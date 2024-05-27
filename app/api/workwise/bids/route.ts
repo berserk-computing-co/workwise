@@ -4,14 +4,14 @@ import { NextResponse } from "next/server";
 async function getBids() {
   const session = await getServerSession({
     callbacks: {
-      async session({ session, token, user }) {
-        console.log(user);
-        session.access_token = token.accessToken;
+      async session({ session, token }) {
+        if (typeof token.accessToken === 'string') {
+          session.access_token = token.accessToken;
+        }
         return session;
       },
     },
   });
-  console.log("session:", session);
   if (!session?.access_token) {
     return new NextResponse(JSON.stringify({ message: "Invalid token" }), {
       status: 401,

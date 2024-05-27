@@ -1,5 +1,5 @@
 "use client";
-import { Button, Label, Textarea, TextInput } from "flowbite-react";
+import { Button, FileInput, Label, Textarea, TextInput } from "flowbite-react";
 import { useStepContext } from "./create_bid_step_context";
 import { FieldValues, useForm } from "react-hook-form";
 import { useEffect } from "react";
@@ -62,6 +62,11 @@ export const DetailsForm = () => {
           required
           onChange={(e) => setValue("bidAddress", e.target?.value)}
         />
+      </div>
+
+      <div>
+        <Label>Plans</Label>
+        <FileInput />
       </div>
 
       <Button type="submit">Next</Button>

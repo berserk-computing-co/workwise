@@ -50,7 +50,7 @@ export const NewEstimateItemForm = () => {
   const { handleSubmit } = useForm();
 
   const onSubmit = (values: FieldValues) => {
-    console.log("Save Estimate Item to bid");
+    console.log("Save Estimate Item to bid", values);
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
