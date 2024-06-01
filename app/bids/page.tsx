@@ -10,7 +10,7 @@ const bids: any[] = [
 ];
 const bidCard = (bid: any) => {
   return (
-    <Card className="bg-blue-100 flex justify-center w-full h-14 shadow-lg rounded-md">
+    <Card className="bg-blue-600 flex justify-center w-full h-14 shadow-lg rounded-md">
       <div className="flex justify-between h-full">
         <div className="flex flex-1 justify-center items-center">
           {bid.name}

@@ -1,4 +1,5 @@
 "use client";
+/* global window */
 
 import React from "react";
 import {
@@ -51,10 +52,12 @@ const NavbarProfile = () => {
 };
 
 export const WorkWiseNavbar = () => {
+  const homePage = window.location.pathname.split("").length <= 1;
+  console.log("homePage", homePage);
   return (
     <SessionProvider>
       <Navbar fluid rounded>
-        <NavbarBrand as={Link} href="https://flowbite-react.com">
+        <NavbarBrand as={Link} href="http://api.workwise.live">
           <img
             src="/workwise.png"
             className="mr-3 h-6 sm:h-9"
@@ -63,11 +66,12 @@ export const WorkWiseNavbar = () => {
         </NavbarBrand>
         <NavbarCollapse>
           <NavbarLink href="/">Home</NavbarLink>
-          <NavbarLink as={Link} href="#">
-            About
-          </NavbarLink>
+          {homePage && (
+            <NavbarLink as={Link} href="#">
+              About
+            </NavbarLink>
+          )}
           <NavbarLink href="/bids">Bids</NavbarLink>
-          <NavbarLink href="#">Contact</NavbarLink>
         </NavbarCollapse>
         <div className="flex md:order-2">
           <NavbarProfile />

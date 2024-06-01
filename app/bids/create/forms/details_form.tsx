@@ -1,8 +1,9 @@
 "use client";
+
+import React, { useEffect } from "react";
 import { Button, FileInput, Label, Textarea, TextInput } from "flowbite-react";
 import { useStepContext } from "./create_bid_step_context";
 import { FieldValues, useForm } from "react-hook-form";
-import { useEffect } from "react";
 import { useNewBidContext } from "./new_bid_context";
 
 interface DetailsFormFields {
@@ -13,7 +14,7 @@ interface DetailsFormFields {
 
 export const DetailsForm = () => {
   const { setStep } = useStepContext();
-  const { bid, setBid } = useNewBidContext();
+  const { bid } = useNewBidContext();
   const { handleSubmit, register, setValue } = useForm<DetailsFormFields>();
 
   useEffect(() => {
@@ -23,14 +24,14 @@ export const DetailsForm = () => {
   });
 
   const onSubmit = (values: FieldValues) => {
-    setBid({
+    setStep('estimate-items', {
       ...bid,
       name: values.bidTitle,
       description: values.bidDescription,
       address: values.bidAddress,
     });
-    setStep("estimate-items");
   };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>

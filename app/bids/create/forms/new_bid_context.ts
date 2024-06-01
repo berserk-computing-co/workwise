@@ -8,7 +8,7 @@ interface NewBidContextType {
 
 export const NewBidContext = createContext<NewBidContextType>({
   bid: {},
-  setBid: () => {},
+  setBid: () => { },
 });
 
 export const useNewBidContext = () => useContext(NewBidContext);

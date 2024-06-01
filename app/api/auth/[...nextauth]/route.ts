@@ -11,13 +11,19 @@ const handler = NextAuth({
         params: {
           audience: process.env.AUTH0_AUDIENCE,
         },
-      }
+      },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async signIn({ user, profile }) {
+      console.log("user", user);
+      console.log("profile", profile);
+
+      return true;
+    },
     async session({ session, token }) {
-      if (typeof token.accessToken === 'string') {
+      if (typeof token.accessToken === "string") {
         session.access_token = token.accessToken;
       }
       return session;

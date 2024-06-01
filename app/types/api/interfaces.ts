@@ -31,7 +31,7 @@ export type AddressAttributes = Omit<Address, 'id'>;
 
 export const isAddress = (address: Partial<Address>): address is Address => {
   return (address as Address).street !== undefined ||
-  (address as Address).city !== undefined;
+    (address as Address).city !== undefined;
 };
 
 export interface Associated {
@@ -176,7 +176,7 @@ export interface EstimateItem {
   phase?: PhaseResponse;
   phaseName?: string; // For create and update requests only for creating a phase
   phaseEstimateItemAttributes?: { phaseId: number | undefined }; // only used for create and update
-  _destroy: boolean
+  _destroy?: boolean
 }
 
 export interface BidResponse {
