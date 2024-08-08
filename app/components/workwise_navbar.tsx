@@ -52,8 +52,7 @@ const NavbarProfile = () => {
 };
 
 export const WorkWiseNavbar = () => {
-  const homePage = window.location.pathname.split("").length <= 1;
-  console.log("homePage", homePage);
+  const homePage = global.window && window.location.pathname.split("").length <= 1;
   return (
     <SessionProvider>
       <Navbar fluid rounded>

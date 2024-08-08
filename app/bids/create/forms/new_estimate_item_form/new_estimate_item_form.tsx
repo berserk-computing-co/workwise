@@ -11,7 +11,7 @@ interface NewEstimateItemFormProps {
 
 export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
   const [itemType, setItemType] = useState<"material" | "labor" | "admin">();
-  const { laborForm, materialForm, handleSubmit, formState } = useNewEstimateItemForm(itemType);
+  const { laborForm, materialForm, handleSubmit } = useNewEstimateItemForm(itemType);
 
   const { bid, setBid } = useStepContext();
 

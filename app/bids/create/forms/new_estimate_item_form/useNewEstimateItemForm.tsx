@@ -1,7 +1,9 @@
 import { SparklesIcon } from "@heroicons/react/16/solid";
-import { Button, Dropdown, Label, TextInput, Tooltip } from "flowbite-react";
-import { useEffect } from "react";
+import { Button, Dropdown, Label, Modal, TextInput, Tooltip } from "flowbite-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { OneBuildTable } from "./one_build_table";
+import { SourceItemFields } from "@/app/api/onebuild/one_build_client";
 
 interface EstimateItemForm {
   name: string;
@@ -43,6 +45,8 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
     register('labor');
   }, [register]);
 
+  const [showOneBuildModal, setShowOneBuildModal] = useState(false);
+
   const materialForm = (
     <div>
       <div>
@@ -60,10 +64,24 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
           </div>
           <div>
             <Tooltip content="Fill with AI">
-              <Button>
+              <Button onClick={() => setShowOneBuildModal(true)}>
                 <SparklesIcon className="size-5 text-lightblue-500" />
               </Button>
             </Tooltip>
+            <Modal
+              show={showOneBuildModal}
+              popup
+              size='xl'
+              onClose={() => setShowOneBuildModal(false)}
+            >
+              <OneBuildTable
+                material={watch('item.name')}
+                chooseMaterial={(chosenMaterial: SourceItemFields) => {
+                  setValue('item.pricePerUnit', chosenMaterial.materialRateUsdCents / 100);
+                  setShowOneBuildModal(false);
+                }}
+              />
+            </Modal>
           </div>
         </div>
       </div>
@@ -76,8 +94,7 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
           onChange={(e) => {
             const newQuantity = parseInt(e.target.value);
             setValue('item.quantity', newQuantity);
-            setValue('material.quantity', newQuantity);
-            setValue('item.totalCost', newQuantity * watch('material.pricePerUnit'))
+            setValue('item.totalCost', newQuantity * watch('item.pricePerUnit'))
           }}
           id="quantity"
           placeholder="quantity"
@@ -86,18 +103,32 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
       </div>
       <div>
         <div className="mb-2 block">
-          <Label htmlFor="price" value="Price" />
+          <Label htmlFor="price" value="Price Per" />
         </div>
         <TextInput
+          id="price"
           onChange={(e) => {
             const newPricePerUnit = parseFloat(e.target.value);
-            setValue('material.pricePerUnit', newPricePerUnit);
+            const newTotalcost = parseFloat((newPricePerUnit * watch('item.quantity')).toFixed(2));
             setValue('item.pricePerUnit', newPricePerUnit);
-            setValue('item.totalCost', newPricePerUnit * watch('material.quantity'))
+            setValue('item.totalCost', newTotalcost);
           }}
+          value={watch('item.pricePerUnit')}
           type="float"
-          id="price"
-          placeholder="price"
+          placeholder="Price Per"
+          required
+        />
+      </div>
+      <div>
+        <div className="mb-2 block">
+          <Label value="Total Cost" />
+        </div>
+        <TextInput
+          id="total-cost"
+          value={watch('item.totalCost')}
+          disabled
+          type="float"
+          placeholder="Total Cost"
           required
         />
       </div>

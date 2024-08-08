@@ -1,3 +1,4 @@
+import { Bid, Estimate } from "@/app/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,12 +24,13 @@ async function getBids() {
       status: 401,
     });
   }
-  return await fetch(`${process.env.WORKWISE_URL}/bids`, {
+  const bidData = await fetch(`${process.env.WORKWISE_URL}/bids`, {
     headers: {
       Authorization: "Bearer " + accessToken,
       "Content-Type": "application/json",
     },
-  });
+  }).then((result) => result.json());
+  return NextResponse.json({ bids: bidData });
 }
 
 async function createBid(request: NextRequest) {
@@ -38,8 +40,23 @@ async function createBid(request: NextRequest) {
       status: 401,
     });
   }
-  const bid = await request.json();
-  console.log('bid', bid);
+  const bid: Partial<Bid> = await request.json();
+  console.log('Creating Bid', bid);
+  console.log('Creating Bid Estimates', JSON.stringify(bid.estimates));
+  if (!bid.estimates) {
+    return new NextResponse(JSON.stringify({ message: 'Estimates are required' }), {
+      status: 422,
+    });
+  }
+  const estimates = bid.estimates.map((estimate: Estimate) => {
+    console.log(estimate);
+
+    return {
+      completion_date: new Date(),
+      expiration_date: new Date(),
+      estimate_items_attributes: []
+    }
+  });
   return await fetch(`${process.env.WORKWISE_URL}/bids`, {
     method: "POST",
     headers: {
@@ -47,7 +64,11 @@ async function createBid(request: NextRequest) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      bid
+      bid: {
+        name: bid.name,
+        description: bid.description,
+        estimates_attributes: estimates
+      }
     })
   });
 }
