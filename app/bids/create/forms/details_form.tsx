@@ -44,7 +44,6 @@ export const DetailsForm = () => {
           required
         />
       </div>
-
       <div>
         <Label>Bid Description</Label>
         <Textarea
@@ -54,7 +53,6 @@ export const DetailsForm = () => {
           required
         />
       </div>
-
       <div>
         <Label>Address</Label>
         <TextInput
@@ -64,7 +62,6 @@ export const DetailsForm = () => {
           onChange={(e) => setValue("bidAddress", e.target?.value)}
         />
       </div>
-
       <div>
         <Label>Plans</Label>
         <FileInput />

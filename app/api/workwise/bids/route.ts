@@ -2,7 +2,7 @@ import { Bid, Estimate } from "@/app/types";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-const getAccessToken = async () => {
+export const getAccessToken = async () => {
   const session = await getServerSession({
     callbacks: {
       async session({ session, token }) {
@@ -41,22 +41,19 @@ async function createBid(request: NextRequest) {
     });
   }
   const bid: Partial<Bid> = await request.json();
-  console.log('Creating Bid', bid);
-  console.log('Creating Bid Estimates', JSON.stringify(bid.estimates));
-  if (!bid.estimates) {
+  if (!bid.estimates || bid.estimates.some((estimate) => !estimate)) {
     return new NextResponse(JSON.stringify({ message: 'Estimates are required' }), {
       status: 422,
     });
   }
-  const estimates = bid.estimates.map((estimate: Estimate) => {
-    console.log(estimate);
-
+  const estimates = bid.estimates.map((estimate: Partial<Estimate>) => {
     return {
       completion_date: new Date(),
       expiration_date: new Date(),
       estimate_items_attributes: []
     }
   });
+
   return await fetch(`${process.env.WORKWISE_URL}/bids`, {
     method: "POST",
     headers: {

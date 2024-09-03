@@ -155,13 +155,13 @@ export interface CustomUserResponse extends UserResponse {
 export interface Estimate {
   id?: number;
   estimateItems: EstimateItem[];
-  expirationDate: string;
-  completionDate: string;
+  expiration_date: string;
+  completion_date: string;
 }
 
 export const isEstimate = (estimate: Partial<Estimate>): estimate is Estimate => {
-  return (estimate as Estimate).expirationDate !== undefined &&
-    (estimate as Estimate).completionDate !== undefined;
+  return (estimate as Estimate).expiration_date !== undefined &&
+    (estimate as Estimate).completion_date !== undefined;
 };
 
 export interface EstimateItem {
