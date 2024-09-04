@@ -1,45 +1,86 @@
 "use client";
-import { Card } from "flowbite-react";
-import { useEffect } from "react";
+import { Card, ListGroup, Spinner } from "flowbite-react";
+import { useEffect, useState } from "react";
+import { Bid } from "../types";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/16/solid";
 
-const bids: any[] = [
-  {
-    name: "Basement Finish",
-    status: "Pending",
-  },
-];
-const bidCard = (bid: any) => {
+const bidCard = (bid: Bid) => {
+  const { completion_date, expiration_date } = bid.estimates[0];
+  const expired = expiration_date && new Date(expiration_date) < new Date();
+
   return (
-    <Card className="bg-blue-100 flex justify-center w-full h-14 shadow-lg rounded-md">
-      <div className="flex justify-between h-full">
-        <div className="flex flex-1 justify-center items-center">
-          {bid.name}
+    <div className="grid grid-rows-4 grid-flow-col gap-4 w-full">
+      <h5 className="flex items-center text-2xl font-bold tracking-tight row-span-3">
+        {bid.name}
+      </h5>
+      <div className="flex flex-1 justify-center items-center">
+        {bid.status}
+      </div>
+      <div className="size-5 text-lightblue-500 justify-self-end">
+        <a href={`/bids/${bid.id}`}>
+          <ArrowTopRightOnSquareIcon />
+        </a>
+      </div>
+      <div>
+        <div>
+          Estimated Revenue: ${bid.estimated_cost}
         </div>
-        <div className="flex flex-1 justify-center items-center">
-          {bid.status}
+        <div>
+          Expected Profit: {(bid.estimated_cost / bid.estimated_cost) * 100}%
         </div>
       </div>
-    </Card>
+      {
+        completion_date && (
+          <div className="flex flex-1 justify-center items-center">
+            Completion: {new Date(completion_date).toDateString()}
+          </div>
+        )
+      }
+      {
+        expiration_date && (
+          <div>
+            Bid Expires {new Date(expiration_date).toDateString()}
+          </div>
+        )
+      }
+    </div >
   );
 };
 
 export default function Bids() {
+  const [bids, setBids] = useState([]);
+  const [fetching, setFetching] = useState(false);
+
   useEffect(() => {
-    const fetchBids = async () => {
-      const data = await fetch("/api/workwise/bids");
-      console.log("fetch bids", data);
-    };
-    fetchBids();
+    setFetching(true);
+    fetch("/api/workwise/bids")
+      .then((response) => response.json())
+      .then(({ bids }) => {
+        setBids(bids ?? []);
+        setFetching(false);
+      }).catch(() => setFetching(false));
   }, []);
+
   return (
-    <Card className="bg-black-200 w-full">
-      <div>{bids.map(bidCard)}</div>
-      <a
-        className="bg-blue-400 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        href="/bids/create"
-      >
-        + New Bid
-      </a>
-    </Card>
+    <>
+      <Card>
+        {fetching || !bids ?
+          <Spinner /> :
+          <ListGroup>
+            {bids.map((bid) => (
+              <ListGroup.Item>
+                {bidCard(bid)}
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        }
+        <a
+          className="bg-blue-400 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          href="/bids/create"
+        >
+          + New Bid
+        </a>
+      </Card >
+    </>
   );
 }

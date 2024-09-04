@@ -7,13 +7,25 @@ const handler = NextAuth({
       clientId: process.env.AUTH0_CLIENT_ID ?? "",
       clientSecret: process.env.AUTH0_CLIENT_SECRET ?? "",
       issuer: process.env.AUTH0_ISSUER ?? "",
+      authorization: {
+        params: {
+          audience: process.env.AUTH0_AUDIENCE,
+        },
+      },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async signIn({ user, profile }) {
+      console.log("user", user);
+      console.log("profile", profile);
+
+      return true;
+    },
     async session({ session, token }) {
-      console.log("session callback");
-      session.access_token = token.accessToken;
+      if (typeof token.accessToken === "string") {
+        session.access_token = token.accessToken;
+      }
       return session;
     },
     async jwt({ token, user, account }) {

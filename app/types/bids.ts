@@ -1,5 +1,4 @@
 import { useLatestEstimate } from "@workwise/hooks/useLatestEstimate";
-
 import { type BidStatus } from "./api/bids";
 import {
   type Address,
@@ -89,7 +88,7 @@ export interface Bid {
   address: Partial<Address>;
   project: Partial<Project>;
   status: BidStatus;
-  estimatedCost: number;
+  estimated_cost: number;
   estimates: Array<Partial<Estimate>>;
 }
 

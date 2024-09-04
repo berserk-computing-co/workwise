@@ -1,50 +1,81 @@
 "use client";
+/* global window */
 
+import React from "react";
 import {
-  Button,
+  Avatar,
+  Drawer,
   Navbar,
   NavbarBrand,
   NavbarCollapse,
   NavbarLink,
-  NavbarToggle,
+  Sidebar,
 } from "flowbite-react";
-import { SessionProvider, useSession } from "next-auth/react";
+import { SessionProvider, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 
 const NavbarProfile = () => {
   const { data } = useSession();
-  console.log("data", data);
   const [open, setOpen] = useState(false);
   return (
-    <div>
-      <Button>Profile</Button>
-      <Drawer isOpen={isOpen}></Drawer>
-    </div>
+    data && (
+      <div>
+        <Avatar rounded onClick={() => setOpen(true)} />
+        <Drawer position="right" open={open} onClose={() => setOpen(false)}>
+          <Drawer.Header title="Profile" />
+          <Drawer.Items>
+            <Sidebar
+              aria-label="Sidebar with multi-level dropdown example"
+              className="[&>div]:bg-transparent [&>div]:p-0"
+            >
+              <div className="flex h-full flex-col justify-between py-2">
+                <div>
+                  <Sidebar.Items>
+                    <Sidebar.ItemGroup>
+                      <Sidebar.Item href="/bids">Dashboard</Sidebar.Item>
+                      <Sidebar.Item
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                      >
+                        Sign Out
+                      </Sidebar.Item>
+                    </Sidebar.ItemGroup>
+                  </Sidebar.Items>
+                </div>
+              </div>
+            </Sidebar>
+          </Drawer.Items>
+        </Drawer>
+      </div>
+    )
   );
 };
 
 export const WorkWiseNavbar = () => {
+  const homePage = global.window && window.location.pathname.split("").length <= 1;
   return (
     <SessionProvider>
       <Navbar fluid rounded>
-        <NavbarBrand as={Link} href="https://flowbite-react.com">
+        <NavbarBrand as={Link} href="http://api.workwise.live">
           <img
             src="/workwise.png"
             className="mr-3 h-6 sm:h-9"
             alt="WorkWise Logo"
           />
         </NavbarBrand>
-        <NavbarToggle />
         <NavbarCollapse>
           <NavbarLink href="/">Home</NavbarLink>
-          <NavbarLink as={Link} href="#">
-            About
-          </NavbarLink>
+          {homePage && (
+            <NavbarLink as={Link} href="#">
+              About
+            </NavbarLink>
+          )}
           <NavbarLink href="/bids">Bids</NavbarLink>
-          <NavbarLink href="#">Contact</NavbarLink>
-          <NavbarProfile />
         </NavbarCollapse>
+        <div className="flex md:order-2">
+          <NavbarProfile />
+          <Navbar.Toggle />
+        </div>
       </Navbar>
     </SessionProvider>
   );
