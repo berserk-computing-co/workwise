@@ -47,10 +47,16 @@ async function createBid(request: NextRequest) {
     });
   }
   const estimates = bid.estimates.map((estimate: Partial<Estimate>) => {
+    console.log('Estimate', estimate);
     return {
       completion_date: new Date(),
       expiration_date: new Date(),
-      estimate_items_attributes: []
+      estimate_items_attributes: estimate.estimateItems?.map((item) => ({
+        name: item.name,
+        price_per_unit: item.pricePerUnit,
+        quantity: item.quantity,
+        total_cost: item.totalCost
+      })),
     }
   });
 
