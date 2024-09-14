@@ -50,7 +50,12 @@ async function createBid(request: NextRequest) {
     return {
       completion_date: new Date(),
       expiration_date: new Date(),
-      estimate_items_attributes: []
+      estimate_items_attributes: estimate.estimateItems?.map((item) => ({
+        name: item.name,
+        price_per_unit: item.pricePerUnit,
+        quantity: item.quantity,
+        total_cost: item.totalCost
+      })),
     }
   });
 
@@ -64,6 +69,7 @@ async function createBid(request: NextRequest) {
       bid: {
         name: bid.name,
         description: bid.description,
+        address_attributes: bid.address,
         estimates_attributes: estimates
       }
     })
