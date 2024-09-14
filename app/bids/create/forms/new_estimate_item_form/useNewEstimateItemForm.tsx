@@ -74,13 +74,18 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
               size='xl'
               onClose={() => setShowOneBuildModal(false)}
             >
-              <OneBuildTable
-                material={watch('item.name')}
-                chooseMaterial={(chosenMaterial: SourceItemFields) => {
-                  setValue('item.pricePerUnit', chosenMaterial.materialRateUsdCents / 100);
-                  setShowOneBuildModal(false);
-                }}
-              />
+              <Modal.Header>
+                Material Options
+              </Modal.Header>
+              <Modal.Body>
+                <OneBuildTable
+                  material={watch('item.name')}
+                  chooseMaterial={(chosenMaterial: SourceItemFields) => {
+                    setValue('item.pricePerUnit', chosenMaterial.materialRateUsdCents / 100);
+                    setShowOneBuildModal(false);
+                  }}
+                />
+              </Modal.Body>
             </Modal>
           </div>
         </div>
@@ -136,9 +141,14 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
   );
 
   const laborForm = (
-    <div>
+    <div className="h-min pb-2">
       <div>
-        <Dropdown id="laborCategory" label="Labor Category"></Dropdown>
+        <Dropdown id="laborCategory" label="Labor Category">
+          <Dropdown.Item>Labor</Dropdown.Item>
+          <Dropdown.Item>SubContractor (General)</Dropdown.Item>
+          <Dropdown.Item>Carpenter</Dropdown.Item>
+          <Dropdown.Item>Plumber</Dropdown.Item>
+        </Dropdown>
       </div>
     </div>
   );

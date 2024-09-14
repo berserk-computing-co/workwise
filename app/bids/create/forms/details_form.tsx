@@ -9,7 +9,12 @@ import { useNewBidContext } from "./new_bid_context";
 interface DetailsFormFields {
   bidTitle: string;
   bidDescription: string;
-  bidAddress: string;
+  address: {
+    street1: string;
+    city: string;
+    state: string;
+    zip: number;
+  };
 }
 
 export const DetailsForm = () => {
@@ -20,7 +25,7 @@ export const DetailsForm = () => {
   useEffect(() => {
     register("bidTitle", { required: true });
     register("bidDescription", { required: true });
-    register("bidAddress", { required: true });
+    register("address", { required: true });
   });
 
   const onSubmit = (values: FieldValues) => {
@@ -54,13 +59,42 @@ export const DetailsForm = () => {
         />
       </div>
       <div>
-        <Label>Address</Label>
-        <TextInput
-          id="address"
-          placeholder="Address"
-          required
-          onChange={(e) => setValue("bidAddress", e.target?.value)}
-        />
+        <div>
+          <Label>Street</Label>
+          <TextInput
+            id="street"
+            placeholder="12345 Cool Avenue"
+            required
+            onChange={(e) => setValue("address.street1", e.target?.value)}
+          />
+        </div>
+        <div>
+          <Label>City</Label>
+          <TextInput
+            id="city"
+            placeholder="Small Town"
+            required
+            onChange={(e) => setValue("address.city", e.target?.value)}
+          />
+        </div>
+        <div>
+          <Label>State</Label>
+          <TextInput
+            id="state"
+            placeholder="AL"
+            required
+            onChange={(e) => setValue("address.state", e.target?.value)}
+          />
+        </div>
+        <div>
+          <Label>Zipcode</Label>
+          <TextInput
+            id="zipcode"
+            placeholder="12345"
+            required
+            onChange={(e) => setValue("address.zip", +e.target?.value)}
+          />
+        </div>
       </div>
       <div>
         <Label>Plans</Label>

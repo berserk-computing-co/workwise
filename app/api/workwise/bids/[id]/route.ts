@@ -23,6 +23,8 @@ async function getBid(_: NextApiRequest, { params }: { params: { id: string } })
     },
   }).then((result) => result.json());
 
+  console.log('bid', bid);
+
   return NextResponse.json({ bid });
 }
 

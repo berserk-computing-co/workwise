@@ -47,7 +47,6 @@ async function createBid(request: NextRequest) {
     });
   }
   const estimates = bid.estimates.map((estimate: Partial<Estimate>) => {
-    console.log('Estimate', estimate);
     return {
       completion_date: new Date(),
       expiration_date: new Date(),
@@ -70,6 +69,7 @@ async function createBid(request: NextRequest) {
       bid: {
         name: bid.name,
         description: bid.description,
+        address_attributes: bid.address,
         estimates_attributes: estimates
       }
     })
