@@ -13,7 +13,8 @@ async function getOneBuildResults(request: Request) {
 
   const response = await fetchSourceItems(variables);
 
-  return new NextResponse(JSON.stringify(response?.data?.sources?.nodes) ?? []);
+  return NextResponse.json(response?.data?.sources?.nodes ?? []);
+
 }
 
 export { getOneBuildResults as GET };

@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
-import { getAccessToken } from "../route";
-import { NextApiRequest } from "next";
+import { NextResponse, NextRequest } from "next/server";
+import {getAccessToken} from "@/app/lib/auth/utills";
 
-async function getBid(_: NextApiRequest, { params }: { params: { id: string } }) {
+async function getBid(_: NextRequest, { params }: { params: { id: string } }) {
   console.log('params', +params.id);
   if (!params.id) {
     return new NextResponse(JSON.stringify({ message: 'Missing ID' }), {

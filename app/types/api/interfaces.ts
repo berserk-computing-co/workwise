@@ -20,7 +20,7 @@ export const isUserType = (potentialType: string): potentialType is UserType => 
 export interface Address {
   id: number;
   street: string;
-  streetSuffix: string;
+  streetSuffix?: string;
   city: string;
   state?: string;
   zip?: string;

@@ -2,6 +2,11 @@ import { type UserResponse } from './api/interfaces';
 
 type ClientFields = 'id' | 'uuid' | 'email' | 'phoneNumber' | 'firstName' | 'lastName';
 export type Client = Pick<UserResponse, ClientFields>;
+export interface Contact {
+  name: string;
+  phone: string;
+  email: string
+};
 
 export const isClient = (obj: any): obj is Client | Partial<Client> => (
   (obj as Client).firstName !== undefined &&
