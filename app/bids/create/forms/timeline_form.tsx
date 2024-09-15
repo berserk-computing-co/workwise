@@ -11,6 +11,8 @@ export const TimelineForm = ({ onComplete }: TimelineFormProps) => {
   const { handleSubmit } = useForm();
   const { bid } = useStepContext();
   const onSubmit = useCallback(async (values: FieldValues) => {
+
+    console.log('SENDING BID', bid)
     fetch("/api/workwise/bids", {
       method: "POST",
       body: JSON.stringify(bid),
