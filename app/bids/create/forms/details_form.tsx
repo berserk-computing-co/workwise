@@ -1,31 +1,30 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, {useEffect, useState} from "react";
 import { Button, FileInput, Label, Textarea, TextInput } from "flowbite-react";
 import { useStepContext } from "./create_bid_step_context";
 import { FieldValues, useForm } from "react-hook-form";
 import { useNewBidContext } from "./new_bid_context";
+import {AddressAutocomplete} from "@/app/bids/create/forms/address_autocomplete_form";
+import {Address} from "@/app/types";
 
 interface DetailsFormFields {
   bidTitle: string;
   bidDescription: string;
-  address: {
-    street1: string;
-    city: string;
-    state: string;
-    zip: number;
-  };
+  address: Address
+  streetSuffix: string
 }
 
 export const DetailsForm = () => {
   const { setStep } = useStepContext();
   const { bid } = useNewBidContext();
   const { handleSubmit, register, setValue } = useForm<DetailsFormFields>();
-
+  const [ address, setAddress ] = useState<Partial<Address>>()
   useEffect(() => {
     register("bidTitle", { required: true });
     register("bidDescription", { required: true });
     register("address", { required: true });
+    register('streetSuffix');
   });
 
   const onSubmit = (values: FieldValues) => {
@@ -33,7 +32,10 @@ export const DetailsForm = () => {
       ...bid,
       name: values.bidTitle,
       description: values.bidDescription,
-      address: values.bidAddress,
+      address: {
+        ...address,
+        streetSuffix: values.streetSuffix
+      },
     });
   };
 
@@ -59,42 +61,20 @@ export const DetailsForm = () => {
         />
       </div>
       <div>
-        <div>
-          <Label>Street</Label>
-          <TextInput
-            id="street"
-            placeholder="12345 Cool Avenue"
-            required
-            onChange={(e) => setValue("address.street1", e.target?.value)}
-          />
-        </div>
-        <div>
-          <Label>City</Label>
-          <TextInput
-            id="city"
-            placeholder="Small Town"
-            required
-            onChange={(e) => setValue("address.city", e.target?.value)}
-          />
-        </div>
-        <div>
-          <Label>State</Label>
-          <TextInput
-            id="state"
-            placeholder="AL"
-            required
-            onChange={(e) => setValue("address.state", e.target?.value)}
-          />
-        </div>
-        <div>
-          <Label>Zipcode</Label>
-          <TextInput
-            id="zipcode"
-            placeholder="12345"
-            required
-            onChange={(e) => setValue("address.zip", +e.target?.value)}
-          />
-        </div>
+        <Label>Address</Label>
+        <AddressAutocomplete
+          setValue={(address) => {
+            setAddress(address);
+            setValue("address", address as Address);
+          }}
+        />
+      </div>
+      <div>
+        <Label>Unit Number</Label>
+        <TextInput
+          onChange={(e) => setValue("streetSuffix", e.target?.value)}
+          placeholder="Unit Number"
+        />
       </div>
       <div>
         <Label>Plans</Label>

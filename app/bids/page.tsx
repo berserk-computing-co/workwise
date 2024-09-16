@@ -57,6 +57,7 @@ export default function Bids() {
       .then((response) => response.json())
       .then(({ bids }) => {
         setBids(bids ?? []);
+
         setFetching(false);
       }).catch(() => setFetching(false));
   }, []);

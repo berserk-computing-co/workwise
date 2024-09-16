@@ -75,7 +75,7 @@ export const toBid = (bidResponse: Partial<BidResponse>): Bid => {
     ...(client && { client }),
     ...(project && { project }),
     ...(status && { status }),
-    ...(estimatedCost && { estimatedCost: totalCost }),
+    ...(estimatedCost && { estimated_cost: totalCost }),
     ...(estimates && { estimates }),
   };
 };
