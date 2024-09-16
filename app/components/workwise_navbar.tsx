@@ -18,37 +18,39 @@ import { useState } from "react";
 const NavbarProfile = () => {
   const { data } = useSession();
   const [open, setOpen] = useState(false);
-  return (
-    data && (
-      <div>
-        <Avatar rounded onClick={() => setOpen(true)} />
-        <Drawer position="right" open={open} onClose={() => setOpen(false)}>
-          <Drawer.Header title="Profile" />
-          <Drawer.Items>
-            <Sidebar
-              aria-label="Sidebar with multi-level dropdown example"
-              className="[&>div]:bg-transparent [&>div]:p-0"
-            >
-              <div className="flex h-full flex-col justify-between py-2">
-                <div>
-                  <Sidebar.Items>
-                    <Sidebar.ItemGroup>
-                      <Sidebar.Item href="/bids">Dashboard</Sidebar.Item>
-                      <Sidebar.Item
-                        onClick={() => signOut({ callbackUrl: "/" })}
-                      >
-                        Sign Out
-                      </Sidebar.Item>
-                    </Sidebar.ItemGroup>
-                  </Sidebar.Items>
-                </div>
+  return (data ? (
+    <div>
+      <Avatar rounded onClick={() => setOpen(true)} />
+      <Drawer position="right" open={open} onClose={() => setOpen(false)}>
+        <Drawer.Header title="Profile" />
+        <Drawer.Items>
+          <Sidebar
+            aria-label="Sidebar with multi-level dropdown example"
+            className="[&>div]:bg-transparent [&>div]:p-0"
+          >
+            <div className="flex h-full flex-col justify-between py-2">
+              <div>
+                <Sidebar.Items>
+                  <Sidebar.ItemGroup>
+                    <Sidebar.Item href="/bids">Dashboard</Sidebar.Item>
+                    <Sidebar.Item
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                    >
+                      Sign Out
+                    </Sidebar.Item>
+                  </Sidebar.ItemGroup>
+                </Sidebar.Items>
               </div>
-            </Sidebar>
-          </Drawer.Items>
-        </Drawer>
-      </div>
-    )
-  );
+            </div>
+          </Sidebar>
+        </Drawer.Items>
+      </Drawer>
+    </div>
+  ) : (
+    <Link href="/login">
+      <button className="text-slate-700">Login</button>
+    </Link>
+  ));
 };
 
 export const WorkWiseNavbar = () => {

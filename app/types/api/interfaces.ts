@@ -154,7 +154,7 @@ export interface CustomUserResponse extends UserResponse {
 
 export interface Estimate {
   id?: number;
-  estimateItems: EstimateItem[];
+  estimate_items: EstimateItem[];
   expiration_date: string;
   completion_date: string;
 }
@@ -168,9 +168,9 @@ export interface EstimateItem {
   id?: number;
   description: string;
   name: string;
-  pricePerUnit: number;
+  price_per_unit: number;
   quantity: number;
-  totalCost: number;
+  total_cost: number;
   estimatableType: EstimatableType;
   estimatableId: number;
   phase?: PhaseResponse;
