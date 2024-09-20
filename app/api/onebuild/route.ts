@@ -11,7 +11,8 @@ async function getOneBuildResults(request: Request) {
   };
 
 
-  const response = await fetchSourceItems(variables);
+  const response = await fetchSourceItems(variables as any);
+  console.log(JSON.stringify(response, null, 2));
 
   return NextResponse.json(response?.data?.sources?.nodes ?? []);
 

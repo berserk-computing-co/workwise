@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { OneBuildTable } from "./one_build_table";
 import { SourceItemFields } from "@/app/api/onebuild/one_build_client";
+import AdminForm from "./admin_form";
+import LaborForm from "./labor_form";
 
 interface EstimateItemForm {
   name: string;
@@ -24,7 +26,7 @@ interface LaborForm {
   flatFee: boolean;
 }
 
-interface NewEstimateFormFields {
+export interface NewEstimateFormFields {
   item: EstimateItemForm;
   material: MaterialForm;
   labor: LaborForm;
@@ -71,7 +73,7 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
             <Modal
               show={showOneBuildModal}
               popup
-              size='xl'
+              size='5xl'
               onClose={() => setShowOneBuildModal(false)}
             >
               <Modal.Header>
@@ -142,20 +144,20 @@ export const useNewEstimateItemForm = (itemType: 'material' | 'labor' | 'admin' 
 
   const laborForm = (
     <div className="h-min pb-2">
-      <div>
-        <Dropdown id="laborCategory" label="Labor Category">
-          <Dropdown.Item>Labor</Dropdown.Item>
-          <Dropdown.Item>SubContractor (General)</Dropdown.Item>
-          <Dropdown.Item>Carpenter</Dropdown.Item>
-          <Dropdown.Item>Plumber</Dropdown.Item>
-        </Dropdown>
-      </div>
+      <LaborForm />
+    </div>
+  );
+
+  const adminForm = (
+    <div className="h-min pb-2">
+      <AdminForm />
     </div>
   );
 
   return {
     materialForm,
     laborForm,
+    adminForm,
     handleSubmit,
     formState
   };

@@ -1,8 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
-import {getAccessToken} from "@/app/lib/auth/utills";
+import { getAccessToken } from "@/app/lib/auth/utills";
 
 async function getBid(_: NextRequest, { params }: { params: { id: string } }) {
-  console.log('params', +params.id);
   if (!params.id) {
     return new NextResponse(JSON.stringify({ message: 'Missing ID' }), {
       status: 400

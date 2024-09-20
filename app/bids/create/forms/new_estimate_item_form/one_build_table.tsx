@@ -1,4 +1,4 @@
-import { Table } from "flowbite-react"
+import { Checkbox, Table } from "flowbite-react"
 import { useEffect, useState } from "react"
 import Image from 'next/image';
 import { SourceItem, SourceItemFields, uomToOneBuildUomMap } from "@/app/api/onebuild/one_build_client";
@@ -13,7 +13,6 @@ export const OneBuildTable = ({ material, chooseMaterial }: OneBuildTableProps) 
 
   useEffect(() => {
     const fetchOneBuildData = async () => {
-      console.log('material', material);
       await fetch(`/api/onebuild?material=${material}`)
         .then((res) => res.json())
         .then(setNodes);
@@ -43,10 +42,8 @@ export const OneBuildTable = ({ material, chooseMaterial }: OneBuildTableProps) 
       }
 
       return (
-        <Table.Row onClick={() => chooseMaterial(costDetail)}>
-          <Table.Cell>
-            {node.name}
-          </Table.Cell>
+        <Table.Row onDoubleClick={() => chooseMaterial(costDetail)}>
+          <Table.Cell>{node.name}</Table.Cell>
           <Table.Cell>
             <Image
               src={node.imagesUrls[0]}
@@ -55,11 +52,13 @@ export const OneBuildTable = ({ material, chooseMaterial }: OneBuildTableProps) 
               alt="material image"
             />
           </Table.Cell>
+          <Table.Cell>{prices.pricePerItem}</Table.Cell>
+          <Table.Cell>{uomToOneBuildUomMap[primaryUom]}</Table.Cell>
+          <Table.Cell>{prices.laborCostPerItem}</Table.Cell>
           <Table.Cell>
-            {prices.pricePerItem}
-          </Table.Cell>
-          <Table.Cell>
-            {uomToOneBuildUomMap[primaryUom]}
+            <Checkbox onClick={() => {
+              console.log('Include labor in estimate');
+            }} />
           </Table.Cell>
         </Table.Row>
       )
@@ -73,13 +72,10 @@ export const OneBuildTable = ({ material, chooseMaterial }: OneBuildTableProps) 
         <Table.HeadCell>Product Image</Table.HeadCell>
         <Table.HeadCell>Price Per</Table.HeadCell>
         <Table.HeadCell>Unit</Table.HeadCell>
-        <Table.HeadCell>
-          <span className="sr-only">Edit</span>
-        </Table.HeadCell>
+        <Table.HeadCell>Estimate for Labor</Table.HeadCell>
+        <Table.HeadCell>Include Labor?</Table.HeadCell>
       </Table.Head>
-      <Table.Body>
-        {tableRows}
-      </Table.Body>
+      <Table.Body>{tableRows}</Table.Body>
     </Table>
   )
 }

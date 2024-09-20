@@ -1,8 +1,7 @@
 import { Bid, Estimate } from "@/app/types";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import {getAccessToken} from "@/app/lib/auth/utills";
-import {workwiseFetch} from "@/app/lib/workwise_api/utils";
+import { getAccessToken } from "@/app/lib/auth/utills";
+import { workwiseFetch } from "@/app/lib/workwise_api/utils";
 
 async function getBids() {
   const accessToken = await getAccessToken();
@@ -38,11 +37,11 @@ async function createBid(request: NextRequest) {
     return {
       completion_date: new Date(),
       expiration_date: new Date(),
-      estimate_items_attributes: estimate.estimateItems?.map((item) => ({
+      estimate_items_attributes: estimate.estimate_items?.map((item) => ({
         name: item.name,
-        price_per_unit: item.pricePerUnit,
+        price_per_unit: item.price_per_unit,
         quantity: item.quantity,
-        total_cost: item.totalCost
+        total_cost: item.total_cost
       })),
     }
   });

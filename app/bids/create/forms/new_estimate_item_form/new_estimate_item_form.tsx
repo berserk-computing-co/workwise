@@ -1,9 +1,11 @@
 import { Button, Label } from "flowbite-react";
 import { useState } from "react";
-import { useNewEstimateItemForm } from "./useNewEstimateItemForm";
 import { FieldValues } from "react-hook-form";
 import { EstimateItem } from "@/app/types";
 import { useStepContext } from "../create_bid_step_context";
+import MaterialForm from "./material_form";
+import LaborForm from "./labor_form";
+import AdminForm from "./admin_form";
 
 interface NewEstimateItemFormProps {
   onClose: () => void;
@@ -11,29 +13,27 @@ interface NewEstimateItemFormProps {
 
 export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
   const [itemType, setItemType] = useState<"material" | "labor" | "admin">();
-  const { laborForm, materialForm, handleSubmit } = useNewEstimateItemForm(itemType);
-
   const { bid, setBid } = useStepContext();
 
   const onSubmit = (values: FieldValues) => {
     let currentEstimate = (bid?.estimates ?? [])[0];
     if (!currentEstimate) {
       currentEstimate = {
-        estimateItems: []
+        estimate_items: []
       };
     }
-    currentEstimate.estimateItems ??= [];
+    currentEstimate.estimate_items ??= [];
     const { item } = values;
     const estimateItem: EstimateItem = {
       name: item.name,
       description: item.title,
-      pricePerUnit: item.pricePerUnit,
+      price_per_unit: item.pricePerUnit,
       quantity: item.quantity,
-      totalCost: item.totalCost,
+      total_cost: item.totalCost,
       estimatableType: 'Material',
       estimatableId: 1
     };
-    currentEstimate.estimateItems.push(estimateItem);
+    currentEstimate.estimate_items.push(estimateItem);
     setBid({
       ...bid,
       estimates: [...(bid?.estimates ?? []), currentEstimate],
@@ -42,7 +42,7 @@ export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <>
       <div className="space-y-6">
         <div>
           <div className="mb-2 block">
@@ -72,12 +72,10 @@ export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
             </Button>
           </Button.Group>
         </div>
-        {itemType === "material" && materialForm}
-        {itemType === "labor" && laborForm}
+        {itemType === "material" && <MaterialForm />}
+        {itemType === "labor" && <LaborForm />}
+        {itemType === 'admin' && <AdminForm />}
       </div>
-      <Button disabled={!itemType} type="submit">
-        Save Estimate Item
-      </Button>
-    </form>
+    </>
   );
 };

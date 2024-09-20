@@ -1,18 +1,11 @@
-'use client'
-
 import React from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { WorkWiseNavbar } from "./components/workwise_navbar";
 import { Footer } from "flowbite-react";
-import { createStytchUIClient } from "@stytch/nextjs/ui";
-import { StytchProvider } from "@stytch/nextjs";
+import { AuthProvider } from "./auth_provider";
 
 const inter = Inter({ subsets: ["latin"] });
-
-const stytch = createStytchUIClient(
-  process.env.STYTCH_PUBLIC_TOKEN ?? ''
-);
 
 export default async function RootLayout({
   children,
@@ -22,14 +15,14 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <StytchProvider stytch={stytch}>
+        <AuthProvider>
           <WorkWiseNavbar />
           <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-blue-200">
             <div className="z-10 w-full max-w-5xl items-center justify-between font-mono">
               {children}
             </div>
           </main>
-        </StytchProvider>
+        </AuthProvider>
         <Footer container>
           <div className="w-full text-center">
             <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
