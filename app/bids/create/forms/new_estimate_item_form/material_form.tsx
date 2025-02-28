@@ -4,9 +4,9 @@ import { SparklesIcon } from '@heroicons/react/16/solid';
 import { OneBuildTable } from './one_build_table';
 import { SourceItemFields } from '@/app/api/onebuild/one_build_client';
 import { FieldValues, useForm } from 'react-hook-form';
-import { NewEstimateFormFields } from './useNewEstimateItemForm';
+import { EstimateItemFormProps, NewEstimateFormFields } from './types';
 
-export const MaterialForm = () => {
+export const MaterialForm = ({ onSubmit }: EstimateItemFormProps) => {
   const {
     handleSubmit,
     register,
@@ -18,8 +18,9 @@ export const MaterialForm = () => {
     register('item');
     register('item.name', { required: true });
     register('item.totalCost', { required: true })
-    register('material', { required: true });
+    setValue('item.itemType', 'material');
   }, [register]);
+
   const [showOneBuildModal, setShowOneBuildModal] = useState(false);
 
   const updateTotalCost = () => {
@@ -31,6 +32,7 @@ export const MaterialForm = () => {
 
   const createMaterialEstimateItem = (values: FieldValues) => {
     console.log('Create Material estimate Item', values);
+    onSubmit(values);
   }
 
   return (
@@ -42,6 +44,7 @@ export const MaterialForm = () => {
             <TextInput
               id="name"
               placeholder="e.g., plywood"
+              required
               {...register('item.name', { required: true })}
             />
             <Tooltip content="Fill with AI">
@@ -51,13 +54,13 @@ export const MaterialForm = () => {
             </Tooltip>
           </div>
         </div>
-
         <div>
           <Label htmlFor="quantity" value="Quantity" />
           <TextInput
             id="quantity"
             type="number"
             placeholder="0"
+            required
             {...register('item.quantity', {
               required: true,
               min: 0,
@@ -65,7 +68,6 @@ export const MaterialForm = () => {
             })}
           />
         </div>
-
         <div>
           <Label htmlFor="pricePerUnit" value="Price Per Unit" />
           <TextInput
@@ -73,6 +75,7 @@ export const MaterialForm = () => {
             type="number"
             step="0.01"
             placeholder="0.00"
+            required
             {...register('item.pricePerUnit', {
               required: true,
               min: 0,
@@ -80,7 +83,6 @@ export const MaterialForm = () => {
             })}
           />
         </div>
-
         <div>
           <Label htmlFor="totalCost" value="Total Cost" />
           <TextInput
@@ -112,7 +114,7 @@ export const MaterialForm = () => {
           </Modal.Body>
         </Modal>
       </div>
-      <Button type='submit'>Save new Material</Button>
+      <Button type='submit'>Save New Material</Button>
     </form>
   );
 };

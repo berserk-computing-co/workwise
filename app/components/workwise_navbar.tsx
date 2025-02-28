@@ -1,7 +1,7 @@
 "use client";
 /* global window */
 
-import React from "react";
+import React, { useCallback, useState } from "react";
 import {
   Avatar,
   Drawer,
@@ -11,14 +11,23 @@ import {
   NavbarLink,
   Sidebar,
 } from "flowbite-react";
-import { SessionProvider, signOut, useSession } from "next-auth/react";
+import { SessionProvider } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useStytch, useStytchSession } from "@stytch/nextjs";
 
 const NavbarProfile = () => {
-  const { data } = useSession();
   const [open, setOpen] = useState(false);
-  return (data ? (
+  const client = useStytch();
+  const session = useStytchSession();
+
+  const logout = useCallback(() => {
+    if (session.session) {
+      client.session.revoke();
+    }
+  }, [client, session]);
+
+
+  return (session.session ? (
     <div>
       <Avatar rounded onClick={() => setOpen(true)} />
       <Drawer position="right" open={open} onClose={() => setOpen(false)}>
@@ -33,11 +42,7 @@ const NavbarProfile = () => {
                 <Sidebar.Items>
                   <Sidebar.ItemGroup>
                     <Sidebar.Item href="/bids">Dashboard</Sidebar.Item>
-                    <Sidebar.Item
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                    >
-                      Sign Out
-                    </Sidebar.Item>
+                    <Sidebar.Item onClick={logout}>Sign Out</Sidebar.Item>
                   </Sidebar.ItemGroup>
                 </Sidebar.Items>
               </div>

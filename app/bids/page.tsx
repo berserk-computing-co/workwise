@@ -3,11 +3,13 @@ import { Card, ListGroup, Spinner } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { Bid } from "../types";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/16/solid";
+import { useStytch, useStytchUser } from "@stytch/nextjs";
+import { useSearchParams } from "next/navigation";
+
+const MAGIC_LINKS_TOKEN = "magic_links";
 
 const bidCard = (bid: Bid) => {
   const { completion_date, expiration_date } = bid.estimates[0];
-  const expired = expiration_date && new Date(expiration_date) < new Date();
-
   return (
     <div className="grid grid-rows-4 grid-flow-col gap-4 w-full">
       <h5 className="flex items-center text-2xl font-bold tracking-tight row-span-3">
@@ -50,6 +52,23 @@ const bidCard = (bid: Bid) => {
 export default function Bids() {
   const [bids, setBids] = useState([]);
   const [fetching, setFetching] = useState(false);
+  const { user, isInitialized } = useStytchUser();
+  const stytch = useStytch();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (stytch && !user && isInitialized) {
+      const token = searchParams.get("token");
+      const stytch_token_type = searchParams.get("stytch_token_type");
+
+      if (token && stytch_token_type === MAGIC_LINKS_TOKEN) {
+        stytch.magicLinks.authenticate(token, {
+          session_duration_minutes: 60,
+        });
+      }
+      window.location.href = '/bids';
+    }
+  }, [isInitialized, searchParams, stytch, user]);
 
   useEffect(() => {
     setFetching(true);

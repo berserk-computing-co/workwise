@@ -30,7 +30,7 @@ export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
       price_per_unit: item.pricePerUnit,
       quantity: item.quantity,
       total_cost: item.totalCost,
-      estimatableType: 'Material',
+      estimatableType: item.itemType,
       estimatableId: 1
     };
     currentEstimate.estimate_items.push(estimateItem);
@@ -72,9 +72,9 @@ export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
             </Button>
           </Button.Group>
         </div>
-        {itemType === "material" && <MaterialForm />}
-        {itemType === "labor" && <LaborForm />}
-        {itemType === 'admin' && <AdminForm />}
+        {itemType === "material" && <MaterialForm onSubmit={onSubmit} />}
+        {itemType === "labor" && <LaborForm onSubmit={onSubmit} />}
+        {itemType === 'admin' && <AdminForm onSubmit={onSubmit} />}
       </div>
     </>
   );

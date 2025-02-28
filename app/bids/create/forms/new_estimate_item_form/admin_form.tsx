@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Label, TextInput, Tooltip } from 'flowbite-react';
-import { FieldValues, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { EstimateItemFormProps, NewEstimateFormFields } from './types';
 
-export const AdminForm = () => {
-  const { register, watch, setValue, handleSubmit } = useForm();
+export const AdminForm = ({ onSubmit }: EstimateItemFormProps) => {
+  const {
+    register, watch, setValue, handleSubmit
+  } = useForm<NewEstimateFormFields>();
 
-  const saveAdminForm = (values: FieldValues) => {
-    console.log('Saving admin form', values);
-  };
+  useEffect(() => {
+    setValue('item.name', 'Admin Fee');
+    setValue('item.quantity', 1);
+    setValue('item.itemType', 'Expense');
+  }, []);
 
   return (
-    <form onSubmit={handleSubmit(saveAdminForm)}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="h-min pb-2">
         <div>
           <div className="mb-2 block">
@@ -27,7 +32,6 @@ export const AdminForm = () => {
                 onChange: (e) => {
                   const value = parseFloat(e.target.value);
                   setValue('item.totalCost', value);
-                  setValue('item.name', 'Admin Fee');
                 }
               })}
             />
