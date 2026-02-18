@@ -3,6 +3,10 @@ import { type Bid } from "@/app/types";
 import { generateBidDocumentSpec } from "@/app/lib/openai/bids";
 import { renderBidPdf } from "@/app/lib/pdf/bid_pdf";
 
+function safeFilename(name: string): string {
+  return name.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").toLowerCase();
+}
+
 export async function POST(request: NextRequest) {
   let bid: Partial<Bid>;
   try {
@@ -11,14 +15,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  if (!bid.name) {
+  if (!bid.name?.trim()) {
     return NextResponse.json({ error: "Bid name is required" }, { status: 422 });
   }
 
   try {
     const docSpec = await generateBidDocumentSpec(bid);
     const pdfBuffer = await renderBidPdf(bid, docSpec);
-    const filename = `bid-${(bid.name ?? "document").replace(/\s+/g, "-").toLowerCase()}.pdf`;
+    const filename = `bid-${safeFilename(bid.name)}.pdf`;
 
     return new NextResponse(pdfBuffer, {
       status: 200,

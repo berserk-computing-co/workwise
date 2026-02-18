@@ -4,10 +4,15 @@ import { runMaterialsAgent } from "@/app/lib/openai/materials_agent";
 import { generateBidDocumentSpec } from "@/app/lib/openai/bids";
 import { renderBidPdf } from "@/app/lib/pdf/bid_pdf";
 import { sendBidEmail } from "@/app/lib/email/resend";
+import { stytchClient } from "@/app/lib/auth/stytch_client";
 import { type Bid } from "@/app/types";
 
 // Allow up to 5 minutes for Vercel serverless functions
 export const maxDuration = 300;
+
+function safeFilename(name: string): string {
+  return name.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").toLowerCase();
+}
 
 export async function POST(request: NextRequest) {
   let formData: FormData;
@@ -21,6 +26,9 @@ export async function POST(request: NextRequest) {
   if (!description || typeof description !== "string" || !description.trim()) {
     return NextResponse.json({ error: "description is required" }, { status: 422 });
   }
+  if (description.trim().length > 5000) {
+    return NextResponse.json({ error: "Description must be 5000 characters or fewer" }, { status: 422 });
+  }
 
   const email = formData.get("email");
   if (!email || typeof email !== "string" || !email.trim()) {
@@ -30,19 +38,47 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "email is invalid" }, { status: 422 });
   }
 
+  // Fire-and-forget: create a Stytch user for this email if one doesn't exist yet.
+  (async () => {
+    try {
+      const searchResult = await stytchClient.users.search({
+        query: {
+          operator: "AND",
+          operands: [{ filter_name: "email_address", filter_value: [email.trim()] }],
+        },
+      });
+      if (searchResult.results_metadata.total === 0) {
+        await stytchClient.users.create({ email: email.trim() });
+      }
+    } catch (stytchError) {
+      console.error("Failed to create Stytch user:", stytchError);
+    }
+  })();
+
   // Handle optional image upload
   let imageBase64: string | undefined;
   let mimeType: string | undefined;
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
   const imageField = formData.get("image");
   if (imageField && imageField instanceof Blob && imageField.size > 0) {
+    if (imageField.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: "Image must be 10 MB or smaller" }, { status: 422 });
+    }
     const arrayBuffer = await imageField.arrayBuffer();
     imageBase64 = Buffer.from(arrayBuffer).toString("base64");
     mimeType = imageField.type || "image/jpeg";
   }
 
+  const stateField = formData.get("state");
+  const zipField = formData.get("zip");
+  const location =
+    stateField && zipField && typeof stateField === "string" && typeof zipField === "string"
+      ? { state: stateField.trim(), zip: zipField.trim() }
+      : undefined;
+
   try {
     // 1. Run the materials agent to produce line items with real 1Build prices
-    const estimateItems = await runMaterialsAgent(description.trim(), imageBase64, mimeType);
+    const estimateItems = await runMaterialsAgent(description.trim(), location, imageBase64, mimeType);
 
     // 2. Generate a short project name via gpt-4o-mini
     const nameResponse = await openai.chat.completions.create({
@@ -77,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Render the PDF
     const pdfBuffer = await renderBidPdf(bid, docSpec);
-    const filename = `bid-${projectName.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+    const filename = `bid-${safeFilename(projectName)}.pdf`;
 
     // 7. Email the PDF (non-fatal — log on failure but still return the download)
     try {
