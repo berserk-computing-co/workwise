@@ -31,7 +31,6 @@ export const MaterialForm = ({ onSubmit }: EstimateItemFormProps) => {
   };
 
   const createMaterialEstimateItem = (values: FieldValues) => {
-    console.log('Create Material estimate Item', values);
     onSubmit(values);
   }
 

@@ -80,7 +80,7 @@ export async function fetchSourceItems(variables: SourceQuery): Promise<SourceIt
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      '1build-api-key': '1build_ext.WroWxvAO.gQyzA4gIDOsLONpzJMfGzF6o7pnnN8YQ' // Replace with your actual API key
+      '1build-api-key': process.env.ONEBUILD_API_KEY!
     },
     body
   });
@@ -107,7 +107,7 @@ export enum Uom {
   CSY = 'CSY',
   BF = 'BF',
   CBF = 'CBF',
-  MBF = 'MB',
+  MBF = 'MBF',
   CF = 'CF',
   CCF = 'CCF',
   MCF = 'MCF',
@@ -187,7 +187,7 @@ export enum oneBuildUom {
   SET = 'Set',
   BAG = 'Bag',
   PR = 'Pair',
-  PA = 'Package',
+  PA = 'Pail',
   PL = 'Pallet',
   CWT = 'Hundred Weight',
   SHT = 'Sheet',

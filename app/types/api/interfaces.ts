@@ -154,9 +154,10 @@ export interface CustomUserResponse extends UserResponse {
 
 export interface Estimate {
   id?: number;
-  estimate_items: EstimateItem[];
-  expiration_date: string;
-  completion_date: string;
+  estimate_items?: EstimateItem[];
+  estimateItems?: EstimateItem[];
+  expiration_date?: string;
+  completion_date?: string;
 }
 
 export const isEstimate = (estimate: Partial<Estimate>): estimate is Estimate => {

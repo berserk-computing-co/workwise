@@ -1,4 +1,3 @@
-import { useLatestEstimate } from "@workwise/hooks/useLatestEstimate";
 import { type BidStatus } from "./api/bids";
 import {
   type Address,
@@ -30,10 +29,11 @@ export const toUpdateBidRequest = (
 
 const toEstimateAttributes = ({
   estimateItems,
+  estimate_items,
   ...otherAttributes
 }: Partial<Estimate>): Partial<EstimateAttributes> => ({
   ...otherAttributes,
-  estimateItemsAttributes: estimateItems ?? [],
+  estimateItemsAttributes: estimateItems ?? estimate_items ?? [],
 });
 
 export const toUpdateBidRequestNewEstimate = (
@@ -46,10 +46,11 @@ export const toUpdateBidRequestNewEstimate = (
 
 const toEstimateAttributesWithoutId = ({
   estimateItems,
+  estimate_items,
   ...otherAttributes
 }: Partial<Estimate>): Partial<Omit<EstimateAttributes, "id">> => ({
   ...otherAttributes,
-  estimateItemsAttributes: estimateItems ?? [],
+  estimateItemsAttributes: estimateItems ?? estimate_items ?? [],
 });
 
 export const toBid = (bidResponse: Partial<BidResponse>): Bid => {
@@ -65,17 +66,16 @@ export const toBid = (bidResponse: Partial<BidResponse>): Bid => {
     status,
     estimates,
   } = bidResponse;
-  const { totalCost } = useLatestEstimate({ estimates: estimates ?? [] });
   return {
     id: id ?? 0,
     description: description ?? "",
     name: name ?? "",
-    ...(latestEstimate ? { estimate: latestEstimate } : { estimate: {} }),
+    ...(latestEstimate ? { estimate: latestEstimate } : { estimate: {} as Partial<Estimate> }),
     ...(address && { address }),
     ...(client && { client }),
     ...(project && { project }),
     ...(status && { status }),
-    ...(estimatedCost && { estimated_cost: totalCost }),
+    ...(estimatedCost && { estimated_cost: estimatedCost }),
     ...(estimates && { estimates }),
   };
 };

@@ -16,13 +16,8 @@ export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
   const { bid, setBid } = useStepContext();
 
   const onSubmit = (values: FieldValues) => {
-    let currentEstimate = (bid?.estimates ?? [])[0];
-    if (!currentEstimate) {
-      currentEstimate = {
-        estimate_items: []
-      };
-    }
-    currentEstimate.estimate_items ??= [];
+    const currentEstimate = (bid?.estimates ?? [])[0] ?? { estimateItems: [] };
+    currentEstimate.estimateItems ??= [];
     const { item } = values;
     const estimateItem: EstimateItem = {
       name: item.name,
@@ -31,12 +26,12 @@ export const NewEstimateItemForm = ({ onClose }: NewEstimateItemFormProps) => {
       quantity: item.quantity,
       total_cost: item.totalCost,
       estimatableType: item.itemType,
-      estimatableId: 1
+      estimatableId: undefined as unknown as number,
     };
-    currentEstimate.estimate_items.push(estimateItem);
+    currentEstimate.estimateItems = [...currentEstimate.estimateItems, estimateItem];
     setBid({
       ...bid,
-      estimates: [...(bid?.estimates ?? []), currentEstimate],
+      estimates: [currentEstimate],
     });
     onClose();
   };

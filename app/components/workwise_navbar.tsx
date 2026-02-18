@@ -59,11 +59,11 @@ const NavbarProfile = () => {
 };
 
 export const WorkWiseNavbar = () => {
-  const homePage = global.window && window.location.pathname.split("").length <= 1;
+  const homePage = global.window && window.location.pathname.split("/").length <= 2;
   return (
     <SessionProvider>
       <Navbar fluid rounded>
-        <NavbarBrand as={Link} href="http://api.workwise.live">
+        <NavbarBrand as={Link} href="/">
           <img
             src="/workwise.png"
             className="mr-3 h-6 sm:h-9"

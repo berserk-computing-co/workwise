@@ -12,13 +12,15 @@ export const OneBuildTable = ({ material, chooseMaterial }: OneBuildTableProps) 
   const [nodes, setNodes] = useState<Array<SourceItem>>([]);
 
   useEffect(() => {
-    const fetchOneBuildData = async () => {
-      await fetch(`/api/onebuild?material=${material}`)
-        .then((res) => res.json())
-        .then(setNodes);
-    }
-    fetchOneBuildData();
-  }, []);
+    if (!material) return;
+    fetch(`/api/onebuild?material=${encodeURIComponent(material)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(setNodes)
+      .catch(() => setNodes([]));
+  }, [material]);
 
 
   const tableRows = nodes.map((node) => {
@@ -42,23 +44,23 @@ export const OneBuildTable = ({ material, chooseMaterial }: OneBuildTableProps) 
       }
 
       return (
-        <Table.Row onDoubleClick={() => chooseMaterial(costDetail)}>
+        <Table.Row key={node.id} onDoubleClick={() => chooseMaterial(costDetail)}>
           <Table.Cell>{node.name}</Table.Cell>
           <Table.Cell>
-            <Image
-              src={node.imagesUrls[0]}
-              width="100"
-              height="100"
-              alt="material image"
-            />
+            {node.imagesUrls?.[0] && (
+              <Image
+                src={node.imagesUrls[0]}
+                width={100}
+                height={100}
+                alt="material image"
+              />
+            )}
           </Table.Cell>
           <Table.Cell>{prices.pricePerItem}</Table.Cell>
           <Table.Cell>{uomToOneBuildUomMap[primaryUom]}</Table.Cell>
           <Table.Cell>{prices.laborCostPerItem}</Table.Cell>
           <Table.Cell>
-            <Checkbox onClick={() => {
-              console.log('Include labor in estimate');
-            }} />
+            <Checkbox />
           </Table.Cell>
         </Table.Row>
       )

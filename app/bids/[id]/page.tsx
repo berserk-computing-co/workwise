@@ -1,13 +1,9 @@
 'use client'
 import { Bid as BidType, EstimateItem } from "@/app/types";
 import { Button, Card, Spinner } from "flowbite-react";
-import { NextResponse } from "next/server";
 import { useEffect, useMemo, useState } from "react";
 
-export default function Bid({ params: { id } }: { params: { id: number } }) {
-  if (!id) {
-    return NextResponse.error();
-  }
+export default function Bid({ params: { id } }: { params: { id: string } }) {
   const [bid, setBid] = useState<BidType>();
   const [loading, setLoading] = useState(false);
   const [accepting, setAccepting] = useState(false);
@@ -15,12 +11,18 @@ export default function Bid({ params: { id } }: { params: { id: number } }) {
   useEffect(() => {
     setLoading(true);
     fetch(`/api/workwise/bids/${id}`)
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch bid");
+        return response.json();
+      })
       .then(({ bid }) => {
         setBid(bid);
-        setLoading(false);
-      });
-  }, []);
+      })
+      .catch(() => {
+        // TODO: show error state
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const onAccept = () => {
     setAccepting(true);
@@ -28,8 +30,7 @@ export default function Bid({ params: { id } }: { params: { id: number } }) {
   };
 
   const renderBidDetails = useMemo(() => {
-    const estimateItems = bid?.estimates[0].estimate_items ?? [];
-    console.log(estimateItems);
+    const estimateItems = bid?.estimates?.[0]?.estimate_items ?? [];
     return (bid && (
       <>
         <h1 className="text-slate-900">{bid?.name}</h1>
@@ -48,8 +49,8 @@ export default function Bid({ params: { id } }: { params: { id: number } }) {
               </tr>
             </thead>
             <tbody>
-              {estimateItems.map((item: EstimateItem) => (
-                <tr className="text-slate-700">
+              {estimateItems.map((item: EstimateItem, index: number) => (
+                <tr key={item.name ?? index} className="text-slate-700">
                   <td>{item.name}</td>
                   <td>{item.total_cost}</td>
                 </tr>

@@ -17,10 +17,8 @@ export const EstimateItemsForm = () => {
   const { handleSubmit } = useForm<EstimateItemsFormFields>();
   const { bid, setStep } = useStepContext();
 
-  const onSubmit = (values: FieldValues) => {
-    console.log('before submitting estimate items form', bid);
+  const onSubmit = (_values: FieldValues) => {
     setStep('timeline', bid ?? {});
-    console.log('after submitting estimate items form', bid);
   };
 
   const { projectCost, rows } = useEstimateItems(bid ?? {});

@@ -8,6 +8,6 @@ const stytch = createStytchUIClient(
   process.env.NEXT_PUBLIC_STYTCH_PUBLIC_TOKEN ?? ''
 );
 
-export const AuthProvider = ({ children }) => (
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => (
   <StytchProvider stytch={stytch}>{children}</StytchProvider>
 );

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Label, TextInput, Dropdown, Checkbox, Button, Radio } from 'flowbite-react';
 import { FieldValues, useForm, Controller } from 'react-hook-form';
-import { EstimateItem } from '@/app/types';
 import { EstimateItemFormProps } from './types';
 
 const laborCategories = [
@@ -16,7 +15,10 @@ const laborCategories = [
 
 interface LaborForm {
   labor: any;
-  item: EstimateItem;
+  item: {
+    name: string;
+    totalCost: number;
+  };
 }
 
 export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
@@ -60,13 +62,14 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
     }
   };
 
+  const laborValues = watch('labor');
   useEffect(() => {
     const totalCost = calculateTotalCost();
-    setValue('item.total_cost', totalCost);
-  }, [watch('labor')]);
+    setValue('item.totalCost', totalCost);
+  }, [laborValues?.quantity, laborValues?.hoursPerLaborer, laborValues?.ratePerHour, laborValues?.flatFee, laborValues?.flatRatePerLaborer, laborValues?.useFlatFee, laborValues?.rateType]);
 
   const createLaborForm = (values: FieldValues) => {
-    console.log('Create Labor Form', values);
+    onSubmit(values);
   };
 
   return (
@@ -122,7 +125,7 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
             {...register('labor.flatFee', {
               required: true,
               min: 0,
-              onChange: () => setValue('item.total_cost', calculateTotalCost())
+              onChange: () => setValue('item.totalCost', calculateTotalCost())
             })}
           />
         </div>
@@ -138,7 +141,7 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
               {...register('labor.quantity', {
                 required: 'Please input a number',
                 min: 1,
-                onChange: () => setValue('item.total_cost', calculateTotalCost())
+                onChange: () => setValue('item.totalCost', calculateTotalCost())
               })}
             />
           </div>
@@ -181,7 +184,7 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
                   {...register('labor.hoursPerLaborer', {
                     required: true,
                     min: 0,
-                    onChange: () => setValue('item.total_cost', calculateTotalCost())
+                    onChange: () => setValue('item.totalCost', calculateTotalCost())
                   })}
                 />
               </div>
@@ -195,7 +198,7 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
                   {...register('labor.ratePerHour', {
                     required: true,
                     min: 0,
-                    onChange: () => setValue('item.total_cost', calculateTotalCost())
+                    onChange: () => setValue('item.totalCost', calculateTotalCost())
                   })}
                 />
               </div>
@@ -211,7 +214,7 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
                 {...register('labor.flatRatePerLaborer', {
                   required: true,
                   min: 0,
-                  onChange: () => setValue('item.total_cost', calculateTotalCost())
+                  onChange: () => setValue('item.totalCost', calculateTotalCost())
                 })}
               />
             </div>
@@ -222,7 +225,7 @@ export const LaborForm = ({ onSubmit }: EstimateItemFormProps) => {
       <div>
         <Label value="Total Labor Cost" />
         <p className="text-sm text-gray-600">
-          ${watch('item.total_cost') || '0.00'}
+          ${watch('item.totalCost') || '0.00'}
         </p>
       </div>
 

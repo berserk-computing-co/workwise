@@ -7,12 +7,14 @@ import { EstimateItemsForm } from "./forms/estimate_items_form";
 import { Card } from "flowbite-react";
 import { Bid } from "@/app/types";
 import { TimelineForm } from "./forms/timeline_form";
+import { useRouter } from "next/navigation";
 
 type Step = "details" | "estimate-items" | "timeline";
 
 export default function CreateBid() {
   const [step, setStep] = useState<Step>("details");
   const [bid, setBid] = useState<Partial<Bid>>({});
+  const router = useRouter();
 
   const setStepWithBid = (step: Step, bid: Partial<Bid> = {}) => {
     setBid(bid);
@@ -32,7 +34,7 @@ export default function CreateBid() {
         >
           {step === "details" && <DetailsForm />}
           {step === "estimate-items" && <EstimateItemsForm />}
-          {step === "timeline" && <TimelineForm onComplete={() => window.location.href = '/bids'} />}
+          {step === "timeline" && <TimelineForm onComplete={() => router.push('/bids')} />}
         </CreateBidStepContext.Provider>
       </Card>
     </div>

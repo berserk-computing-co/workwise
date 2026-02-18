@@ -2,7 +2,7 @@ import { StytchLogin } from "@stytch/nextjs";
 import { Products } from "@stytch/vanilla-js";
 
 export const Login = () => {
-  const REDIRECT_URL = "http://localhost:4000/bids";
+  const REDIRECT_URL = `${process.env.NEXT_PUBLIC_PUBLIC_HOSTNAME ?? 'http://localhost:4000'}/bids`;
 
   const config = {
     products: [Products.emailMagicLinks, Products.oauth],

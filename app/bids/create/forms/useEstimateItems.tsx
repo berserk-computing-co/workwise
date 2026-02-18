@@ -8,17 +8,17 @@ export const useEstimateItems = (bid: Partial<Bid>) => {
     ? estimates[0].estimateItems : [];
 
   const projectCost = currentEstimateItems
-    .reduce((prev, current) => prev + current.totalCost, 0);
+    .reduce((prev, current) => prev + (current.total_cost ?? 0), 0);
 
   const rows = currentEstimateItems.map(
-    ({ name, totalCost }) => {
+    ({ name, total_cost }, index) => {
       return (
-        <Card>
+        <Card key={`${name}-${index}`}>
           <div className="flex flex-row space-x-3" >
             <div className="text-slate-800" >
               {name}
             </div>
-            <div className="text-green-300" > ${totalCost} </div>
+            <div className="text-green-300" > ${total_cost} </div>
           </div>
         </Card>
       );

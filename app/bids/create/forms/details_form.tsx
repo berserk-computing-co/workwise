@@ -25,7 +25,7 @@ export const DetailsForm = () => {
     register("bidDescription", { required: true });
     register("address", { required: true });
     register('streetSuffix');
-  });
+  }, [register]);
 
   const onSubmit = (values: FieldValues) => {
     setStep('estimate-items', {

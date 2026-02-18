@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 const MAGIC_LINKS_TOKEN = "magic_links";
 
 const bidCard = (bid: Bid) => {
-  const { completion_date, expiration_date } = bid.estimates[0];
+  const { completion_date, expiration_date } = bid.estimates?.[0] ?? {};
   return (
     <div className="grid grid-rows-4 grid-flow-col gap-4 w-full">
       <h5 className="flex items-center text-2xl font-bold tracking-tight row-span-3">
@@ -26,9 +26,6 @@ const bidCard = (bid: Bid) => {
       <div>
         <div>
           Estimated Revenue: ${bid.estimated_cost}
-        </div>
-        <div>
-          Expected Profit: {(bid.estimated_cost / bid.estimated_cost) * 100}%
         </div>
       </div>
       {
@@ -50,7 +47,7 @@ const bidCard = (bid: Bid) => {
 };
 
 export default function Bids() {
-  const [bids, setBids] = useState([]);
+  const [bids, setBids] = useState<Bid[]>([]);
   const [fetching, setFetching] = useState(false);
   const { user, isInitialized } = useStytchUser();
   const stytch = useStytch();
@@ -66,7 +63,6 @@ export default function Bids() {
           session_duration_minutes: 60,
         });
       }
-      window.location.href = '/bids';
     }
   }, [isInitialized, searchParams, stytch, user]);
 
@@ -83,11 +79,11 @@ export default function Bids() {
   return (
     <>
       <Card>
-        {fetching || !bids ?
+        {fetching ?
           <Spinner /> :
           <ListGroup>
             {bids.map((bid) => (
-              <ListGroup.Item>
+              <ListGroup.Item key={bid.id}>
                 {bidCard(bid)}
               </ListGroup.Item>
             ))}
