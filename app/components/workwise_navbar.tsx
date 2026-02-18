@@ -59,7 +59,6 @@ const NavbarProfile = () => {
 };
 
 export const WorkWiseNavbar = () => {
-  const homePage = global.window && window.location.pathname.split("/").length <= 2;
   return (
     <SessionProvider>
       <Navbar fluid rounded>
@@ -72,12 +71,6 @@ export const WorkWiseNavbar = () => {
         </NavbarBrand>
         <NavbarCollapse>
           <NavbarLink href="/">Home</NavbarLink>
-          {homePage && (
-            <NavbarLink as={Link} href="#">
-              About
-            </NavbarLink>
-          )}
-          <NavbarLink href="/bids">Bids</NavbarLink>
         </NavbarCollapse>
         <div className="flex md:order-2">
           <NavbarProfile />

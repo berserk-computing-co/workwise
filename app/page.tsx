@@ -20,6 +20,8 @@ const PROGRESS_STEPS = [
 function IdleView({
   description,
   onDescriptionChange,
+  email,
+  onEmailChange,
   imageFile,
   onImageChange,
   onSubmit,
@@ -27,6 +29,8 @@ function IdleView({
 }: {
   description: string;
   onDescriptionChange: (v: string) => void;
+  email: string;
+  onEmailChange: (v: string) => void;
   imageFile: File | null;
   onImageChange: (f: File | null) => void;
   onSubmit: () => void;
@@ -51,6 +55,17 @@ function IdleView({
           placeholder="e.g. Build a 500 sq ft cedar deck in the backyard with stairs and railing..."
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
+        />
+      </div>
+
+      <div className="w-full">
+        <input
+          type="email"
+          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="you@example.com"
+          aria-label="Your email"
+          value={email}
+          onChange={(e) => onEmailChange(e.target.value)}
         />
       </div>
 
@@ -80,7 +95,7 @@ function IdleView({
       <Button
         color="blue"
         onClick={onSubmit}
-        disabled={!description.trim()}
+        disabled={!description.trim() || !email.trim()}
         className="w-full"
       >
         Generate Bid
@@ -146,6 +161,7 @@ function DoneView({
 export default function Home() {
   const [pageState, setPageState] = useState<PageState>("idle");
   const [description, setDescription] = useState("");
+  const [email, setEmail] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -179,6 +195,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("description", description);
+      formData.append("email", email);
       if (imageFile) {
         formData.append("image", imageFile);
       }
@@ -217,6 +234,7 @@ export default function Home() {
       blobUrlRef.current = null;
     }
     setDescription("");
+    setEmail("");
     setImageFile(null);
     setError(null);
     setPageState("idle");
@@ -229,6 +247,8 @@ export default function Home() {
         <IdleView
           description={description}
           onDescriptionChange={setDescription}
+          email={email}
+          onEmailChange={setEmail}
           imageFile={imageFile}
           onImageChange={setImageFile}
           onSubmit={handleSubmit}

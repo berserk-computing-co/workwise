@@ -3,6 +3,7 @@ import { openai } from "@/app/lib/openai/client";
 import { runMaterialsAgent } from "@/app/lib/openai/materials_agent";
 import { generateBidDocumentSpec } from "@/app/lib/openai/bids";
 import { renderBidPdf } from "@/app/lib/pdf/bid_pdf";
+import { sendBidEmail } from "@/app/lib/email/resend";
 import { type Bid } from "@/app/types";
 
 // Allow up to 5 minutes for Vercel serverless functions
@@ -19,6 +20,14 @@ export async function POST(request: NextRequest) {
   const description = formData.get("description");
   if (!description || typeof description !== "string" || !description.trim()) {
     return NextResponse.json({ error: "description is required" }, { status: 422 });
+  }
+
+  const email = formData.get("email");
+  if (!email || typeof email !== "string" || !email.trim()) {
+    return NextResponse.json({ error: "email is required" }, { status: 422 });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return NextResponse.json({ error: "email is invalid" }, { status: 422 });
   }
 
   // Handle optional image upload
@@ -69,6 +78,13 @@ export async function POST(request: NextRequest) {
     // 6. Render the PDF
     const pdfBuffer = await renderBidPdf(bid, docSpec);
     const filename = `bid-${projectName.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+
+    // 7. Email the PDF (non-fatal — log on failure but still return the download)
+    try {
+      await sendBidEmail(email.trim(), projectName, pdfBuffer);
+    } catch (emailError) {
+      console.error("Failed to send bid email:", emailError);
+    }
 
     return new NextResponse(pdfBuffer, {
       status: 200,
