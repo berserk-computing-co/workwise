@@ -5,6 +5,7 @@ import React, { useCallback, useState } from "react";
 import {
   Avatar,
   Drawer,
+  Dropdown,
   Navbar,
   NavbarBrand,
   NavbarCollapse,
@@ -14,6 +15,7 @@ import {
 import { SessionProvider } from "next-auth/react";
 import Link from "next/link";
 import { useStytch, useStytchSession } from "@stytch/nextjs";
+import { ThemeToggle } from "./theme_toggle";
 
 const NavbarProfile = () => {
   const [open, setOpen] = useState(false);
@@ -52,9 +54,14 @@ const NavbarProfile = () => {
       </Drawer>
     </div>
   ) : (
-    <Link href="/login">
-      <button className="text-slate-700">Login</button>
-    </Link>
+    <Dropdown label="Login" inline>
+      <Dropdown.Item as={Link} href="/login?type=contractor">
+        Contractor Login
+      </Dropdown.Item>
+      <Dropdown.Item as={Link} href="/login?type=homeowner">
+        Homeowner Login
+      </Dropdown.Item>
+    </Dropdown>
   ));
 };
 
@@ -72,7 +79,14 @@ export const WorkWiseNavbar = () => {
         <NavbarCollapse>
           <NavbarLink href="/">Home</NavbarLink>
         </NavbarCollapse>
-        <div className="flex md:order-2">
+        <div className="flex items-center gap-2 md:order-2">
+          <Link
+            href="/join"
+            className="hidden sm:inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-slate-700 transition-colors"
+          >
+            Join as a contractor
+          </Link>
+          <ThemeToggle />
           <NavbarProfile />
           <Navbar.Toggle />
         </div>

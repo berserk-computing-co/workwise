@@ -25,7 +25,7 @@ export const EstimateItemsForm = () => {
 
   return (
     <>
-      <div className="text-green-600">
+      <div className="text-green-700 dark:text-green-400">
         Project Cost: ${projectCost}
       </div>
       {rows}

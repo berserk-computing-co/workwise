@@ -33,13 +33,13 @@ export default function Bid({ params: { id } }: { params: { id: string } }) {
     const estimateItems = bid?.estimates?.[0]?.estimate_items ?? [];
     return (bid && (
       <>
-        <h1 className="text-slate-900">{bid?.name}</h1>
-        <div className="text-slate-600">{bid.description}</div>
-        <div className="text-slate-700">AI Generated Content Goes here</div>
+        <h1 className="text-slate-900 dark:text-slate-100">{bid?.name}</h1>
+        <div className="text-slate-600 dark:text-slate-300">{bid.description}</div>
+        <div className="text-slate-700 dark:text-slate-200">AI Generated Content Goes here</div>
         {estimateItems && (
           <table className="table-fixed">
             <thead>
-              <tr className="text-slate-700">
+              <tr className="text-slate-700 dark:text-slate-200">
                 <th>
                   Estimate Item
                 </th>
@@ -50,16 +50,16 @@ export default function Bid({ params: { id } }: { params: { id: string } }) {
             </thead>
             <tbody>
               {estimateItems.map((item: EstimateItem, index: number) => (
-                <tr key={item.name ?? index} className="text-slate-700">
+                <tr key={item.name ?? index} className="text-slate-700 dark:text-slate-200">
                   <td>{item.name}</td>
-                  <td>{item.total_cost}</td>
+                  <td className="text-green-700 dark:text-green-400">{item.total_cost}</td>
                 </tr>
               ))}
-              <tr className="text-slate-700">
+              <tr className="text-slate-700 dark:text-slate-200">
                 <td>
                   Total
                 </td>
-                <td>
+                <td className="text-green-700 dark:text-green-400">
                   {bid.estimated_cost}
                 </td>
               </tr>
@@ -67,13 +67,13 @@ export default function Bid({ params: { id } }: { params: { id: string } }) {
           </table>
         )}
 
-        <div className="text-slate-500">By accepting this bid, I understand that the final amount billed may change. I also accept that there is a 10 year limited warranty on workmanship provided by the contractor.</div>
+        <div className="text-slate-600 dark:text-slate-400">By accepting this bid, I understand that the final amount billed may change. I also accept that there is a 10 year limited warranty on workmanship provided by the contractor.</div>
         <Button onClick={onAccept}>{accepting ? <Spinner /> : 'Accept Bid'}</Button>
       </>
     ))
   }, [bid, accepting]);
 
   return (
-    <Card>{loading ? <Spinner /> : renderBidDetails}</Card>
+    <Card className="dark:bg-slate-800">{loading ? <Spinner /> : renderBidDetails}</Card>
   );
 }

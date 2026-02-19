@@ -39,14 +39,13 @@ interface SearchResult {
   uom: string;
 }
 
-async function executSearchMaterials(args: {
-  searchTerm: string;
-  quantity: number;
-  unit: string;
-}): Promise<SearchResult> {
+async function executSearchMaterials(
+  args: { searchTerm: string; quantity: number; unit: string },
+  location?: { state: string; zip: string }
+): Promise<SearchResult> {
   const response = await fetchSourceItems({
-    state: "UT",
-    zipcode: "84111",
+    state: location?.state || "UT",
+    zipcode: location?.zip || "84111",
     searchTerm: args.searchTerm,
   });
 
@@ -78,14 +77,19 @@ async function executSearchMaterials(args: {
 
 export async function runMaterialsAgent(
   description: string,
+  location?: { state: string; zip: string },
   imageBase64?: string,
   mimeType?: string
 ): Promise<EstimateItem[]> {
+  const locationNote = location
+    ? `Prices should reflect the project location: ${location.state}${location.zip ? ` ${location.zip}` : ""}.`
+    : "";
+
   const systemMessage: OpenAI.Chat.ChatCompletionSystemMessageParam = {
     role: "system",
     content: `You are an expert construction estimator. Given a project description (and optionally a photo),
 produce a detailed line-item estimate by calling search_materials for EVERY distinct material and labor item needed.
-Be thorough — include materials, labor hours, equipment rental, and any other line items a professional estimator would include.
+Be thorough — include materials, labor hours, equipment rental, and any other line items a professional estimator would include.${locationNote ? `\n${locationNote}` : ""}
 After you have searched for all items, respond with a JSON array of estimate line items in this exact format (no markdown):
 [
   {
@@ -153,7 +157,7 @@ Do not include any other text outside the JSON array.`,
               quantity: number;
               unit: string;
             };
-            const result = await executSearchMaterials(args);
+            const result = await executSearchMaterials(args, location);
             resultContent = JSON.stringify(result);
           }
         } catch (err) {

@@ -58,7 +58,7 @@ export const TimelineForm = ({ onComplete }: TimelineFormProps) => {
         />
         <Label>Bid Expiration Date</Label>
       </div>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {error && <div className="text-red-700 dark:text-red-400 text-sm">{error}</div>}
       <Button type="submit" disabled={isLoading}>
         {isLoading ? "Generating PDF…" : "Create Bid"}
       </Button>

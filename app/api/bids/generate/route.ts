@@ -69,11 +69,10 @@ export async function POST(request: NextRequest) {
     mimeType = imageField.type || "image/jpeg";
   }
 
-  const stateField = formData.get("state");
   const zipField = formData.get("zip");
   const location =
-    stateField && zipField && typeof stateField === "string" && typeof zipField === "string"
-      ? { state: stateField.trim(), zip: zipField.trim() }
+    zipField && typeof zipField === "string" && zipField.trim()
+      ? { state: "", zip: zipField.trim() }
       : undefined;
 
   try {

@@ -78,7 +78,7 @@ export default function Bids() {
 
   return (
     <>
-      <Card>
+      <Card className="dark:bg-slate-800">
         {fetching ?
           <Spinner /> :
           <ListGroup>
