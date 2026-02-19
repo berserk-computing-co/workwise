@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-export interface JwtPayload {
+export interface Auth0JwtPayload {
   sub: string;
   email?: string;
   iat?: number;
@@ -13,8 +13,8 @@ export interface JwtPayload {
 }
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  private readonly logger = new Logger(JwtStrategy.name);
+export class Auth0JwtStrategy extends PassportStrategy(Strategy, 'auth0-jwt') {
+  private readonly logger = new Logger(Auth0JwtStrategy.name);
 
   constructor() {
     const domain = process.env.AUTH0_DOMAIN;
@@ -37,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
+  validate(payload: Auth0JwtPayload): Auth0JwtPayload {
     return payload;
   }
 }

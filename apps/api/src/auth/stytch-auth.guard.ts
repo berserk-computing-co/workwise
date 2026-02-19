@@ -8,7 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../common/decorators/public.decorator.js';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
+export class StytchAuthGuard extends AuthGuard('stytch-jwt') {
   constructor(private reflector: Reflector) {
     super();
   }
@@ -28,7 +28,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   override handleRequest<T>(err: Error | null, user: T): T {
     if (err || !user) {
-      throw new UnauthorizedException('Invalid or missing token');
+      throw new UnauthorizedException('Invalid or missing Stytch session token');
     }
 
     return user;

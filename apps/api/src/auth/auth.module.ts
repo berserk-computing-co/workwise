@@ -1,12 +1,19 @@
 import { Global, Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from './jwt.strategy.js';
-import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { Auth0JwtStrategy } from './auth0-jwt.strategy.js';
+import { Auth0AuthGuard } from './auth0-auth.guard.js';
+import { StytchJwtStrategy } from './stytch-jwt.strategy.js';
+import { StytchAuthGuard } from './stytch-auth.guard.js';
 
 @Global()
 @Module({
-  imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
-  providers: [JwtStrategy, JwtAuthGuard],
-  exports: [JwtAuthGuard],
+  imports: [PassportModule],
+  providers: [
+    Auth0JwtStrategy,
+    Auth0AuthGuard,
+    StytchJwtStrategy,
+    StytchAuthGuard,
+  ],
+  exports: [Auth0AuthGuard, StytchAuthGuard],
 })
 export class AuthModule {}
