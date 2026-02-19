@@ -23,7 +23,7 @@ export default function CreateBid() {
 
   return (
     <div className="flex justify-center">
-      <Card className="bg-blue-100 w-6/12 p-10 m-10">
+      <Card className="bg-blue-100 dark:bg-slate-800 w-6/12 p-10 m-10">
         <CreateBidStepContext.Provider
           value={{
             step,

@@ -24,6 +24,7 @@
     "react-dom": "^18",
     "react-google-places-autocomplete": "^4.1.0",
     "react-hook-form": "^7.51.5",
+    "resend": "^6.9.2",
     "stytch": "^11.4.2"
   },
   "devDependencies": {

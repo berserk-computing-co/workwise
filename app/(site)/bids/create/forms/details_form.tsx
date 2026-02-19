@@ -42,7 +42,7 @@ export const DetailsForm = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
-        <Label className="block text-gray-700 text-sm font-bold">
+        <Label className="block text-gray-700 dark:text-slate-200 text-sm font-bold">
           Bid Title
         </Label>
         <TextInput
