@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+.nx
+.git
+.gitignore
+*.md
+.vscode
+.idea
+coverage
+.env
+.env.*
+apps/*/.env
+apps/*/.env.local
