@@ -19,7 +19,7 @@ export const AddressAutocomplete = ({ setValue, defaultAddress }: AddressAutocom
     }
   }, [defaultAddress]);
 
-  const handleSelectAddress = async (place) => {
+  const handleSelectAddress = async (place: any) => {
     const geocode = await geocodeByPlaceId(place.value.place_id);
     const addressComponents = geocode[0]?.address_components;
     let streetNumber = '';

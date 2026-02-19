@@ -5,7 +5,7 @@ export interface CreateBidStep {
   bid?: Partial<Bid>;
   setBid: (bid: Partial<Bid>) => void;
   step: "details" | "estimate-items" | "timeline";
-  setStep: (step: string, bid: Partial<Bid>) => void;
+  setStep: (step: "details" | "estimate-items" | "timeline", bid?: Partial<Bid>) => void;
 }
 
 export const CreateBidStepContext = createContext<CreateBidStep>({

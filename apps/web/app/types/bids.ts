@@ -57,7 +57,6 @@ export const toBid = (bidResponse: Partial<BidResponse>): Bid => {
   const {
     id,
     name,
-    latestEstimate,
     estimatedCost,
     description,
     address,
@@ -66,17 +65,20 @@ export const toBid = (bidResponse: Partial<BidResponse>): Bid => {
     status,
     estimates,
   } = bidResponse;
+  const latestEst = (estimates ?? [])[(estimates ?? []).length - 1];
+  const totalCost = latestEst?.estimateItems?.reduce(
+    (acc: number, item: any) => acc + item.pricePerUnit * item.quantity, 0
+  ) ?? 0;
   return {
     id: id ?? 0,
     description: description ?? "",
     name: name ?? "",
-    ...(latestEstimate ? { estimate: latestEstimate } : { estimate: {} as Partial<Estimate> }),
-    ...(address && { address }),
-    ...(client && { client }),
-    ...(project && { project }),
-    ...(status && { status }),
-    ...(estimatedCost && { estimated_cost: estimatedCost }),
-    ...(estimates && { estimates }),
+    address: address ?? {},
+    client: client as Client | undefined,
+    project: project as Partial<Project> ?? {},
+    status: status ?? "draft",
+    estimated_cost: estimatedCost ?? totalCost,
+    estimates: estimates ?? [],
   };
 };
 

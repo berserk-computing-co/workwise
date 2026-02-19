@@ -1,4 +1,21 @@
-.next
 node_modules
-node_modules/**/*
-node_modules/*
+dist
+.next
+
+# Nx
+.nx/cache
+.nx/workspace-data
+
+# Environment (secrets)
+.env.local
+apps/*/.env.local
+apps/*/.env
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store

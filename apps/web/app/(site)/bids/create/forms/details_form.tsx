@@ -5,7 +5,7 @@ import { Button, FileInput, Label, Textarea, TextInput } from "flowbite-react";
 import { useStepContext } from "./create_bid_step_context";
 import { FieldValues, useForm } from "react-hook-form";
 import { useNewBidContext } from "./new_bid_context";
-import {AddressAutocomplete} from "@/app/bids/create/forms/address_autocomplete_form";
+import {AddressAutocomplete} from "@/app/(site)/bids/create/forms/address_autocomplete_form";
 import {Address} from "@/app/types";
 
 interface DetailsFormFields {

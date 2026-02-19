@@ -1,7 +1,7 @@
 "use client";
 import { Card, ListGroup, Spinner } from "flowbite-react";
-import { useEffect, useState } from "react";
-import { Bid } from "../types";
+import { Suspense, useEffect, useState } from "react";
+import { Bid } from "@/app/types";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/16/solid";
 import { useStytch, useStytchUser } from "@stytch/nextjs";
 import { useSearchParams } from "next/navigation";
@@ -46,7 +46,7 @@ const bidCard = (bid: Bid) => {
   );
 };
 
-export default function Bids() {
+function BidsContent() {
   const [bids, setBids] = useState<Bid[]>([]);
   const [fetching, setFetching] = useState(false);
   const { user, isInitialized } = useStytchUser();
@@ -97,5 +97,13 @@ export default function Bids() {
         </a>
       </Card >
     </>
+  );
+}
+
+export default function Bids() {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <BidsContent />
+    </Suspense>
   );
 }
