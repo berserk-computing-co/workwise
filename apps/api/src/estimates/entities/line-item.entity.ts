@@ -69,6 +69,9 @@ export class LineItem {
   @Column({ type: 'boolean', default: false, name: 'is_optional' })
   isOptional: boolean;
 
+  @Column({ type: 'boolean', default: false, name: 'contractor_modified' })
+  contractorModified: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

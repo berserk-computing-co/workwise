@@ -4,6 +4,7 @@ import { Estimate } from './entities/estimate.entity.js';
 import { EstimateSection } from './entities/estimate-section.entity.js';
 import { LineItem } from './entities/line-item.entity.js';
 import { EstimateOption } from './entities/estimate-option.entity.js';
+import { LineItemEdit } from './entities/line-item-edit.entity.js';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { EstimateOption } from './entities/estimate-option.entity.js';
       EstimateSection,
       LineItem,
       EstimateOption,
+      LineItemEdit,
     ]),
   ],
   exports: [TypeOrmModule],

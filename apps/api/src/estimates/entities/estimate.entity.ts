@@ -40,8 +40,8 @@ export class Estimate {
   @Column({ type: 'text', nullable: true, name: 'customer_phone' })
   customerPhone: string | null;
 
-  @Column({ type: 'text', nullable: true, name: 'customer_address' })
-  customerAddress: string | null;
+  @Column({ type: 'text', name: 'job_site_address' })
+  jobSiteAddress: string;
 
   // Project input
   @Column({ type: 'text', name: 'project_description' })
@@ -50,26 +50,44 @@ export class Estimate {
   @Column({ type: 'text', nullable: true, name: 'project_type' })
   projectType: string | null;
 
+  @Column({ type: 'text', default: 'plumbing', name: 'trade_category' })
+  tradeCategory: string;
+
+  @Column({ type: 'text', nullable: true, name: 'property_type' })
+  propertyType: string | null;
+
   @Column({ type: 'text', name: 'zip_code' })
   zipCode: string;
 
+  @Column({ type: 'text', nullable: true })
+  city: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  state: string | null;
+
   // Totals
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
-  subtotal: number;
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'material_subtotal' })
+  materialSubtotal: number;
+
+  @Column({ type: 'decimal', precision: 8, scale: 2, default: 0, name: 'labor_hours' })
+  laborHours: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'labor_subtotal' })
+  laborSubtotal: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'overhead_amount' })
+  overheadAmount: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'profit_amount' })
+  profitAmount: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'tax_amount' })
+  taxAmount: number;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   total: number;
 
-  // Per-estimate rates (markup copied from company default, tax based on ZIP)
-  @Column({
-    type: 'decimal',
-    precision: 4,
-    scale: 2,
-    nullable: true,
-    name: 'markup_percentage',
-  })
-  markupPercentage: number | null;
-
+  // Per-estimate rates (tax based on ZIP)
   @Column({
     type: 'decimal',
     precision: 4,
@@ -78,6 +96,25 @@ export class Estimate {
     name: 'tax_rate',
   })
   taxRate: number | null;
+
+  // Property enrichment
+  @Column({ type: 'int', nullable: true, name: 'property_year_built' })
+  propertyYearBuilt: number | null;
+
+  @Column({ type: 'int', nullable: true, name: 'property_sqft' })
+  propertySqft: number | null;
+
+  @Column({ type: 'int', nullable: true, name: 'property_bedrooms' })
+  propertyBedrooms: number | null;
+
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true, name: 'property_bathrooms' })
+  propertyBathrooms: number | null;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true, name: 'property_valuation' })
+  propertyValuation: number | null;
+
+  @Column({ type: 'jsonb', nullable: true, name: 'property_data_json' })
+  propertyDataJson: Record<string, unknown> | null;
 
   // Notes
   @Column({ type: 'text', nullable: true, name: 'internal_notes' })

@@ -26,6 +26,9 @@ export class EstimateSection {
   @Column({ type: 'int', default: 0, name: 'sort_order' })
   sortOrder: number;
 
+  @Column({ type: 'decimal', precision: 8, scale: 2, default: 0, name: 'labor_hours' })
+  laborHours: number;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   subtotal: number;
 
