@@ -127,6 +127,9 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": String(pdfBuffer.length),
+        "x-bid-name": projectName,
+        "x-bid-total": estimatedCost.toFixed(2),
+        "x-bid-item-count": String(estimateItems.length),
       },
     });
   } catch (error) {

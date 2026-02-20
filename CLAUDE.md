@@ -2,68 +2,136 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Structure
+
+This is an **Nx monorepo** with two applications:
+
+```
+workwise_bff/
+├── apps/
+│   ├── web/    # Next.js 14 BFF frontend (port 4000)
+│   └── api/    # NestJS API (port 3000)
+├── package.json
+├── nx.json
+└── tsconfig.base.json
+```
+
 ## Commands
 
 ```bash
-npm run dev      # Start dev server on http://localhost:4000
-npm run build    # Production build
-npm run lint     # Run ESLint
+# Development
+npm run dev:web      # Start Next.js frontend on http://localhost:4000
+npm run dev:api      # Start NestJS API on http://localhost:3000
+
+# Build
+npm run build        # Build both apps
+npm run build:web    # Build Next.js only
+npm run build:api    # Build NestJS only
+
+# Lint & Test
+npm run lint         # Lint both apps
+npm run test         # Test both apps
+
+# TypeORM Migrations (run from repo root)
+nx run api:migration:run                         # Apply pending migrations
+nx run api:migration:revert                      # Revert last migration
+nx run api:migration:generate --args="--name=MigrationName"  # Generate migration
 ```
-
-There is no test runner configured. The app runs on port **4000** (not the Next.js default of 3000).
-
-The Workwise Rails API backend is expected at `http://localhost:5000` (set via `WORKWISE_URL`).
 
 ## Architecture
 
-This is a **Next.js 14 BFF (Backend-for-Frontend)** for a construction bidding platform. It uses the App Router and acts as the UI layer and API proxy in front of a Rails backend.
-
 ```
-Browser → Next.js BFF (port 4000)
-             ├── /api/workwise/*    → Rails API (port 5000)
+Browser → Next.js BFF (apps/web, port 4000)
+             ├── /api/bids/*        → AI-powered bid operations
+             ├── /api/contractors/* → Proxies to Rails API (port 5000)
              └── /api/onebuild/*   → 1Build GraphQL (material pricing)
+                      ↓
+         NestJS API (apps/api, port 3000)
+             ├── PostgreSQL via TypeORM
+             └── Stytch JWT auth (global guard)
 ```
 
-### Authentication
+## apps/web (Next.js 14 BFF)
 
-Currently mid-migration from **Auth0 + NextAuth** → **Stytch**. The `stytch` branch is the active development branch. The app is wrapped in `StytchProvider` via `app/auth_provider.tsx`. Legacy NextAuth config remains at `app/api/auth/[...nextauth]/`.
+### Route Groups
 
-- `app/lib/auth/utills.ts` — `getAccessToken()` retrieves the session token for proxying requests to the Rails backend
-- Environment vars needed: `STYTCH_PROJECT_ID`, `STYTCH_PUBLIC_TOKEN`, `NEXT_PUBLIC_STYTCH_PUBLIC_TOKEN`, `STYTCH_SECRET`
+- **`app/(site)/`** — Pages with shared navbar/footer: home (`BidGenerator`), bid list, bid detail, bid create (multi-step), login, join.
+- **`app/widget/`** — Embeddable iframe bid generator. CSP is `frame-ancestors *`.
+- **`app/api/`** — API routes.
 
-### API Proxy Layer (`app/api/workwise/`)
+### AI Bid Generation Pipeline (`/api/bids/generate`)
 
-All requests to the Rails backend go through Next.js API routes. `app/lib/workwise_api/utils.ts` contains `workwiseFetch()` — the central utility that adds auth headers and converts camelCase → snake_case (via `decamelize-keys`) before forwarding to the backend.
+Core feature with `maxDuration = 300` (Vercel). Single `POST` triggers:
 
-### Multi-step Bid Creation (`app/bids/create/`)
+1. **Materials agent** (`app/lib/openai/materials_agent.ts`) — `gpt-4o` tool-calling loop (up to 15 iterations) querying 1Build GraphQL for real material prices.
+2. **Project name** — `gpt-4o-mini` generates a short name.
+3. **Document spec** (`app/lib/openai/bids.ts:generateBidDocumentSpec`) — `gpt-4` returns structured JSON for PDF sections.
+4. **PDF rendering** (`app/lib/pdf/bid_pdf.tsx`) — `@react-pdf/renderer` renders to a buffer.
+5. **Email delivery** (`app/lib/email/resend.ts`) — Resend sends the PDF; non-fatal on failure.
+6. **Stytch user creation** — Fire-and-forget, non-blocking.
 
-State is shared across form steps using React Context (`CreateBidStepContext`). Steps: DetailsForm → EstimateItemsForm → TimelineForm. Each step reads/writes to context; the final step submits to `POST /api/workwise/bids`.
+### Other API Routes
 
-### 1Build Integration (`app/api/onebuild/`)
+- `POST /api/bids/analyze` — GPT-4 price anomaly detection.
+- `POST /api/bids/email` — GPT-4 client-facing email draft.
+- `POST /api/bids/pdf` — PDF generation for existing bid.
+- `POST /api/contractors/apply` — Validates then proxies to Rails `POST /contractors`.
+- `GET /api/onebuild/` — 1Build GraphQL proxy (`?material=` query param).
 
-GraphQL client for construction material pricing. Contains extensive UOM (unit of measure) enums with bidirectional mapping between Workwise and 1Build naming conventions.
+### Authentication (web)
+
+**Stytch** is the auth provider. `app/lib/auth/stytch_client.ts` exports the server-side client. Legacy NextAuth config at `app/api/auth/[...nextauth]/` is still required.
+
+Public routes (bid generator at `/`, `/widget`) require no auth. Protected `/(site)/` pages use Stytch session tokens when proxying to Rails.
 
 ### Type System (`app/types/`)
 
-Domain types are defined here with converter functions (e.g., `toBidRequest()`, `toBid()`) that translate between API snake_case and frontend camelCase representations.
+- `api/interfaces.ts` — API request/response contracts (`BidRequest`, `EstimateAttributes`, etc.)
+- `bids.ts` — Frontend `Bid` interface + converter functions (`toBidRequest()`, `toBid()`, `toUpdateBidRequest()`)
+- Type guards: `isBid()`, `isClient()`, `isAddress()`, `isUserType()`
+- All API responses are snake_case; frontend uses camelCase. `decamelize-keys` converts requests to snake_case for Rails.
+
+### 1Build Integration
+
+`app/api/onebuild/one_build_client.ts` — GraphQL client with full `Uom` enum and `uomToOneBuildUomMap` bidirectional mapping. Prices returned in USD cents, converted to dollars before use.
+
+## apps/api (NestJS)
+
+### Architecture
+
+- **Auth**: `StytchAuthGuard` applied globally via `APP_GUARD`. Use `@Public()` decorator to opt routes out. Two JWT strategies: `StytchJwtStrategy` (primary) and `Auth0JwtStrategy` (legacy). Both use JWKS-RSA for key rotation.
+- **Database**: TypeORM with PostgreSQL. Config in `src/config/database.config.ts` (shared by app and TypeORM CLI). Reads `.env.local` then `.env`. Migrations run automatically on startup.
+- **Current modules**: `AuthModule`, `UsersModule`, `EstimatesModule`. Entities are defined but controllers are minimal — this API is still being built out.
+- **User injection**: `@CurrentUser()` decorator injects the JWT payload (`Auth0JwtPayload | StytchJwtPayload`).
+
+### Environment Variables (api)
+
+```
+PORT=3000
+CORS_ORIGIN=http://localhost:4000
+DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD
+STYTCH_PROJECT_ID / STYTCH_PROJECT_ENV / STYTCH_SECRET
+```
 
 ## Key Libraries
 
 | Library | Purpose |
 |---------|---------|
-| `flowbite-react` | UI component library (Button, Card, Modal, etc.) |
+| `openai` | GPT-4/GPT-4o for bid generation, analysis, email drafting |
+| `@react-pdf/renderer` | Server-side PDF rendering |
+| `resend` | Transactional email delivery |
+| `@stytch/nextjs` + `stytch` | Authentication |
+| `typeorm` + `pg` | ORM + PostgreSQL (NestJS API) |
+| `flowbite-react` | UI component library |
 | `react-hook-form` | Form state management |
-| `react-google-places-autocomplete` | Address input with Google Maps |
-| `@heroicons/react` | Icons |
-| `neo4j-driver` | Graph DB client (used via Rails backend) |
-| `decamelize-keys` | camelCase → snake_case conversion for API requests |
+| `decamelize-keys` | camelCase → snake_case for Rails API requests |
 
-## Environment Variables
+## Environment Variables (web)
 
-Copy `.env.local` from a team member. Key vars:
-
+- `OPENAI_API_KEY`
+- `ONEBUILD_API_KEY`
+- `RESEND_API_KEY`
+- `STYTCH_PROJECT_ID`, `STYTCH_SECRET`, `NEXT_PUBLIC_STYTCH_PUBLIC_TOKEN`
 - `WORKWISE_URL` — Rails backend URL (default: `http://localhost:5000`)
-- `NEXT_PUBLIC_STYTCH_PUBLIC_TOKEN` — Stytch public token (safe for client)
-- `STYTCH_SECRET` — Stytch server-side secret
-- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` — Google Places autocomplete
-- `NEXTAUTH_SECRET` — Legacy; still required while NextAuth is present
+- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+- `NEXTAUTH_SECRET` — Legacy; still required
