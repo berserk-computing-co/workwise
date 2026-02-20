@@ -21,12 +21,12 @@ export class AlignSchemaWithPlan1771576300000 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "estimates" ADD "property_type" text`);
         await queryRunner.query(`ALTER TABLE "estimates" ADD "city" text`);
         await queryRunner.query(`ALTER TABLE "estimates" ADD "state" text`);
-        await queryRunner.query(`ALTER TABLE "estimates" ADD "material_subtotal" numeric(12,2) DEFAULT '0'`);
-        await queryRunner.query(`ALTER TABLE "estimates" ADD "labor_hours" numeric(8,2) DEFAULT '0'`);
-        await queryRunner.query(`ALTER TABLE "estimates" ADD "labor_subtotal" numeric(12,2) DEFAULT '0'`);
-        await queryRunner.query(`ALTER TABLE "estimates" ADD "overhead_amount" numeric(12,2) DEFAULT '0'`);
-        await queryRunner.query(`ALTER TABLE "estimates" ADD "profit_amount" numeric(12,2) DEFAULT '0'`);
-        await queryRunner.query(`ALTER TABLE "estimates" ADD "tax_amount" numeric(12,2) DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimates" ADD "material_subtotal" numeric(12,2) NOT NULL DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimates" ADD "labor_hours" numeric(8,2) NOT NULL DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimates" ADD "labor_subtotal" numeric(12,2) NOT NULL DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimates" ADD "overhead_amount" numeric(12,2) NOT NULL DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimates" ADD "profit_amount" numeric(12,2) NOT NULL DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimates" ADD "tax_amount" numeric(12,2) NOT NULL DEFAULT '0'`);
         await queryRunner.query(`ALTER TABLE "estimates" ADD "property_year_built" integer`);
         await queryRunner.query(`ALTER TABLE "estimates" ADD "property_sqft" integer`);
         await queryRunner.query(`ALTER TABLE "estimates" ADD "property_bedrooms" integer`);
@@ -35,10 +35,10 @@ export class AlignSchemaWithPlan1771576300000 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "estimates" ADD "property_data_json" jsonb`);
 
         // estimate_sections table changes
-        await queryRunner.query(`ALTER TABLE "estimate_sections" ADD "labor_hours" numeric(8,2) DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "estimate_sections" ADD "labor_hours" numeric(8,2) NOT NULL DEFAULT '0'`);
 
         // line_items table changes
-        await queryRunner.query(`ALTER TABLE "line_items" ADD "contractor_modified" boolean DEFAULT false`);
+        await queryRunner.query(`ALTER TABLE "line_items" ADD "contractor_modified" boolean NOT NULL DEFAULT false`);
 
         // Create line_item_edits table
         await queryRunner.query(`CREATE TABLE "line_item_edits" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "estimate_id" uuid NOT NULL, "line_item_id" uuid, "user_id" uuid NOT NULL, "edit_type" text NOT NULL, "previous_value" jsonb, "new_value" jsonb, "section_name" text, "project_type" text, "zip_code" text, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_line_item_edits" PRIMARY KEY ("id"))`);

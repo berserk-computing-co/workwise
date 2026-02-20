@@ -29,7 +29,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         error = (resp.error as string) ?? HttpStatus[statusCode] ?? 'Error';
 
         // Handle class-validator validation errors
-        if (Array.isArray(resp.message)) {
+        if (Array.isArray(resp.message) && statusCode === HttpStatus.BAD_REQUEST) {
           // Transform ValidationPipe errors into field-level format
           const validationMessages = resp.message as string[];
           // class-validator returns messages like "firstName must be a string"

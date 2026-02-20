@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsDefined,
   IsEmail,
   IsNotEmpty,
   IsNumber,
@@ -61,10 +62,12 @@ export class AuthSetupCompanyDto {
 }
 
 export class AuthSetupDto {
+  @IsDefined()
   @ValidateNested()
   @Type(() => AuthSetupUserDto)
   user: AuthSetupUserDto;
 
+  @IsDefined()
   @ValidateNested()
   @Type(() => AuthSetupCompanyDto)
   company: AuthSetupCompanyDto;

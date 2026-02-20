@@ -24,6 +24,7 @@ import { typeOrmConfigFactory } from './config/database.config.js';
     EstimatesModule,
   ],
   providers: [
+    StytchAuthGuard,
     {
       provide: APP_GUARD,
       useExisting: StytchAuthGuard,
