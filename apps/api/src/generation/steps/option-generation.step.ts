@@ -13,8 +13,8 @@ const optionGenerationSchema = z.object({
     description: z.string(),
     total: z.number(),
     is_recommended: z.boolean(),
-    overrides: z.record(z.unknown()).default({}),
-  })).length(3),
+    overrides: z.record(z.string(), z.unknown()).default({}),
+  })).min(3).max(3),
 });
 
 @Injectable()
