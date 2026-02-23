@@ -70,7 +70,7 @@ export class CalculationStep implements PipelineStep<GenerationContext> {
       }
 
       await manager.update(Project, context.projectId, {
-        status: 'generating',
+        status: 'generated',
         total: Math.round(total * 100) / 100,
       });
     });

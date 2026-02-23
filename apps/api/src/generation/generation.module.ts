@@ -3,7 +3,6 @@ import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GenerationController } from './generation.controller.js';
 import { GenerationProcessor } from './generation.processor.js';
-import { JobProgressService } from '../pipeline/job-progress.service.js';
 import { ScopeDecompositionStep } from './steps/scope-decomposition.step.js';
 import { PriceResolutionStep } from './steps/price-resolution.step.js';
 import { OptionGenerationStep } from './steps/option-generation.step.js';
@@ -31,6 +30,6 @@ import { UsersModule } from '../users/users.module.js';
     OptionGenerationStep,
     CalculationStep,
   ],
-  exports: [BullModule, JobProgressService],
+  exports: [BullModule, PipelineModule],
 })
 export class GenerationModule {}
