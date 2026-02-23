@@ -6,11 +6,13 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module.js';
 import { StytchAuthGuard } from './auth/stytch-auth.guard.js';
 import { UsersModule } from './users/users.module.js';
-import { EstimatesModule } from './estimates/estimates.module.js';
+import { ProjectsModule } from './projects/projects.module.js';
 import { GenerationModule } from './generation/generation.module.js';
-import { OneBuildModule } from './onebuild/onebuild.module.js';
+import { OneBuildModule } from './datasources/onebuild/onebuild.module.js';
 import { AiModule } from './ai/ai.module.js';
+import { PipelineModule } from './pipeline/pipeline.module.js';
 import { typeOrmConfigFactory } from './config/database.config.js';
+import { Auth0AuthGuard } from './auth/auth0-auth.guard.js';
 
 @Module({
   imports: [
@@ -35,16 +37,17 @@ import { typeOrmConfigFactory } from './config/database.config.js';
     }),
     AuthModule,
     UsersModule,
-    EstimatesModule,
+    ProjectsModule,
     GenerationModule,
     OneBuildModule,
     AiModule,
+    PipelineModule,
   ],
   providers: [
-    StytchAuthGuard,
+    Auth0AuthGuard,
     {
       provide: APP_GUARD,
-      useExisting: StytchAuthGuard,
+      useExisting: Auth0AuthGuard,
     },
   ],
 })

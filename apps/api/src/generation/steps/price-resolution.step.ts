@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PipelineStep } from '../../common/pipeline/pipeline-step.interface.js';
-import { OneBuildService } from '../../onebuild/onebuild.service.js';
-import type { GenerationContext, PricedLineItem } from '../generation-context.js';
+import { PipelineStep } from '../../pipeline/pipeline-step.interface.js';
+import { OneBuildService } from '../../datasources/onebuild/onebuild.service.js';
+import type { GenerationContext, PricedItem } from '../generation-context.js';
 
 @Injectable()
 export class PriceResolutionStep implements PipelineStep<GenerationContext> {
@@ -30,10 +30,11 @@ export class PriceResolutionStep implements PipelineStep<GenerationContext> {
           quantity: item.quantity,
           unit: item.unit,
           unitCost: match.unit_cost!,
-          source: 'onebuild' as const,
-          onebuildSourceId: match.onebuild_id,
-          onebuildMatchScore: match.match_score,
-          flagged: false,
+          source: 'ai_priced' as const,
+          sourceData: {
+            onebuildId: match.onebuild_id,
+            matchScore: match.match_score,
+          },
           sectionName: item.sectionName,
         };
       }
@@ -42,11 +43,10 @@ export class PriceResolutionStep implements PipelineStep<GenerationContext> {
         quantity: item.quantity,
         unit: item.unit,
         unitCost: item.unitCost,
-        source: 'ai_generated' as const,
-        flagged: true,
-        flagReason: 'No 1Build match — verify price',
+        source: 'ai_unmatched' as const,
+        sourceData: {},
         sectionName: item.sectionName,
       };
-    }) satisfies PricedLineItem[];
+    }) satisfies PricedItem[];
   }
 }
