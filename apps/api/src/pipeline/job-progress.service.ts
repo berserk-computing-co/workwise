@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { ReplaySubject, Observable } from 'rxjs';
+import { Injectable } from "@nestjs/common";
+import { ReplaySubject, Observable } from "rxjs";
 
 export interface ProgressEvent {
   step: string;
-  status: 'running' | 'complete' | 'error';
+  status: "running" | "complete" | "error";
   message: string;
-  estimateId?: string;
+  projectId?: string;
   total?: number;
 }
 

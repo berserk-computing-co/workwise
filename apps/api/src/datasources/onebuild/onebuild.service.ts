@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { mapUnitToOneBuildUom, zipToState } from './uom-mapping.js';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { mapUnitToOneBuildUom, zipToState } from "./uom-mapping.js";
 
 const QUERY = `
   query sources($input: SourceSearchInput!) {
@@ -21,7 +21,9 @@ const QUERY = `
     }
   }
 }
-`.replace(/\s+/g, ' ').trim();
+`
+  .replace(/\s+/g, " ")
+  .trim();
 
 export interface SourceItemFields {
   uom: string;
@@ -53,11 +55,18 @@ export class OneBuildService {
   private readonly endpoint: string;
 
   constructor(private readonly config: ConfigService) {
-    this.apiKey = this.config.getOrThrow<string>('ONEBUILD_API_KEY');
-    this.endpoint = this.config.get<string>('ONEBUILD_ENDPOINT', 'https://gateway-external.1build.com/');
+    this.apiKey = this.config.getOrThrow<string>("ONEBUILD_API_KEY");
+    this.endpoint = this.config.get<string>(
+      "ONEBUILD_ENDPOINT",
+      "https://gateway-external.1build.com/",
+    );
   }
 
-  async fetchSourceItems(searchTerm: string, zipCode: string, uom?: string): Promise<SourceItem[]> {
+  async fetchSourceItems(
+    searchTerm: string,
+    zipCode: string,
+    uom?: string,
+  ): Promise<SourceItem[]> {
     const state = zipToState(zipCode);
     const variables = {
       input: {
@@ -65,17 +74,17 @@ export class OneBuildService {
         zipcode: zipCode,
         searchTerm,
         page: { limit: 6 },
-        sortBy: { type: 'MATCH_SCORE' },
+        sortBy: { type: "MATCH_SCORE" },
       },
     };
 
     let response: Response;
     try {
       response = await fetch(this.endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          '1build-api-key': this.apiKey,
+          "Content-Type": "application/json",
+          "1build-api-key": this.apiKey,
         },
         body: JSON.stringify({ query: QUERY, variables }),
       });
@@ -89,7 +98,7 @@ export class OneBuildService {
 
     let json: { data?: { sources?: { nodes?: SourceItem[] } } };
     try {
-      json = await response.json() as typeof json;
+      json = (await response.json()) as typeof json;
     } catch {
       return [];
     }
@@ -105,7 +114,11 @@ export class OneBuildService {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const nodes = await this.fetchSourceItems(item.description, zipCode, item.unit);
+      const nodes = await this.fetchSourceItems(
+        item.description,
+        zipCode,
+        item.unit,
+      );
 
       if (nodes.length === 0) {
         results.push({ index: i, matched: false });
@@ -117,7 +130,7 @@ export class OneBuildService {
 
       let matchedUomField: SourceItemFields | undefined;
       if (targetUom) {
-        matchedUomField = topNode.knownUoms.find(k => k.uom === targetUom);
+        matchedUomField = topNode.knownUoms.find((k) => k.uom === targetUom);
       }
       if (!matchedUomField) {
         matchedUomField = topNode.knownUoms[0];
