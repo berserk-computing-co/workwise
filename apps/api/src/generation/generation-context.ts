@@ -1,69 +1,49 @@
-export interface CompanyRates {
-  hourlyRate: number;
-  burdenMultiplier: number;
-  overheadMultiplier: number;
-  profitMargin: number;
-  taxRate: number;
-}
-
 export interface ScopeItem {
   description: string;
   quantity: number;
   unit: string;
   unitCost: number;
+  category: 'material' | 'labor' | 'equipment' | 'permit' | 'other';
 }
 
 export interface ScopeSection {
   name: string;
-  laborHours: number;
   items: ScopeItem[];
 }
 
-export interface PricedLineItem {
+export interface PricedItem {
   description: string;
   quantity: number;
   unit: string;
   unitCost: number;
-  source: 'onebuild' | 'ai_generated' | 'manual';
-  onebuildSourceId?: string;
-  onebuildMatchScore?: number;
-  flagged: boolean;
-  flagReason?: string;
+  source: 'ai_decomposition' | 'ai_priced' | 'ai_unmatched' | 'manual' | 'template';
+  sourceData?: Record<string, unknown>;
   sectionName: string;
 }
 
-export interface EstimateOptionData {
+export interface OptionData {
   tier: 'good' | 'better' | 'best';
   label: string;
   description: string;
   total: number;
   isRecommended: boolean;
-  tierDetails: { change: string; costDelta: number }[];
+  overrides: Record<string, unknown>;
 }
 
-export interface EstimateTotals {
-  materialSubtotal: number;
-  laborHours: number;
-  laborSubtotal: number;
-  overheadAmount: number;
-  profitAmount: number;
-  taxAmount: number;
+export interface ProjectTotals {
   total: number;
 }
 
 export interface GenerationContext {
-  estimateId: string;
-  projectDescription: string;
-  jobSiteAddress: string;
+  projectId: string;
+  description: string;
+  address: string;
   zipCode: string;
-  tradeCategory: string;
-  propertyType: string | null;
-  companyRates: CompanyRates;
+  category: string;
 
   // Populated by pipeline steps
-  projectType?: string;
   sections?: ScopeSection[];
-  pricedItems?: PricedLineItem[];
-  options?: EstimateOptionData[];
-  totals?: EstimateTotals;
+  pricedItems?: PricedItem[];
+  options?: OptionData[];
+  totals?: ProjectTotals;
 }

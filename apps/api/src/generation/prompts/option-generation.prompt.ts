@@ -4,15 +4,15 @@ export const optionGenerationPrompt = `You are an expert construction cost estim
 
 Guidelines for each tier:
 
-**Good (budget)**: Use standard/basic materials, simplify where possible. Lower total than the base estimate. Set is_recommended to false. tier_details should list the changes made with NEGATIVE cost_delta values representing savings.
+**Good (budget)**: Use standard/basic materials, simplify where possible. Lower total than the base estimate. Set is_recommended to false. overrides should capture the key changes as a record of adjustments.
 
-**Better (mid-range)**: The base estimate as-is. This is the recommended tier. Set is_recommended to true. tier_details should be an empty array since it is the baseline.
+**Better (mid-range)**: The base estimate as-is. This is the recommended tier. Set is_recommended to true. overrides should be an empty object since it is the baseline.
 
-**Best (premium)**: Upgrade materials, add premium features or finishes. Higher total than the base estimate. Set is_recommended to false. tier_details should list the upgrades with POSITIVE cost_delta values.
+**Best (premium)**: Upgrade materials, add premium features or finishes. Higher total than the base estimate. Set is_recommended to false. overrides should capture the key upgrades.
 
 Totals:
-- Good total = base total + sum of all (negative) cost_delta values
-- Best total = base total + sum of all (positive) cost_delta values
+- Good total = base total reduced by simplified scope
+- Best total = base total increased by premium upgrades
 - Better total = base total exactly
 
 Each tier must include:
@@ -21,19 +21,16 @@ Each tier must include:
 - description: 1-2 sentences describing what this tier includes
 - total: the dollar total for this tier
 - is_recommended: boolean
-- tier_details: array of { change: string, cost_delta: number }
+- overrides: object with any tier-specific adjustments
 
-Return valid JSON matching the schema exactly. Output all 3 tiers in the order: good, better, best.`;
+Return valid JSON matching the schema exactly. Output all 3 tiers in the order: good, better, best.
+Output must be valid JSON matching the provided schema exactly. Do not wrap in markdown code fences.`;
 
 export function buildOptionPrompt(context: GenerationContext): string {
-  const { projectDescription, projectType, sections, pricedItems, companyRates } = context;
+  const { description, sections, pricedItems } = context;
 
   const materialSubtotal = pricedItems
     ? pricedItems.reduce((sum, item) => sum + item.quantity * item.unitCost, 0)
-    : 0;
-
-  const totalLaborHours = sections
-    ? sections.reduce((sum, section) => sum + section.laborHours, 0)
     : 0;
 
   const sectionLines: string[] = [];
@@ -42,30 +39,22 @@ export function buildOptionPrompt(context: GenerationContext): string {
     for (const section of sections) {
       const items = pricedItems.filter(item => item.sectionName === section.name);
       sectionLines.push(`Section: ${section.name}`);
-      sectionLines.push(`  Labor Hours: ${section.laborHours}`);
       for (const item of items) {
         const lineTotal = item.quantity * item.unitCost;
         sectionLines.push(
-          `  - ${item.description}: ${item.quantity} ${item.unit} @ $${item.unitCost.toFixed(2)} = $${lineTotal.toFixed(2)}`,
+          `  - ${item.description}: ${item.quantity} ${item.unit} @ $${item.unitCost.toFixed(2)} = $${lineTotal.toFixed(2)} [${item.source}]`,
         );
       }
     }
   }
 
-  return `Project Description: ${projectDescription}
-Inferred Project Type: ${projectType ?? 'Unknown'}
+  return `Project Description: ${description}
 
 Scope Breakdown:
 ${sectionLines.join('\n')}
 
 Summary:
   Material Subtotal: $${materialSubtotal.toFixed(2)}
-  Total Labor Hours: ${totalLaborHours}
-
-Company Rates (for reference):
-  Hourly Rate: $${companyRates.hourlyRate.toFixed(2)}/hr
-  Overhead Multiplier: ${companyRates.overheadMultiplier}
-  Profit Margin: ${companyRates.profitMargin}
 
 Generate 3 pricing tiers (good, better, best) for this project.`;
 }

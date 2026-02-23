@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { PipelineStep } from '../../common/pipeline/pipeline-step.interface.js';
-import { AiService } from '../../ai/ai.service.js';
+import { PipelineStep } from '../../pipeline/pipeline-step.interface.js';
+import type { AiProvider } from '../../ai/interfaces/provider.interface.js';
+import { AI_PROVIDER } from '../../ai/interfaces/provider.interface.js';
 import type { GenerationContext } from '../generation-context.js';
 import { getScopePrompt, buildUserPrompt } from '../prompts/scope-decomposition.prompt.js';
 
 const scopeDecompositionSchema = z.object({
-  project_type: z.string(),
   sections: z.array(z.object({
     name: z.string(),
     labor_hours: z.number(),
@@ -15,6 +15,7 @@ const scopeDecompositionSchema = z.object({
       quantity: z.number(),
       unit: z.string(),
       unit_cost: z.number(),
+      category: z.enum(['material', 'labor', 'equipment', 'permit', 'other']),
     })),
   })),
   confidence: z.number().min(0).max(1),
@@ -24,24 +25,26 @@ const scopeDecompositionSchema = z.object({
 export class ScopeDecompositionStep implements PipelineStep<GenerationContext> {
   readonly name = 'scope_decomposition';
 
-  constructor(private readonly aiService: AiService) {}
+  constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
   async execute(context: GenerationContext): Promise<void> {
-    const result = await this.aiService.generateObject({
-      system: getScopePrompt(context.tradeCategory),
-      prompt: buildUserPrompt(context),
-      schema: scopeDecompositionSchema,
+    const response = await this.provider.chat({
+      model: 'claude-sonnet-4-20250514',
+      system: getScopePrompt(context.category),
+      messages: [{ role: 'user', content: buildUserPrompt(context) }],
+      maxTokens: 4096,
     });
 
-    context.projectType = result.project_type;
+    const result = scopeDecompositionSchema.parse(JSON.parse(response.text));
+
     context.sections = result.sections.map(s => ({
       name: s.name,
-      laborHours: s.labor_hours,
       items: s.items.map(i => ({
         description: i.description,
         quantity: i.quantity,
         unit: i.unit,
         unitCost: i.unit_cost,
+        category: i.category,
       })),
     }));
   }

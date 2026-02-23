@@ -18,10 +18,21 @@ Organize line items into logical sections:
 4. "Testing & Cleanup" — pressure testing, inspections, site cleanup
 
 For each section:
-- Estimate realistic labor hours based on the scope
 - Provide all line items with quantity, unit, and a reasonable unit cost from your training knowledge (these will be overridden by real pricing data later, but must be a plausible ballpark)
 
-Infer the project_type from the description. Common values: "bathroom_remodel", "kitchen_remodel", "water_heater_replacement", "whole_house_repipe", "fixture_replacement", "drain_repair", "leak_repair", "addition_rough_in".
+For each line item, assign a category:
+- "material" — physical materials (pipe, fittings, fixtures, consumables, fasteners)
+- "labor" — installation work, demolition, testing, cleanup
+- "equipment" — tool/equipment rental (trencher, camera inspection, etc.)
+- "permit" — permits, inspections, code compliance fees
+- "other" — anything that doesn't fit the above
+
+Separate material and labor into distinct line items. For example:
+- "3/4\" Type L copper pipe" → category: material
+- "Install rough-in plumbing" → category: labor
+- "Plumbing permit" → category: permit
+
+For each section, also provide estimated labor_hours — the total crew-hours needed for that section's work.
 
 Include a confidence score between 0 and 1 reflecting how well-specified the project description is:
 - 0.9–1.0: very detailed description with specific fixtures, pipe sizes, and scope clearly defined
@@ -29,31 +40,26 @@ Include a confidence score between 0 and 1 reflecting how well-specified the pro
 - 0.3–0.5: vague description requiring significant inference
 - 0.0–0.2: extremely vague, unable to estimate reliably
 
-Output must be valid JSON matching the provided schema exactly.`;
+Output must be valid JSON matching the provided schema exactly. Do not wrap in markdown code fences.`;
   }
 
   throw new Error(`Unsupported trade category: ${tradeCategory}`);
 }
 
 export function buildUserPrompt(context: {
-  projectDescription: string;
+  description: string;
   zipCode: string;
-  tradeCategory: string;
-  propertyType: string | null;
-  jobSiteAddress: string;
+  category: string;
+  address: string;
 }): string {
   const lines: string[] = [
-    `Project Description: ${context.projectDescription}`,
-    `Trade Category: ${context.tradeCategory}`,
+    `Project Description: ${context.description}`,
+    `Trade Category: ${context.category}`,
     `ZIP Code: ${context.zipCode}`,
   ];
 
-  if (context.propertyType) {
-    lines.push(`Property Type: ${context.propertyType}`);
-  }
-
-  if (context.jobSiteAddress) {
-    lines.push(`Job Site Address: ${context.jobSiteAddress}`);
+  if (context.address) {
+    lines.push(`Job Site Address: ${context.address}`);
   }
 
   lines.push('');

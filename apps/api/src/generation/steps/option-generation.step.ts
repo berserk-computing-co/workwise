@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { PipelineStep } from '../../common/pipeline/pipeline-step.interface.js';
-import { AiService } from '../../ai/ai.service.js';
-import type { GenerationContext, EstimateOptionData } from '../generation-context.js';
+import { PipelineStep } from '../../pipeline/pipeline-step.interface.js';
+import type { AiProvider } from '../../ai/interfaces/provider.interface.js';
+import { AI_PROVIDER } from '../../ai/interfaces/provider.interface.js';
+import type { GenerationContext, OptionData } from '../generation-context.js';
 import { optionGenerationPrompt, buildOptionPrompt } from '../prompts/option-generation.prompt.js';
 
 const optionGenerationSchema = z.object({
@@ -12,10 +13,7 @@ const optionGenerationSchema = z.object({
     description: z.string(),
     total: z.number(),
     is_recommended: z.boolean(),
-    tier_details: z.array(z.object({
-      change: z.string(),
-      cost_delta: z.number(),
-    })),
+    overrides: z.record(z.unknown()).default({}),
   })).length(3),
 });
 
@@ -23,14 +21,17 @@ const optionGenerationSchema = z.object({
 export class OptionGenerationStep implements PipelineStep<GenerationContext> {
   readonly name = 'option_generation';
 
-  constructor(private readonly aiService: AiService) {}
+  constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
   async execute(context: GenerationContext): Promise<void> {
-    const result = await this.aiService.generateObject({
+    const response = await this.provider.chat({
+      model: 'claude-sonnet-4-20250514',
       system: optionGenerationPrompt,
-      prompt: buildOptionPrompt(context),
-      schema: optionGenerationSchema,
+      messages: [{ role: 'user', content: buildOptionPrompt(context) }],
+      maxTokens: 4096,
     });
+
+    const result = optionGenerationSchema.parse(JSON.parse(response.text));
 
     context.options = result.options.map(o => ({
       tier: o.tier,
@@ -38,10 +39,7 @@ export class OptionGenerationStep implements PipelineStep<GenerationContext> {
       description: o.description,
       total: o.total,
       isRecommended: o.is_recommended,
-      tierDetails: o.tier_details.map(td => ({
-        change: td.change,
-        costDelta: td.cost_delta,
-      })),
+      overrides: o.overrides as Record<string, unknown>,
     }));
   }
 }
