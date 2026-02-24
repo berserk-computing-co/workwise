@@ -4,7 +4,10 @@
  * AgentConfig (what to do) → AgentRunner.run() → AgentResult (what happened)
  */
 
-import type { ToolDefinition } from "./provider.interface.js";
+import type {
+  ToolDefinition,
+  ServerToolDeclaration,
+} from "./provider.interface.js";
 
 /**
  * Pairs a tool definition (sent to the model) with its local execute function
@@ -23,6 +26,8 @@ export interface AgentConfig {
   model: string;
   systemPrompt: string;
   tools: AgentTool[];
+  /** Server tools executed by the API (web_search, code_execution, etc.). */
+  serverTools?: ServerToolDeclaration[];
   /** Safety cap on tool-use round-trips. */
   maxIterations: number;
   maxTokens?: number;

@@ -5,7 +5,7 @@ import {
   getScopePrompt,
   buildUserPrompt,
 } from "../prompts/scope-decomposition.prompt.js";
-import { createWebSearchTool } from "./scope-agent.tool.js";
+import { webSearchServerTool } from "./scope-agent.tool.js";
 
 @Injectable()
 export class ScopeAgentService {
@@ -21,7 +21,8 @@ export class ScopeAgentService {
       name: "scope_decomposition",
       model: "claude-sonnet-4-6",
       systemPrompt: getScopePrompt(category),
-      tools: [createWebSearchTool()],
+      tools: [],
+      serverTools: [webSearchServerTool],
       maxIterations: 5,
       maxTokens: 8192,
     };

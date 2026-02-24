@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { z } from "zod";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
 import type { AiProvider } from "../../../ai/interfaces/provider.interface.js";
 import { AI_PROVIDER } from "../../../ai/interfaces/provider.interface.js";
@@ -25,38 +26,7 @@ const optionGenerationSchema = z.object({
     .max(3),
 });
 
-const optionGenerationJsonSchema: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["options"],
-  properties: {
-    options: {
-      type: "array",
-      minItems: 3,
-      maxItems: 3,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "tier",
-          "label",
-          "description",
-          "total",
-          "is_recommended",
-          "overrides",
-        ],
-        properties: {
-          tier: { type: "string", enum: ["good", "better", "best"] },
-          label: { type: "string" },
-          description: { type: "string" },
-          total: { type: "number" },
-          is_recommended: { type: "boolean" },
-          overrides: { type: "object", additionalProperties: true },
-        },
-      },
-    },
-  },
-};
+const optionOutputFormat = zodOutputFormat(optionGenerationSchema);
 
 @Injectable()
 export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
@@ -70,7 +40,7 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
       system: optionGenerationPrompt,
       messages: [{ role: "user", content: buildOptionPrompt(context) }],
       maxTokens: 4096,
-      outputSchema: optionGenerationJsonSchema,
+      outputFormat: optionOutputFormat,
     });
 
     if (response.stopReason !== "end_turn") {
@@ -79,7 +49,7 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
       );
     }
 
-    const result = optionGenerationSchema.parse(JSON.parse(response.text));
+    const result = optionOutputFormat.parse(response.text);
 
     context.options = result.options.map((o) => ({
       tier: o.tier,

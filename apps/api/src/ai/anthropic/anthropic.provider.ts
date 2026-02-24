@@ -39,19 +39,22 @@ export class AnthropicProvider implements AiProvider {
       system: params.system,
       messages: this.toAnthropicMessages(params.messages),
       cache_control: { type: "ephemeral" },
-      ...(params.tools?.length && {
-        tools: params.tools.map((t) => ({
-          name: t.name,
-          description: t.description,
-          input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
-          strict: true,
-        })),
+      ...((params.tools?.length || params.serverTools?.length) && {
+        tools: [
+          ...(params.tools?.map((t) => ({
+            name: t.name,
+            description: t.description,
+            input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
+            strict: true,
+          })) ?? []),
+          ...(params.serverTools ?? []),
+        ] as Anthropic.Messages.ToolUnion[],
       }),
-      ...(params.outputSchema && {
+      ...(params.outputFormat && {
         output_config: {
           format: {
             type: "json_schema" as const,
-            schema: params.outputSchema,
+            schema: params.outputFormat.schema,
           },
         },
       }),
@@ -70,19 +73,46 @@ export class AnthropicProvider implements AiProvider {
         input: b.input as Record<string, unknown>,
       }));
 
-    // Skip thinking/redacted_thinking blocks — only echo text + tool_use
+    // Echo text, tool_use, and server tool blocks into history.
+    // Skip thinking/redacted_thinking blocks.
     const rawAssistantContent: ChatContentBlock[] = response.content
-      .filter((b) => b.type === "text" || b.type === "tool_use")
+      .filter(
+        (b) =>
+          b.type === "text" ||
+          b.type === "tool_use" ||
+          b.type === "server_tool_use" ||
+          b.type === "web_search_tool_result",
+      )
       .map((block): ChatContentBlock => {
         if (block.type === "text") {
           return { type: "text", text: block.text };
         }
-        const tb = block as Anthropic.ToolUseBlock;
+        if (block.type === "tool_use") {
+          const tb = block as Anthropic.ToolUseBlock;
+          return {
+            type: "tool_use",
+            toolCallId: tb.id,
+            toolName: tb.name,
+            toolInput: tb.input as Record<string, unknown>,
+          };
+        }
+        // Server tool blocks — echo the raw SDK block so the provider can
+        // reconstruct them verbatim when building the next request.
+        if (block.type === "server_tool_use") {
+          const stb = block as Anthropic.ServerToolUseBlock;
+          return {
+            type: "server_tool_use",
+            toolCallId: stb.id,
+            toolName: stb.name,
+            toolInput: stb.input as Record<string, unknown>,
+            rawBlock: block,
+          };
+        }
+        // web_search_tool_result (and other server tool results)
         return {
-          type: "tool_use",
-          toolCallId: tb.id,
-          toolName: tb.name,
-          toolInput: tb.input as Record<string, unknown>,
+          type: "server_tool_result",
+          toolCallId: (block as Anthropic.WebSearchToolResultBlock).tool_use_id,
+          rawBlock: block,
         };
       });
 
@@ -91,9 +121,11 @@ export class AnthropicProvider implements AiProvider {
         ? "end_turn"
         : response.stop_reason === "tool_use"
           ? "tool_use"
-          : response.stop_reason === "refusal"
-            ? "refusal"
-            : "max_tokens";
+          : response.stop_reason === "pause_turn"
+            ? "pause_turn"
+            : response.stop_reason === "refusal"
+              ? "refusal"
+              : "max_tokens";
 
     return {
       text,
@@ -139,6 +171,11 @@ export class AnthropicProvider implements AiProvider {
           content: block.toolResultContent ?? "",
           is_error: block.isError,
         } as ToolResultBlockParam;
+
+      case "server_tool_use":
+      case "server_tool_result":
+        // Server tool blocks are stored as raw SDK objects — pass through verbatim.
+        return block.rawBlock as ContentBlockParam;
     }
   }
 }

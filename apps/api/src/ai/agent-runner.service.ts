@@ -19,7 +19,7 @@ export class AgentRunner {
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
   async run(config: AgentConfig, initialPrompt: string): Promise<AgentResult> {
-    const { maxTokens, model, systemPrompt, tools } = config;
+    const { maxTokens, model, systemPrompt, tools, serverTools } = config;
     const messages: ChatMessage[] = [{ role: "user", content: initialPrompt }];
     const toolMap = new Map<string, AgentTool>(
       tools.map((t) => [t.definition.name, t]),
@@ -37,6 +37,7 @@ export class AgentRunner {
         system: systemPrompt,
         messages,
         tools: tools.map((t) => t.definition),
+        serverTools,
         maxTokens,
       });
 
@@ -56,7 +57,18 @@ export class AgentRunner {
         return { text: response.text, steps, iterations, toolCallCount };
       }
 
-      // TOOL USE — model wants to call tool(s)
+      // PAUSE TURN — server tool loop hit max iterations, echo and continue
+      if (response.stopReason === "pause_turn") {
+        messages.push({
+          role: "assistant",
+          content: response.rawAssistantContent,
+        });
+        messages.push({ role: "user", content: "continue" });
+        iterations++;
+        continue;
+      }
+
+      // TOOL USE — model wants to call local tool(s)
       if (response.stopReason === "tool_use") {
         // Echo the full assistant response (text + tool_use blocks) into history
         messages.push({

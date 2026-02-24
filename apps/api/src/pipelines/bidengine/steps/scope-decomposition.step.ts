@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { z } from "zod";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
 import type { AiProvider } from "../../../ai/interfaces/provider.interface.js";
 import { AI_PROVIDER } from "../../../ai/interfaces/provider.interface.js";
@@ -34,50 +35,7 @@ const scopeDecompositionSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
-const scopeDecompositionJsonSchema: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["sections", "confidence"],
-  properties: {
-    sections: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["name", "labor_hours", "items"],
-        properties: {
-          name: { type: "string" },
-          labor_hours: { type: "number" },
-          items: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: [
-                "description",
-                "quantity",
-                "unit",
-                "unit_cost",
-                "category",
-              ],
-              properties: {
-                description: { type: "string" },
-                quantity: { type: "number" },
-                unit: { type: "string" },
-                unit_cost: { type: "number" },
-                category: {
-                  type: "string",
-                  enum: ["material", "labor", "equipment", "permit", "other"],
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    confidence: { type: "number", minimum: 0, maximum: 1 },
-  },
-};
+const scopeOutputFormat = zodOutputFormat(scopeDecompositionSchema);
 
 @Injectable()
 export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
@@ -91,7 +49,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
       system: getScopePrompt(context.category),
       messages: [{ role: "user", content: buildUserPrompt(context) }],
       maxTokens: 4096,
-      outputSchema: scopeDecompositionJsonSchema,
+      outputFormat: scopeOutputFormat,
     });
 
     if (response.stopReason !== "end_turn") {
@@ -100,7 +58,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
       );
     }
 
-    const result = scopeDecompositionSchema.parse(JSON.parse(response.text));
+    const result = scopeOutputFormat.parse(response.text);
 
     context.sections = result.sections.map((s) => ({
       name: s.name,
