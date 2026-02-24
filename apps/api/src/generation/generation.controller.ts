@@ -1,12 +1,43 @@
-import { Controller, Get, Param, Req, Res } from '@nestjs/common';
+import { Controller, ForbiddenException, Get, HttpCode, NotFoundException, Param, Post, Req, Res } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
+import { InjectRepository } from '@nestjs/typeorm';
+import type { Repository } from 'typeorm';
 import type { Request, Response } from 'express';
 import { Subscription } from 'rxjs';
 import { JobProgressService } from './job-progress.service.js';
 import { Public } from '../common/decorators/public.decorator.js';
+import { Estimate } from '../estimates/entities/estimate.entity.js';
+import { UsersService } from '../users/users.service.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import type { JwtPayload } from '../common/decorators/current-user.decorator.js';
 
 @Controller()
 export class GenerationController {
-  constructor(private readonly jobProgress: JobProgressService) {}
+  constructor(
+    private readonly jobProgress: JobProgressService,
+    @InjectQueue('estimate-generation') private readonly generationQueue: Queue,
+    @InjectRepository(Estimate) private readonly estimateRepo: Repository<Estimate>,
+    private readonly usersService: UsersService,
+  ) {}
+
+  @Post('estimates/:id/generate')
+  @HttpCode(202)
+  async generate(
+    @CurrentUser() payload: JwtPayload,
+    @Param('id') id: string,
+  ) {
+    const user = await this.usersService.findByAuthIdOrFail(payload.sub);
+    const estimate = await this.estimateRepo.findOne({ where: { id } });
+    if (!estimate) throw new NotFoundException('Estimate not found');
+    if (estimate.companyId !== user.companyId) throw new ForbiddenException('Access denied');
+
+    const jobId = `gen_${id.slice(0, 8)}_${Date.now()}`;
+    this.jobProgress.createJob(jobId);
+    await this.generationQueue.add('generate', { estimateId: id, companyId: user.companyId }, { jobId });
+
+    return { jobId };
+  }
 
   @Public()
   @Get('jobs/:jobId/progress')
