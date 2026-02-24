@@ -3,6 +3,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { BidEngineController } from "./bidengine.controller.js";
 import { BidEngineProcessor } from "./bidengine.processor.js";
+import { ScopeAgentService } from "./agents/scope-agent.service.js";
 import { ScopeDecompositionStep } from "./steps/scope-decomposition.step.js";
 import { PriceResolutionStep } from "./steps/price-resolution.step.js";
 import { OptionGenerationStep } from "./steps/option-generation.step.js";
@@ -25,6 +26,7 @@ import { UsersModule } from "../../users/users.module.js";
   controllers: [BidEngineController],
   providers: [
     BidEngineProcessor,
+    ScopeAgentService,
     ScopeDecompositionStep,
     PriceResolutionStep,
     OptionGenerationStep,
