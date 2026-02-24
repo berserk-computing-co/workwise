@@ -1,6 +1,6 @@
 import { IsArray, IsUUID } from 'class-validator';
 
-export class ReorderLineItemsDto {
+export class ReorderItemsDto {
   @IsUUID()
   sectionId: string;
 

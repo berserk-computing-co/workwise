@@ -7,19 +7,19 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { Estimate } from './estimate.entity.js';
+import { Project } from './project.entity.js';
 
-@Entity('estimate_options')
-export class EstimateOption {
+@Entity('options')
+export class Option {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid', name: 'estimate_id' })
+  @Column({ type: 'uuid', name: 'project_id' })
   @Index()
-  estimateId: string;
+  projectId: string;
 
-  @Column({ type: 'text', nullable: true })
-  tier: string | null;
+  @Column({ type: 'text' })
+  tier: string;
 
   @Column({ type: 'text', nullable: true })
   label: string | null;
@@ -33,13 +33,13 @@ export class EstimateOption {
   @Column({ type: 'boolean', default: false, name: 'is_recommended' })
   isRecommended: boolean;
 
-  @Column({ type: 'jsonb', default: '[]', name: 'tier_details' })
-  tierDetails: Record<string, unknown>[];
+  @Column({ type: 'jsonb', default: '{}' })
+  overrides: Record<string, unknown>;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Estimate, (estimate) => estimate.options, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'estimate_id' })
-  estimate: Estimate;
+  @ManyToOne(() => Project, (p) => p.options, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'project_id' })
+  project: Project;
 }

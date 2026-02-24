@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
 
-export class CreateLineItemDto {
+export class CreateItemDto {
   @IsUUID()
   sectionId: string;
 

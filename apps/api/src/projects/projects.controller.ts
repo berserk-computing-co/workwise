@@ -9,21 +9,21 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { EstimatesService } from './estimates.service.js';
+import { ProjectsService } from './projects.service.js';
 import { SectionsService } from './sections.service.js';
 import { OptionsService } from './options.service.js';
-import { CreateEstimateDto } from './dto/create-estimate.dto.js';
-import { UpdateEstimateDto } from './dto/update-estimate.dto.js';
+import { CreateProjectDto } from './dto/create-project.dto.js';
+import { UpdateProjectDto } from './dto/update-project.dto.js';
 import { CreateSectionDto } from './dto/create-section.dto.js';
 import { UpdateSectionDto } from './dto/update-section.dto.js';
 import { UpdateOptionDto } from './dto/update-option.dto.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import type { JwtPayload } from '../common/decorators/current-user.decorator.js';
 
-@Controller('estimates')
-export class EstimatesController {
+@Controller('projects')
+export class ProjectsController {
   constructor(
-    private readonly estimatesService: EstimatesService,
+    private readonly projectsService: ProjectsService,
     private readonly sectionsService: SectionsService,
     private readonly optionsService: OptionsService,
   ) {}
@@ -36,7 +36,7 @@ export class EstimatesController {
     @Query('limit') limit?: string,
     @Query('sort') sort?: string,
   ) {
-    return this.estimatesService.findAll(payload.sub, {
+    return this.projectsService.findAll(payload.sub, {
       status,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
@@ -48,9 +48,9 @@ export class EstimatesController {
   @HttpCode(201)
   async create(
     @CurrentUser() payload: JwtPayload,
-    @Body() dto: CreateEstimateDto,
+    @Body() dto: CreateProjectDto,
   ) {
-    return this.estimatesService.create(payload.sub, dto);
+    return this.projectsService.create(payload.sub, dto);
   }
 
   @Get(':id')
@@ -58,16 +58,16 @@ export class EstimatesController {
     @CurrentUser() payload: JwtPayload,
     @Param('id') id: string,
   ) {
-    return this.estimatesService.findOne(payload.sub, id);
+    return this.projectsService.findOne(payload.sub, id);
   }
 
   @Patch(':id')
   async update(
     @CurrentUser() payload: JwtPayload,
     @Param('id') id: string,
-    @Body() dto: UpdateEstimateDto,
+    @Body() dto: UpdateProjectDto,
   ) {
-    return this.estimatesService.update(payload.sub, id, dto);
+    return this.projectsService.update(payload.sub, id, dto);
   }
 
   @Delete(':id')
@@ -76,7 +76,7 @@ export class EstimatesController {
     @CurrentUser() payload: JwtPayload,
     @Param('id') id: string,
   ) {
-    return this.estimatesService.softDelete(payload.sub, id);
+    return this.projectsService.softDelete(payload.sub, id);
   }
 
   @Post(':id/duplicate')
@@ -85,7 +85,7 @@ export class EstimatesController {
     @CurrentUser() payload: JwtPayload,
     @Param('id') id: string,
   ) {
-    return this.estimatesService.duplicate(payload.sub, id);
+    return this.projectsService.duplicate(payload.sub, id);
   }
 
   @Post(':id/recalculate')
@@ -93,7 +93,8 @@ export class EstimatesController {
     @CurrentUser() payload: JwtPayload,
     @Param('id') id: string,
   ) {
-    return this.estimatesService.recalculate(payload.sub, id);
+    await this.projectsService.findOne(payload.sub, id);
+    return this.projectsService.recalculate(id);
   }
 
   @Post(':id/sections')
@@ -103,7 +104,7 @@ export class EstimatesController {
     @Param('id') id: string,
     @Body() dto: CreateSectionDto,
   ) {
-    await this.estimatesService.findOne(payload.sub, id);
+    await this.projectsService.findOne(payload.sub, id);
     return this.sectionsService.create(id, dto);
   }
 
@@ -114,7 +115,7 @@ export class EstimatesController {
     @Param('sectionId') sectionId: string,
     @Body() dto: UpdateSectionDto,
   ) {
-    await this.estimatesService.findOne(payload.sub, id);
+    await this.projectsService.findOne(payload.sub, id);
     return this.sectionsService.update(id, sectionId, dto);
   }
 
@@ -125,7 +126,7 @@ export class EstimatesController {
     @Param('id') id: string,
     @Param('sectionId') sectionId: string,
   ) {
-    await this.estimatesService.findOne(payload.sub, id);
+    await this.projectsService.findOne(payload.sub, id);
     return this.sectionsService.remove(id, sectionId);
   }
 
@@ -134,7 +135,7 @@ export class EstimatesController {
     @CurrentUser() payload: JwtPayload,
     @Param('id') id: string,
   ) {
-    await this.estimatesService.findOne(payload.sub, id);
+    await this.projectsService.findOne(payload.sub, id);
     return this.optionsService.findAll(id);
   }
 
@@ -145,7 +146,7 @@ export class EstimatesController {
     @Param('optionId') optionId: string,
     @Body() dto: UpdateOptionDto,
   ) {
-    await this.estimatesService.findOne(payload.sub, id);
+    await this.projectsService.findOne(payload.sub, id);
     return this.optionsService.update(id, optionId, dto);
   }
 }

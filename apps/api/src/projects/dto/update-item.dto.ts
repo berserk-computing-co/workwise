@@ -1,15 +1,19 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdateSectionDto {
+export class UpdateItemDto {
   @IsOptional()
   @IsString()
-  name?: string;
+  description?: string;
 
   @IsOptional()
   @IsNumber()
-  sortOrder?: number;
+  quantity?: number;
+
+  @IsOptional()
+  @IsString()
+  unit?: string;
 
   @IsOptional()
   @IsNumber()
-  laborHours?: number;
+  unitCost?: number;
 }
