@@ -38,12 +38,22 @@ export class AnthropicProvider implements AiProvider {
       max_tokens: params.maxTokens ?? 8192,
       system: params.system,
       messages: this.toAnthropicMessages(params.messages),
+      cache_control: { type: "ephemeral" },
       ...(params.tools?.length && {
         tools: params.tools.map((t) => ({
           name: t.name,
           description: t.description,
           input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
+          strict: true,
         })),
+      }),
+      ...(params.outputSchema && {
+        output_config: {
+          format: {
+            type: "json_schema" as const,
+            schema: params.outputSchema,
+          },
+        },
       }),
     });
 
@@ -81,7 +91,9 @@ export class AnthropicProvider implements AiProvider {
         ? "end_turn"
         : response.stop_reason === "tool_use"
           ? "tool_use"
-          : "max_tokens";
+          : response.stop_reason === "refusal"
+            ? "refusal"
+            : "max_tokens";
 
     return {
       text,

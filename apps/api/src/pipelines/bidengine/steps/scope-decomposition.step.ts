@@ -34,6 +34,51 @@ const scopeDecompositionSchema = z.object({
   confidence: z.number().min(0).max(1),
 });
 
+const scopeDecompositionJsonSchema: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["sections", "confidence"],
+  properties: {
+    sections: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["name", "labor_hours", "items"],
+        properties: {
+          name: { type: "string" },
+          labor_hours: { type: "number" },
+          items: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "description",
+                "quantity",
+                "unit",
+                "unit_cost",
+                "category",
+              ],
+              properties: {
+                description: { type: "string" },
+                quantity: { type: "number" },
+                unit: { type: "string" },
+                unit_cost: { type: "number" },
+                category: {
+                  type: "string",
+                  enum: ["material", "labor", "equipment", "permit", "other"],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+  },
+};
+
 @Injectable()
 export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
   readonly name = "scope_decomposition";
@@ -42,11 +87,18 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
 
   async execute(context: BidEngineContext): Promise<void> {
     const response = await this.provider.chat({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       system: getScopePrompt(context.category),
       messages: [{ role: "user", content: buildUserPrompt(context) }],
       maxTokens: 4096,
+      outputSchema: scopeDecompositionJsonSchema,
     });
+
+    if (response.stopReason !== "end_turn") {
+      throw new Error(
+        `ScopeDecompositionStep: unexpected stop_reason "${response.stopReason}"`,
+      );
+    }
 
     const result = scopeDecompositionSchema.parse(JSON.parse(response.text));
 

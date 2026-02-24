@@ -43,6 +43,7 @@ export interface ChatParams {
   messages: ChatMessage[];
   tools?: ToolDefinition[];
   maxTokens?: number;
+  outputSchema?: Record<string, unknown>;
 }
 
 /** A normalized tool call extracted from the model's response. */
@@ -63,7 +64,7 @@ export interface ToolCallData {
 export interface ChatResponse {
   text: string;
   toolCalls: ToolCallData[];
-  stopReason: "end_turn" | "tool_use" | "max_tokens";
+  stopReason: "end_turn" | "tool_use" | "max_tokens" | "refusal";
   usage: { inputTokens: number; outputTokens: number };
   /** Full assistant content blocks — echoed back into message history between iterations. */
   rawAssistantContent: ChatContentBlock[];

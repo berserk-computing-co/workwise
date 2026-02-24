@@ -25,6 +25,39 @@ const optionGenerationSchema = z.object({
     .max(3),
 });
 
+const optionGenerationJsonSchema: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["options"],
+  properties: {
+    options: {
+      type: "array",
+      minItems: 3,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "tier",
+          "label",
+          "description",
+          "total",
+          "is_recommended",
+          "overrides",
+        ],
+        properties: {
+          tier: { type: "string", enum: ["good", "better", "best"] },
+          label: { type: "string" },
+          description: { type: "string" },
+          total: { type: "number" },
+          is_recommended: { type: "boolean" },
+          overrides: { type: "object", additionalProperties: true },
+        },
+      },
+    },
+  },
+};
+
 @Injectable()
 export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
   readonly name = "option_generation";
@@ -33,11 +66,18 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
 
   async execute(context: BidEngineContext): Promise<void> {
     const response = await this.provider.chat({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       system: optionGenerationPrompt,
       messages: [{ role: "user", content: buildOptionPrompt(context) }],
       maxTokens: 4096,
+      outputSchema: optionGenerationJsonSchema,
     });
+
+    if (response.stopReason !== "end_turn") {
+      throw new Error(
+        `OptionGenerationStep: unexpected stop_reason "${response.stopReason}"`,
+      );
+    }
 
     const result = optionGenerationSchema.parse(JSON.parse(response.text));
 
