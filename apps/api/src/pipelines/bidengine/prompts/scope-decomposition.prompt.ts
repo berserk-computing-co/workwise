@@ -1,5 +1,5 @@
 export function getScopePrompt(tradeCategory: string): string {
-  if (tradeCategory === 'plumbing') {
+  if (tradeCategory === "plumbing") {
     return `You are an expert plumbing estimator with 20+ years of field experience. Your job is to decompose a project description into a comprehensive, structured scope of work with detailed line items.
 
 Be COMPREHENSIVE. Do not omit any materials or labor. Include ALL of the following categories as appropriate:
@@ -62,8 +62,10 @@ export function buildUserPrompt(context: {
     lines.push(`Job Site Address: ${context.address}`);
   }
 
-  lines.push('');
-  lines.push('Decompose this project into a comprehensive scope of work with all materials, labor, and code compliance items.');
+  lines.push("");
+  lines.push(
+    "Decompose this project into a comprehensive scope of work with all materials, labor, and code compliance items.",
+  );
 
-  return lines.join('\n');
+  return lines.join("\n");
 }

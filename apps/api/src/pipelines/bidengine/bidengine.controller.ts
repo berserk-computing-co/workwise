@@ -15,15 +15,15 @@ import { InjectRepository } from "@nestjs/typeorm";
 import type { Repository } from "typeorm";
 import type { Request, Response } from "express";
 import { Subscription } from "rxjs";
-import { JobProgressService } from "../pipeline/job-progress.service.js";
-import { Public } from "../common/decorators/public.decorator.js";
-import { Project } from "../projects/entities/project.entity.js";
-import { UsersService } from "../users/users.service.js";
-import { CurrentUser } from "../common/decorators/current-user.decorator.js";
-import type { JwtPayload } from "../common/decorators/current-user.decorator.js";
+import { JobProgressService } from "../../pipeline/job-progress.service.js";
+import { Public } from "../../common/decorators/public.decorator.js";
+import { Project } from "../../projects/entities/project.entity.js";
+import { UsersService } from "../../users/users.service.js";
+import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
+import type { JwtPayload } from "../../common/decorators/current-user.decorator.js";
 
 @Controller()
-export class GenerationController {
+export class BidEngineController {
   constructor(
     private readonly jobProgress: JobProgressService,
     @InjectQueue("project-generation") private readonly generationQueue: Queue,
@@ -60,25 +60,21 @@ export class GenerationController {
     @Res() res: Response,
   ): void {
     if (!this.jobProgress.has(jobId)) {
-      res
-        .status(404)
-        .json({
-          statusCode: 404,
-          error: "Not Found",
-          message: "Job not found",
-        });
+      res.status(404).json({
+        statusCode: 404,
+        error: "Not Found",
+        message: "Job not found",
+      });
       return;
     }
 
     const observable = this.jobProgress.subscribe(jobId);
     if (!observable) {
-      res
-        .status(404)
-        .json({
-          statusCode: 404,
-          error: "Not Found",
-          message: "Job not found",
-        });
+      res.status(404).json({
+        statusCode: 404,
+        error: "Not Found",
+        message: "Job not found",
+      });
       return;
     }
 

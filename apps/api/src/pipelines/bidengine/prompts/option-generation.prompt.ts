@@ -1,4 +1,4 @@
-import type { GenerationContext } from '../generation-context.js';
+import type { BidEngineContext } from "../bidengine-context.js";
 
 export const optionGenerationPrompt = `You are an expert construction cost estimator. You will be given a detailed scope breakdown with priced line items and you must generate exactly 3 pricing tiers: good, better, and best.
 
@@ -26,7 +26,7 @@ Each tier must include:
 Return valid JSON matching the schema exactly. Output all 3 tiers in the order: good, better, best.
 Output must be valid JSON matching the provided schema exactly. Do not wrap in markdown code fences.`;
 
-export function buildOptionPrompt(context: GenerationContext): string {
+export function buildOptionPrompt(context: BidEngineContext): string {
   const { description, sections, pricedItems } = context;
 
   const materialSubtotal = pricedItems
@@ -37,7 +37,9 @@ export function buildOptionPrompt(context: GenerationContext): string {
 
   if (sections && pricedItems) {
     for (const section of sections) {
-      const items = pricedItems.filter(item => item.sectionName === section.name);
+      const items = pricedItems.filter(
+        (item) => item.sectionName === section.name,
+      );
       sectionLines.push(`Section: ${section.name}`);
       for (const item of items) {
         const lineTotal = item.quantity * item.unitCost;
@@ -51,7 +53,7 @@ export function buildOptionPrompt(context: GenerationContext): string {
   return `Project Description: ${description}
 
 Scope Breakdown:
-${sectionLines.join('\n')}
+${sectionLines.join("\n")}
 
 Summary:
   Material Subtotal: $${materialSubtotal.toFixed(2)}

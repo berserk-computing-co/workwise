@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { PipelineStep } from '../../pipeline/pipeline-step.interface.js';
-import type { GenerationContext } from '../generation-context.js';
-import { Project } from '../../projects/entities/project.entity.js';
-import { Section } from '../../projects/entities/section.entity.js';
-import { Item } from '../../projects/entities/item.entity.js';
-import { Option } from '../../projects/entities/option.entity.js';
+import { Injectable } from "@nestjs/common";
+import { DataSource } from "typeorm";
+import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
+import type { BidEngineContext } from "../bidengine-context.js";
+import { Project } from "../../../projects/entities/project.entity.js";
+import { Section } from "../../../projects/entities/section.entity.js";
+import { Item } from "../../../projects/entities/item.entity.js";
+import { Option } from "../../../projects/entities/option.entity.js";
 
 @Injectable()
-export class CalculationStep implements PipelineStep<GenerationContext> {
-  readonly name = 'calculation';
+export class CalculationStep implements PipelineStep<BidEngineContext> {
+  readonly name = "calculation";
 
   constructor(private readonly dataSource: DataSource) {}
 
-  async execute(context: GenerationContext): Promise<void> {
+  async execute(context: BidEngineContext): Promise<void> {
     const total = context.pricedItems!.reduce(
       (sum, item) => sum + item.quantity * item.unitCost,
       0,
@@ -70,7 +70,7 @@ export class CalculationStep implements PipelineStep<GenerationContext> {
       }
 
       await manager.update(Project, context.projectId, {
-        status: 'generated',
+        status: "generated",
         total: Math.round(total * 100) / 100,
       });
     });

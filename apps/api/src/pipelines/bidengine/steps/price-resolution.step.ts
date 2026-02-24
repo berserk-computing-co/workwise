@@ -1,16 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { PipelineStep } from '../../pipeline/pipeline-step.interface.js';
-import { OneBuildService } from '../../datasources/onebuild/onebuild.service.js';
-import type { GenerationContext, PricedItem } from '../generation-context.js';
+import { Injectable } from "@nestjs/common";
+import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
+import { OneBuildService } from "../../../datasources/onebuild/onebuild.service.js";
+import type { BidEngineContext, PricedItem } from "../bidengine-context.js";
 
 @Injectable()
-export class PriceResolutionStep implements PipelineStep<GenerationContext> {
-  readonly name = 'price_resolution';
+export class PriceResolutionStep implements PipelineStep<BidEngineContext> {
+  readonly name = "price_resolution";
 
   constructor(private readonly oneBuildService: OneBuildService) {}
 
-  async execute(context: GenerationContext): Promise<void> {
-    const flatItems: { description: string; quantity: number; unit: string; unitCost: number; sectionName: string }[] = [];
+  async execute(context: BidEngineContext): Promise<void> {
+    const flatItems: {
+      description: string;
+      quantity: number;
+      unit: string;
+      unitCost: number;
+      sectionName: string;
+    }[] = [];
     for (const section of context.sections!) {
       for (const item of section.items) {
         flatItems.push({ ...item, sectionName: section.name });
@@ -18,7 +24,11 @@ export class PriceResolutionStep implements PipelineStep<GenerationContext> {
     }
 
     const results = await this.oneBuildService.batchLookup(
-      flatItems.map(item => ({ description: item.description, unit: item.unit, quantity: item.quantity })),
+      flatItems.map((item) => ({
+        description: item.description,
+        unit: item.unit,
+        quantity: item.quantity,
+      })),
       context.zipCode,
     );
 
@@ -30,7 +40,7 @@ export class PriceResolutionStep implements PipelineStep<GenerationContext> {
           quantity: item.quantity,
           unit: item.unit,
           unitCost: match.unit_cost!,
-          source: 'ai_priced' as const,
+          source: "ai_priced" as const,
           sourceData: {
             onebuildId: match.onebuild_id,
             matchScore: match.match_score,
@@ -43,7 +53,7 @@ export class PriceResolutionStep implements PipelineStep<GenerationContext> {
         quantity: item.quantity,
         unit: item.unit,
         unitCost: item.unitCost,
-        source: 'ai_unmatched' as const,
+        source: "ai_unmatched" as const,
         sourceData: {},
         sectionName: item.sectionName,
       };
