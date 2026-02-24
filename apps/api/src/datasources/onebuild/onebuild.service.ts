@@ -5,6 +5,7 @@ import { mapUnitToOneBuildUom, zipToState } from "./uom-mapping.js";
 const QUERY = `
   query sources($input: SourceSearchInput!) {
   sources(input: $input) {
+    totalCount
     nodes {
       id
       name
@@ -12,10 +13,19 @@ const QUERY = `
       imagesUrls
       uom
       externalProductUrl
+      sourceType
+      description
+      materialRateUsdCents
+      laborRateUsdCents
+      burdenedLaborRateUsdCents
+      productionRate
+      calculatedUnitRateUsdCents
       knownUoms {
         uom
         materialRateUsdCents
         laborRateUsdCents
+        burdenedLaborRateUsdCents
+        productionRate
         calculatedUnitRateUsdCents
       }
     }
@@ -30,6 +40,8 @@ export interface SourceItemFields {
   calculatedUnitRateUsdCents: number;
   laborRateUsdCents: number;
   materialRateUsdCents: number;
+  burdenedLaborRateUsdCents?: number;
+  productionRate?: number;
 }
 
 export interface SourceItem {
@@ -38,6 +50,13 @@ export interface SourceItem {
   uom: string;
   knownUoms: SourceItemFields[];
   imagesUrls: string[];
+  sourceType?: string;
+  description?: string;
+  materialRateUsdCents?: number;
+  laborRateUsdCents?: number;
+  burdenedLaborRateUsdCents?: number;
+  productionRate?: number;
+  calculatedUnitRateUsdCents?: number;
 }
 
 export interface BatchLookupResult {
