@@ -11,6 +11,7 @@ export interface ScopeItem {
 
 export interface ScopeSection {
   name: string;
+  labor_hours?: number;
   items: ScopeItem[];
 }
 

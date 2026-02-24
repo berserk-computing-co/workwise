@@ -42,7 +42,7 @@ export class OneBuildAgentService {
   ): Promise<PricingResult[]> {
     const config: AgentConfig = {
       name: "onebuild_resolution",
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-6",
       systemPrompt: getResolutionPrompt(),
       tools: [createSearch1BuildTool(this.oneBuildService)],
       maxIterations: 30,

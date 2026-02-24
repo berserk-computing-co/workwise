@@ -104,6 +104,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
 
     context.sections = result.sections.map((s) => ({
       name: s.name,
+      labor_hours: s.labor_hours,
       items: s.items.map((i) => ({
         description: i.description,
         quantity: i.quantity,
