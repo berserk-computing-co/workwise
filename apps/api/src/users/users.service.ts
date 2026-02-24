@@ -12,11 +12,11 @@ export class UsersService {
   ) {}
 
   async findByAuthId(authId: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { auth0Id: authId } });
+    return this.userRepository.findOne({ where: { authId } });
   }
 
   async findByAuthIdOrFail(authId: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { auth0Id: authId } });
+    const user = await this.userRepository.findOne({ where: { authId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }

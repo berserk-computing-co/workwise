@@ -1,11 +1,11 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class UpdateUserDto {
+export class UpdateOrganizationDto {
   @IsOptional()
   @IsString()
-  firstName?: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  lastName?: string;
+  zipCode?: string;
 }

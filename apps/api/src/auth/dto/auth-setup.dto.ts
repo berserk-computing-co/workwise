@@ -3,8 +3,6 @@ import {
   IsDefined,
   IsEmail,
   IsNotEmpty,
-  IsNumber,
-  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -23,7 +21,7 @@ export class AuthSetupUserDto {
   email: string;
 }
 
-export class AuthSetupCompanyDto {
+export class AuthSetupOrganizationDto {
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -31,34 +29,6 @@ export class AuthSetupCompanyDto {
   @IsString()
   @IsNotEmpty()
   zipCode: string;
-
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @IsOptional()
-  @IsNumber()
-  hourlyRate?: number;
-
-  @IsOptional()
-  @IsNumber()
-  burdenMultiplier?: number;
-
-  @IsOptional()
-  @IsNumber()
-  overheadMultiplier?: number;
-
-  @IsOptional()
-  @IsNumber()
-  profitMargin?: number;
-
-  @IsOptional()
-  @IsNumber()
-  taxRate?: number;
 }
 
 export class AuthSetupDto {
@@ -69,6 +39,6 @@ export class AuthSetupDto {
 
   @IsDefined()
   @ValidateNested()
-  @Type(() => AuthSetupCompanyDto)
-  company: AuthSetupCompanyDto;
+  @Type(() => AuthSetupOrganizationDto)
+  organization: AuthSetupOrganizationDto;
 }
