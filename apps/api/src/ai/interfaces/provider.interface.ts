@@ -1,34 +1,42 @@
 /**
  * Provider-agnostic LLM interface.
- * Each provider (Anthropic, OpenAI, etc.) implements this once.
- * The AgentRunner and all agents code against this — never a specific SDK.
+ *
+ * Each provider (Anthropic, OpenAI) implements AiProvider.chat() once,
+ * translating generic ChatParams/ChatResponse to/from its SDK format.
+ * AgentRunner and pipeline steps code against these types — never a specific SDK.
  */
 
+/** A single message in a multi-turn conversation. */
 export interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string | ChatContentBlock[];
 }
 
+/**
+ * Discriminated union on `type`. Only fields relevant to each type are populated.
+ * - `'text'`        — uses `text`
+ * - `'tool_use'`    — uses `toolCallId`, `toolName`, `toolInput`
+ * - `'tool_result'` — uses `toolResultId`, `toolResultContent`, `isError`
+ */
 export interface ChatContentBlock {
-  type: 'text' | 'tool_use' | 'tool_result';
-  // text block
+  type: "text" | "tool_use" | "tool_result";
   text?: string;
-  // tool_use block
   toolCallId?: string;
   toolName?: string;
   toolInput?: Record<string, unknown>;
-  // tool_result block
   toolResultId?: string;
   toolResultContent?: string;
   isError?: boolean;
 }
 
+/** JSON Schema definition for a tool the model can call. */
 export interface ToolDefinition {
   name: string;
   description: string;
-  inputSchema: Record<string, unknown>;    // JSON Schema
+  inputSchema: Record<string, unknown>;
 }
 
+/** Parameters for a single LLM call (one round-trip, not the full agent loop). */
 export interface ChatParams {
   model: string;
   system: string;
@@ -37,22 +45,34 @@ export interface ChatParams {
   maxTokens?: number;
 }
 
+/** A normalized tool call extracted from the model's response. */
 export interface ToolCallData {
   id: string;
   name: string;
   input: Record<string, unknown>;
 }
 
+/**
+ * Normalized response from a single LLM call.
+ *
+ * AgentRunner inspects `stopReason` to decide what to do next:
+ * - `'end_turn'`   → done, `text` is the final answer
+ * - `'tool_use'`   → execute `toolCalls[]`, send results, loop
+ * - `'max_tokens'` → truncated, handle as error
+ */
 export interface ChatResponse {
-  text: string;                            // Concatenated text blocks (empty if only tool calls)
-  toolCalls: ToolCallData[];               // Normalized tool call blocks
-  stopReason: 'end_turn' | 'tool_use' | 'max_tokens';
+  text: string;
+  toolCalls: ToolCallData[];
+  stopReason: "end_turn" | "tool_use" | "max_tokens";
   usage: { inputTokens: number; outputTokens: number };
-  rawAssistantContent: ChatContentBlock[]; // Provider-normalized content for conversation history
+  /** Full assistant content blocks — echoed back into message history between iterations. */
+  rawAssistantContent: ChatContentBlock[];
 }
 
+/** The contract every LLM provider must implement. */
 export interface AiProvider {
   chat(params: ChatParams): Promise<ChatResponse>;
 }
 
-export const AI_PROVIDER = Symbol('AI_PROVIDER');
+/** NestJS injection token for the active AiProvider implementation. */
+export const AI_PROVIDER = Symbol("AI_PROVIDER");
