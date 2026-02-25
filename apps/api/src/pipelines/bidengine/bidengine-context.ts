@@ -1,9 +1,11 @@
+import { ItemCategory, ItemSource, OptionTier } from "./bidengine.enums.js";
+
 export interface ScopeItem {
   description: string;
   quantity: number;
   unit: string;
   unitCost: number;
-  category: "material" | "labor" | "equipment" | "permit" | "other";
+  category: ItemCategory;
   pricing_hint?: string;
   labor_hours?: number;
   notes?: string;
@@ -20,18 +22,13 @@ export interface PricedItem {
   quantity: number;
   unit: string;
   unitCost: number;
-  source:
-    | "ai_decomposition"
-    | "ai_priced"
-    | "ai_unmatched"
-    | "manual"
-    | "template";
+  source: ItemSource;
   sourceData?: Record<string, unknown>;
   sectionName: string;
 }
 
 export interface OptionData {
-  tier: "good" | "better" | "best";
+  tier: OptionTier;
   label: string;
   description: string;
   total: number;
