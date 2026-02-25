@@ -19,7 +19,8 @@ export class AgentRunner {
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
   async run(config: AgentConfig, initialPrompt: string): Promise<AgentResult> {
-    const { maxTokens, model, systemPrompt, tools, serverTools } = config;
+    const { maxTokens, model, systemPrompt, tools, serverTools, outputFormat } =
+      config;
     const messages: ChatMessage[] = [{ role: "user", content: initialPrompt }];
     const toolMap = new Map<string, AgentTool>(
       tools.map((t) => [t.definition.name, t]),
@@ -39,6 +40,7 @@ export class AgentRunner {
         tools: tools.map((t) => t.definition),
         serverTools,
         maxTokens,
+        outputFormat,
       });
 
       steps.push({

@@ -7,6 +7,7 @@
 import type {
   ToolDefinition,
   ServerToolDeclaration,
+  OutputFormat,
 } from "./provider.interface.js";
 
 /**
@@ -31,6 +32,8 @@ export interface AgentConfig {
   /** Safety cap on tool-use round-trips. */
   maxIterations: number;
   maxTokens?: number;
+  /** Structured output format — sent to the API on every turn to constrain text output. */
+  outputFormat?: OutputFormat;
 }
 
 /** A single recorded event from an agent run (LLM response, tool call, or tool result). */

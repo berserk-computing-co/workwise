@@ -36,7 +36,13 @@ export class AnthropicProvider implements AiProvider {
     const response = await this.client.messages.create({
       model: params.model,
       max_tokens: params.maxTokens ?? 8192,
-      system: params.system,
+      system: [
+        {
+          type: "text",
+          text: params.system,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: this.toAnthropicMessages(params.messages),
       cache_control: { type: "ephemeral" },
       ...((params.tools?.length || params.serverTools?.length) && {
