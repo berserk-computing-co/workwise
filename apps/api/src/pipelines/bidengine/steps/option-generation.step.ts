@@ -5,6 +5,7 @@ import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
 import type { AiProvider } from "../../../ai/interfaces/provider.interface.js";
 import { AI_PROVIDER } from "../../../ai/interfaces/provider.interface.js";
 import type { BidEngineContext, OptionData } from "../bidengine-context.js";
+import { OptionTier } from "../bidengine.enums.js";
 import {
   optionGenerationPrompt,
   buildOptionPrompt,
@@ -14,7 +15,7 @@ const optionGenerationSchema = z.object({
   options: z
     .array(
       z.object({
-        tier: z.enum(["good", "better", "best"]),
+        tier: z.nativeEnum(OptionTier),
         label: z.string(),
         description: z.string(),
         total: z.number(),

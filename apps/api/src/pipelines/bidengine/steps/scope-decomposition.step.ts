@@ -5,6 +5,7 @@ import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
 import type { AiProvider } from "../../../ai/interfaces/provider.interface.js";
 import { AI_PROVIDER } from "../../../ai/interfaces/provider.interface.js";
 import type { BidEngineContext } from "../bidengine-context.js";
+import { ItemCategory } from "../bidengine.enums.js";
 import {
   getScopePrompt,
   buildUserPrompt,
@@ -21,13 +22,7 @@ const scopeDecompositionSchema = z.object({
           quantity: z.number(),
           unit: z.string(),
           unit_cost: z.number(),
-          category: z.enum([
-            "material",
-            "labor",
-            "equipment",
-            "permit",
-            "other",
-          ]),
+          category: z.nativeEnum(ItemCategory),
         }),
       ),
     }),
@@ -48,7 +43,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
       model: "claude-sonnet-4-6",
       system: getScopePrompt(context.category),
       messages: [{ role: "user", content: buildUserPrompt(context) }],
-      maxTokens: 4096,
+      maxTokens: 8192,
       outputFormat: scopeOutputFormat,
     });
 
