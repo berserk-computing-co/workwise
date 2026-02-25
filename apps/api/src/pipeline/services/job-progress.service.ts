@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { ReplaySubject, Observable } from "rxjs";
+import { StepStatus } from "../pipeline.enums.js";
 
 export interface ProgressEvent {
   step: string;
-  status: "running" | "complete" | "error";
+  status: StepStatus;
   message: string;
   projectId?: string;
   total?: number;

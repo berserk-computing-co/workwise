@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CoreModels1771814086190 implements MigrationInterface {
-    name = 'CoreModels1771814086190'
+export class CoreModels1771999427557 implements MigrationInterface {
+    name = 'CoreModels1771999427557'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "items" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "section_id" uuid NOT NULL, "description" text NOT NULL, "quantity" numeric(10,2) NOT NULL DEFAULT '1', "unit" text NOT NULL DEFAULT 'each', "unit_cost" numeric(10,2) NOT NULL DEFAULT '0', "extended_cost" numeric(12,2) NOT NULL DEFAULT '0', "sort_order" integer NOT NULL DEFAULT '0', "source" text NOT NULL DEFAULT 'ai_generated', "source_data" jsonb NOT NULL DEFAULT '{}', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_ba5885359424c15ca6b9e79bcf6" PRIMARY KEY ("id"))`);
@@ -14,31 +14,33 @@ export class CoreModels1771814086190 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "idx_projects_org" ON "projects" ("organization_id") `);
         await queryRunner.query(`CREATE TABLE "organizations" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" text NOT NULL, "zip_code" text NOT NULL, "settings" jsonb NOT NULL DEFAULT '{}', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_6b031fcd0863e3f6b44230163f9" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "auth_id" text NOT NULL, "email" text NOT NULL, "first_name" text, "last_name" text, "organization_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_32ddc1ae708e8261a870a6eb3e6" UNIQUE ("auth_id"), CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "pipelines" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "project_id" uuid NOT NULL, "triggered_by" uuid NOT NULL, "status" text NOT NULL DEFAULT 'pending', "current_step" text, "steps" jsonb NOT NULL DEFAULT '[]', "errors" jsonb, "total_input_tokens" integer NOT NULL DEFAULT '0', "total_output_tokens" integer NOT NULL DEFAULT '0', "estimated_cost_cents" integer NOT NULL DEFAULT '0', "duration_ms" integer, "started_at" TIMESTAMP WITH TIME ZONE, "completed_at" TIMESTAMP WITH TIME ZONE, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "version" integer NOT NULL, CONSTRAINT "PK_e38ea171cdfad107c1f3db2c036" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "idx_pipelines_project" ON "pipelines" ("project_id") `);
-        await queryRunner.query(`CREATE INDEX "idx_pipelines_status" ON "pipelines" ("status") `);
+        await queryRunner.query(`CREATE TABLE "jobs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "target_id" uuid NOT NULL, "target_type" text NOT NULL DEFAULT 'project', "pipeline_type" text NOT NULL, "triggered_by" uuid NOT NULL, "status" text NOT NULL DEFAULT 'pending', "current_step" text, "steps" jsonb NOT NULL DEFAULT '[]', "errors" jsonb, "total_input_tokens" integer NOT NULL DEFAULT '0', "total_output_tokens" integer NOT NULL DEFAULT '0', "estimated_cost_cents" integer NOT NULL DEFAULT '0', "duration_ms" integer, "started_at" TIMESTAMP WITH TIME ZONE, "completed_at" TIMESTAMP WITH TIME ZONE, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "version" integer NOT NULL, CONSTRAINT "PK_cf0a6c42b72fcc7f7c237def345" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "idx_jobs_target" ON "jobs" ("target_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_jobs_target_type" ON "jobs" ("target_type") `);
+        await queryRunner.query(`CREATE INDEX "idx_jobs_pipeline_type" ON "jobs" ("pipeline_type") `);
+        await queryRunner.query(`CREATE INDEX "idx_jobs_status" ON "jobs" ("status") `);
         await queryRunner.query(`ALTER TABLE "items" ADD CONSTRAINT "FK_7dfc06e7b45cfe015c3c64640cc" FOREIGN KEY ("section_id") REFERENCES "sections"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "sections" ADD CONSTRAINT "FK_46832696ad10cd7b64cd6563b60" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "options" ADD CONSTRAINT "FK_d0771d42c2474351ba1578dbc04" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "projects" ADD CONSTRAINT "FK_585c8ce06628c70b70100bfb842" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "projects" ADD CONSTRAINT "FK_8a7ccdb94bcc8635f933c8f8080" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "FK_21a659804ed7bf61eb91688dea7" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "pipelines" ADD CONSTRAINT "FK_d2178c4de13e15180dcf301dbb8" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "pipelines" ADD CONSTRAINT "FK_0069e6a1a2a8aa2f584450d6145" FOREIGN KEY ("triggered_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "jobs" ADD CONSTRAINT "FK_fdb1e8b4311b7bfc36eea9dc30d" FOREIGN KEY ("triggered_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "pipelines" DROP CONSTRAINT "FK_0069e6a1a2a8aa2f584450d6145"`);
-        await queryRunner.query(`ALTER TABLE "pipelines" DROP CONSTRAINT "FK_d2178c4de13e15180dcf301dbb8"`);
+        await queryRunner.query(`ALTER TABLE "jobs" DROP CONSTRAINT "FK_fdb1e8b4311b7bfc36eea9dc30d"`);
         await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "FK_21a659804ed7bf61eb91688dea7"`);
         await queryRunner.query(`ALTER TABLE "projects" DROP CONSTRAINT "FK_8a7ccdb94bcc8635f933c8f8080"`);
         await queryRunner.query(`ALTER TABLE "projects" DROP CONSTRAINT "FK_585c8ce06628c70b70100bfb842"`);
         await queryRunner.query(`ALTER TABLE "options" DROP CONSTRAINT "FK_d0771d42c2474351ba1578dbc04"`);
         await queryRunner.query(`ALTER TABLE "sections" DROP CONSTRAINT "FK_46832696ad10cd7b64cd6563b60"`);
         await queryRunner.query(`ALTER TABLE "items" DROP CONSTRAINT "FK_7dfc06e7b45cfe015c3c64640cc"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_pipelines_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_pipelines_project"`);
-        await queryRunner.query(`DROP TABLE "pipelines"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_jobs_status"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_jobs_pipeline_type"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_jobs_target_type"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_jobs_target"`);
+        await queryRunner.query(`DROP TABLE "jobs"`);
         await queryRunner.query(`DROP TABLE "users"`);
         await queryRunner.query(`DROP TABLE "organizations"`);
         await queryRunner.query(`DROP INDEX "public"."idx_projects_org"`);

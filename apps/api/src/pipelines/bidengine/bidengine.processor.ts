@@ -4,8 +4,9 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import type { Job } from "bullmq";
 import { Project } from "../../projects/entities/project.entity.js";
-import { PipelineRunner } from "../../pipeline/pipeline-runner.service.js";
-import { JobProgressService } from "../../pipeline/job-progress.service.js";
+import { PipelineRunner } from "../../pipeline/services/pipeline-runner.service.js";
+import { PipelineJobService } from "../../pipeline/services/pipeline-job.service.js";
+import type { StepStatus } from "../../pipeline/pipeline.enums.js";
 import { ScopeDecompositionStep } from "./steps/scope-decomposition.step.js";
 import { PriceResolutionStep } from "./steps/price-resolution.step.js";
 import { OptionGenerationStep } from "./steps/option-generation.step.js";
@@ -21,7 +22,7 @@ export class BidEngineProcessor extends WorkerHost {
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
     private readonly pipelineRunner: PipelineRunner,
-    private readonly jobProgress: JobProgressService,
+    private readonly pipelineJobs: PipelineJobService,
     private readonly scopeStep: ScopeDecompositionStep,
     private readonly priceStep: PriceResolutionStep,
     private readonly optionStep: OptionGenerationStep,
@@ -38,6 +39,8 @@ export class BidEngineProcessor extends WorkerHost {
     this.logger.log(`Processing job ${job.id} for project ${projectId}`);
 
     try {
+      await this.pipelineJobs.start(job.id!);
+
       const project = await this.projectRepo.findOneOrFail({
         where: { id: projectId },
       });
@@ -50,12 +53,12 @@ export class BidEngineProcessor extends WorkerHost {
         category: project.category,
       };
 
-      const onProgress = (step: string, status: string, message: string) => {
-        this.jobProgress.emit(job.id!, {
-          step,
-          status: status as "running" | "complete",
-          message,
-        });
+      const onProgress = (
+        step: string,
+        status: StepStatus,
+        message: string,
+      ) => {
+        this.pipelineJobs.updateStep(job.id!, step, status, message);
       };
 
       await this.pipelineRunner.run(
@@ -65,14 +68,9 @@ export class BidEngineProcessor extends WorkerHost {
         onProgress,
       );
 
-      this.jobProgress.emit(job.id!, {
-        step: "",
-        status: "complete",
-        message: "Project generated",
-        projectId,
+      await this.pipelineJobs.complete(job.id!, {
         total: context.totals!.total,
       });
-      this.jobProgress.complete(job.id!);
       this.logger.log(
         `Job ${job.id} completed — total: ${context.totals!.total}`,
       );
@@ -82,11 +80,7 @@ export class BidEngineProcessor extends WorkerHost {
         `Job ${job.id} failed: ${message}`,
         error instanceof Error ? error.stack : undefined,
       );
-      this.jobProgress.error(job.id!, {
-        step: "pipeline",
-        status: "error",
-        message,
-      });
+      await this.pipelineJobs.fail(job.id!, message);
       throw error;
     }
   }
