@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
-export type StepStatus = "pending" | "running" | "completed" | "error";
+export type StepStatus = "pending" | "running" | "complete" | "completed" | "error";
 
 export interface ProgressStep {
   step: string;
@@ -19,7 +19,7 @@ export interface UseJobProgressReturn {
   disconnect: () => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export function useJobProgress(): UseJobProgressReturn {
   const [steps, setSteps] = useState<ProgressStep[]>([]);

@@ -39,19 +39,22 @@ export class WebPricingAgentService {
       description: string;
       quantity: number;
       unit: string;
-      unitCost: number;
       category: string;
       sectionName: string;
     }>,
     zipCode: string,
   ): Promise<WebPricingResult[]> {
+    this.logger.log(
+      `Starting web pricing: ${items.length} items, ZIP=${zipCode}`,
+    );
+
     const config: AgentConfig = {
       name: "web_pricing",
       model: "claude-sonnet-4-6",
       systemPrompt: getWebPricingPrompt(),
       tools: [],
-      serverTools: [{ ...webSearchServerTool, max_uses: 15 }],
-      maxIterations: 15,
+      serverTools: [{ ...webSearchServerTool, max_uses: 20 }],
+      maxIterations: 20,
       maxTokens: 8192,
       outputFormat: webPricingOutputFormat,
     };
@@ -59,19 +62,62 @@ export class WebPricingAgentService {
     const itemList = items
       .map(
         (item, i) =>
-          `${i}: ${JSON.stringify({ description: item.description, quantity: item.quantity, unit: item.unit, unitCost: item.unitCost, category: item.category })}`,
+          `${i}: ${JSON.stringify({ description: item.description, quantity: item.quantity, unit: item.unit, category: item.category })}`,
       )
       .join("\n");
 
     const initialPrompt = `Price the following ${items.length} items for ZIP code ${zipCode}:\n\n${itemList}`;
 
-    const result = await this.agentRunner.run(config, initialPrompt);
-
-    this.logger.log(
-      `Web pricing agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls`,
+    this.logger.debug(
+      `Web pricing prompt length: ${initialPrompt.length} chars`,
     );
 
-    const parsed = webPricingOutputFormat.parse(result.text);
-    return parsed.results;
+    let result;
+    try {
+      result = await this.agentRunner.run(config, initialPrompt);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Web pricing agent runner failed: ${msg}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw err;
+    }
+
+    this.logger.log(
+      `Web pricing agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,
+    );
+
+    // Safety check: if the agent produced results without any tool calls,
+    // it hallucinated prices instead of actually searching. Reject them.
+    if (result.toolCallCount === 0) {
+      this.logger.warn(
+        `Web pricing agent returned results with 0 tool calls — prices are hallucinated, marking all unmatched`,
+      );
+      return items.map((_, i) => ({
+        index: i,
+        matched: false,
+        unitCost: 0,
+        confidence: 0,
+        category: items[i].category,
+        skipReason: "agent_did_not_search",
+      }));
+    }
+
+    try {
+      const parsed = webPricingOutputFormat.parse(result.text);
+      this.logger.log(
+        `Web pricing parsed ${parsed.results.length} results (${parsed.results.filter((r) => r.matched).length} matched)`,
+      );
+      return parsed.results;
+    } catch (parseErr) {
+      this.logger.error(
+        `Web pricing output parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+      );
+      this.logger.error(
+        `Raw agent output (first 500 chars): ${result.text.slice(0, 500)}`,
+      );
+      throw parseErr;
+    }
   }
 }

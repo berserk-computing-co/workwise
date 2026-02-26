@@ -30,7 +30,7 @@ const AUTO_DISMISS_MS = 4000;
 const dotClass = {
   success: "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0",
   error: "w-2 h-2 rounded-full bg-red-500 flex-shrink-0",
-  info: "w-2 h-2 rounded-full bg-blue-500 flex-shrink-0",
+  info: "w-2 h-2 rounded-full bg-gray-500 flex-shrink-0",
 };
 
 function ToastItem({

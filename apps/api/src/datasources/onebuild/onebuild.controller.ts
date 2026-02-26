@@ -2,13 +2,12 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { OneBuildService } from './onebuild.service.js';
 import type { SourceItem } from './onebuild.service.js';
 
-function formatMatch(item: SourceItem, unit?: string) {
+function formatMatch(item: SourceItem) {
   return {
     id: item.id,
     name: item.name,
     uom: item.uom,
     knownUoms: item.knownUoms,
-    imagesUrls: item.imagesUrls,
   };
 }
 
@@ -20,11 +19,11 @@ export class OneBuildController {
   async lookup(
     @Query('description') description: string,
     @Query('zip') zip: string,
-    @Query('unit') unit?: string,
+    @Query('source_type') sourceType?: string,
   ) {
-    const items = await this.oneBuildService.fetchSourceItems(description, zip, unit);
+    const items = await this.oneBuildService.fetchSourceItems(description, zip, sourceType);
     const match = items[0] ?? null;
-    return { match: match ? formatMatch(match, unit) : null };
+    return { match: match ? formatMatch(match) : null };
   }
 
   @Post('batch-lookup')

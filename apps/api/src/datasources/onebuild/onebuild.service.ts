@@ -1,25 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { mapUnitToOneBuildUom, zipToState } from "./uom-mapping.js";
 
 const QUERY = `
   query sources($input: SourceSearchInput!) {
   sources(input: $input) {
-    totalCount
     nodes {
       id
       name
-      county
-      imagesUrls
       uom
-      externalProductUrl
       sourceType
-      description
-      materialRateUsdCents
-      laborRateUsdCents
-      burdenedLaborRateUsdCents
-      productionRate
-      calculatedUnitRateUsdCents
+      categoryPath
       knownUoms {
         uom
         materialRateUsdCents
@@ -49,14 +40,8 @@ export interface SourceItem {
   name: string;
   uom: string;
   knownUoms: SourceItemFields[];
-  imagesUrls: string[];
   sourceType?: string;
-  description?: string;
-  materialRateUsdCents?: number;
-  laborRateUsdCents?: number;
-  burdenedLaborRateUsdCents?: number;
-  productionRate?: number;
-  calculatedUnitRateUsdCents?: number;
+  categoryPath?: string[];
 }
 
 export interface BatchLookupResult {
@@ -70,6 +55,7 @@ export interface BatchLookupResult {
 
 @Injectable()
 export class OneBuildService {
+  private readonly logger = new Logger(OneBuildService.name);
   private readonly apiKey: string;
   private readonly endpoint: string;
 
@@ -84,18 +70,24 @@ export class OneBuildService {
   async fetchSourceItems(
     searchTerm: string,
     zipCode: string,
-    uom?: string,
+    sourceType?: string,
   ): Promise<SourceItem[]> {
     const state = zipToState(zipCode);
-    const variables = {
-      input: {
-        state,
-        zipcode: zipCode,
-        searchTerm,
-        page: { limit: 6 },
-        sortBy: { type: "MATCH_SCORE" },
-      },
+    const input: Record<string, unknown> = {
+      state,
+      zipcode: zipCode,
+      searchTerm,
+      page: { limit: 6 },
+      sortBy: { type: "MATCH_SCORE" },
     };
+    if (sourceType) {
+      input.sourceType = sourceType;
+    }
+    const variables = { input };
+
+    this.logger.debug(
+      `fetchSourceItems: term="${searchTerm}" state=${state} zip=${zipCode} sourceType=${sourceType ?? "ALL"}`,
+    );
 
     let response: Response;
     try {
@@ -107,22 +99,41 @@ export class OneBuildService {
         },
         body: JSON.stringify({ query: QUERY, variables }),
       });
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `fetchSourceItems network error for "${searchTerm}": ${err instanceof Error ? err.message : String(err)}`,
+      );
       return [];
     }
 
     if (!response.ok) {
+      this.logger.warn(
+        `fetchSourceItems HTTP ${response.status} for "${searchTerm}": ${response.statusText}`,
+      );
       return [];
     }
 
-    let json: { data?: { sources?: { nodes?: SourceItem[] } } };
+    let json: { data?: { sources?: { nodes?: SourceItem[] } }; errors?: unknown[] };
     try {
       json = (await response.json()) as typeof json;
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `fetchSourceItems JSON parse error for "${searchTerm}": ${err instanceof Error ? err.message : String(err)}`,
+      );
       return [];
     }
 
-    return json?.data?.sources?.nodes ?? [];
+    if (json.errors) {
+      this.logger.warn(
+        `fetchSourceItems GraphQL errors for "${searchTerm}": ${JSON.stringify(json.errors)}`,
+      );
+    }
+
+    const nodes = json?.data?.sources?.nodes ?? [];
+    this.logger.debug(
+      `fetchSourceItems: "${searchTerm}" → ${nodes.length} results`,
+    );
+    return nodes;
   }
 
   async batchLookup(
@@ -136,7 +147,6 @@ export class OneBuildService {
       const nodes = await this.fetchSourceItems(
         item.description,
         zipCode,
-        item.unit,
       );
 
       if (nodes.length === 0) {

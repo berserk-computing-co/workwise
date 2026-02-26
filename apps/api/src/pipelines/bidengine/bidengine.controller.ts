@@ -55,6 +55,11 @@ export class BidEngineController {
       triggeredBy: user.id,
     });
 
+    await this.projectRepo.update(id, {
+      status: "generating",
+      currentJobId: job.id,
+    });
+
     await this.generationQueue.add(
       "generate",
       { projectId: id, organizationId: user.organizationId },

@@ -1,6 +1,6 @@
 import { getAccessToken } from "@auth0/nextjs-auth0";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export async function apiClient<T>(
   path: string,

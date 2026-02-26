@@ -53,6 +53,9 @@ export class Project {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   total: number;
 
+  @Column({ type: 'uuid', nullable: true, name: 'current_job_id' })
+  currentJobId: string | null;
+
   @Column({ type: 'jsonb', default: '{}' })
   metadata: Record<string, unknown>;
 

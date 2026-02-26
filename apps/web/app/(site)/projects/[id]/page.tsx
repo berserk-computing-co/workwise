@@ -30,7 +30,7 @@ const STATUS_STYLES: Record<ProjectStatus, string> = {
   draft: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   generating:
     "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse",
-  review: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
+  review: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
   sent: "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
   accepted:
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
@@ -956,12 +956,19 @@ export default function ProjectDetailPage() {
     fetchProject().finally(() => setLoading(false));
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Restore overlay from URL param or from project's active job
   useEffect(() => {
     const jobIdFromUrl = searchParams.get("generating");
     if (jobIdFromUrl) {
       setGeneratingJobId(jobIdFromUrl);
+    } else if (
+      project?.status === "generating" &&
+      project.currentJobId &&
+      !generatingJobId
+    ) {
+      setGeneratingJobId(project.currentJobId);
     }
-  }, [searchParams]);
+  }, [searchParams, project]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveDescription = async (newValue: string) => {
     const res = await fetch(`/api/proxy/projects/${id}`, {
@@ -995,6 +1002,9 @@ export default function ProjectDetailPage() {
       }
       const { jobId } = await res.json();
       setGeneratingJobId(jobId);
+      setProject((prev) =>
+        prev ? { ...prev, status: "generating" as const, currentJobId: jobId } : prev,
+      );
     } catch (err) {
       addToast(
         "error",
@@ -1151,8 +1161,7 @@ export default function ProjectDetailPage() {
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[project.status]}`}
             >
-              {project.status.charAt(0).toUpperCase() +
-                project.status.slice(1)}
+              {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
             </span>
           </div>
           <div className="flex-shrink-0 text-right">
@@ -1167,13 +1176,22 @@ export default function ProjectDetailPage() {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
-          <button
-            disabled={project.status === "generating" || generating}
-            onClick={() => void handleGenerate()}
-            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-40"
-          >
-            {generating ? "Generating…" : "Generate Estimate"}
-          </button>
+          {project.status === "generating" && project.currentJobId ? (
+            <button
+              onClick={() => setGeneratingJobId(project.currentJobId)}
+              className="rounded-full bg-amber-500 dark:bg-amber-400 text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity animate-pulse"
+            >
+              View Progress
+            </button>
+          ) : (
+            <button
+              disabled={project.status === "generating" || generating}
+              onClick={() => void handleGenerate()}
+              className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-40"
+            >
+              {generating ? "Generating…" : "Generate Estimate"}
+            </button>
+          )}
           <button
             disabled={duplicating}
             onClick={() => void handleDuplicate()}

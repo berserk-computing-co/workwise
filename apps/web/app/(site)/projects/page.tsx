@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<ProjectStatus, string> = {
   draft: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   generating:
     "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse",
-  review: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
+  review: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
   sent: "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
   accepted:
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
