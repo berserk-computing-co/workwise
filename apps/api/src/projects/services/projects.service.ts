@@ -80,6 +80,7 @@ export class ProjectsService {
         zipCode: true,
         clientName: true,
         total: true,
+        currentJobId: true,
         createdAt: true,
         updatedAt: true,
       },

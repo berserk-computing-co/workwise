@@ -36,6 +36,7 @@ export interface Project {
   clientName: string | null;
   status: ProjectStatus;
   total: number;
+  currentJobId: string | null;
   organizationId: string;
   sections: Section[];
   options: Option[];
