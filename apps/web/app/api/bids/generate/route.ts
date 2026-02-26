@@ -4,7 +4,6 @@ import { runMaterialsAgent } from "@/app/lib/openai/materials_agent";
 import { generateBidDocumentSpec } from "@/app/lib/openai/bids";
 import { renderBidPdf } from "@/app/lib/pdf/bid_pdf";
 import { sendBidEmail } from "@/app/lib/email/resend";
-import { stytchClient } from "@/app/lib/auth/stytch_client";
 import { type Bid } from "@/app/types";
 
 // Allow up to 5 minutes for Vercel serverless functions
@@ -37,23 +36,6 @@ export async function POST(request: NextRequest) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
     return NextResponse.json({ error: "email is invalid" }, { status: 422 });
   }
-
-  // Fire-and-forget: create a Stytch user for this email if one doesn't exist yet.
-  (async () => {
-    try {
-      const searchResult = await stytchClient.users.search({
-        query: {
-          operator: "AND",
-          operands: [{ filter_name: "email_address", filter_value: [email.trim()] }],
-        },
-      });
-      if (searchResult.results_metadata.total === 0) {
-        await stytchClient.users.create({ email: email.trim() });
-      }
-    } catch (stytchError) {
-      console.error("Failed to create Stytch user:", stytchError);
-    }
-  })();
 
   // Handle optional image upload
   let imageBase64: string | undefined;
