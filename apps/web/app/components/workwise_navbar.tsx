@@ -43,10 +43,7 @@ const NavbarProfile = () => {
 
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a1a1e] shadow-lg py-1">
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -81,7 +78,10 @@ export const WorkWiseNavbar = () => {
     <nav className="sticky top-0 z-30 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-[#0f0f12]/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/workwise.png" className="h-7" alt="WorkWise" />
+          <img src="/hardhat-logo.png" className="h-8" alt="WorkWise" />
+          <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+            WorkWise
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />

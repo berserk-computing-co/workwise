@@ -13,6 +13,7 @@ import GooglePlacesAutocomplete, {
   geocodeByPlaceId,
 } from "react-google-places-autocomplete";
 import { useToast } from "@/app/components/toast";
+import { useTheme } from "@/app/lib/theme/context";
 import { CreateProjectPayload } from "@/app/types/project-api";
 
 // ---------------------------------------------------------------------------
@@ -176,6 +177,8 @@ function Step1Address({
     zipCode: string;
   }) => void;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [value, setValue] = useState<{
     label: string;
@@ -235,26 +238,39 @@ function Step1Address({
               styles: {
                 control: (base) => ({
                   ...base,
-                  border: "1px solid #e5e7eb",
+                  border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
                   borderRadius: "0.75rem",
                   boxShadow: "none",
                   padding: "2px 4px",
                   backgroundColor: "transparent",
-                  "&:hover": { borderColor: "#9ca3af" },
+                  "&:hover": { borderColor: isDark ? "#6b7280" : "#9ca3af" },
                 }),
                 input: (base) => ({ ...base, color: "inherit" }),
+                singleValue: (base) => ({ ...base, color: "inherit" }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: isDark ? "#6b7280" : "#9ca3af",
+                }),
                 menu: (base) => ({
                   ...base,
                   zIndex: 50,
                   borderRadius: "0.75rem",
-                  border: "1px solid #e5e7eb",
-                  boxShadow:
-                    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+                  border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
+                  backgroundColor: isDark ? "#1a1a1e" : "white",
+                  boxShadow: isDark
+                    ? "0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3)"
+                    : "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
                 }),
                 option: (base, state) => ({
                   ...base,
-                  backgroundColor: state.isFocused ? "#f9fafb" : "white",
-                  color: "#111827",
+                  backgroundColor: state.isFocused
+                    ? isDark
+                      ? "#374151"
+                      : "#f9fafb"
+                    : isDark
+                      ? "#1a1a1e"
+                      : "white",
+                  color: isDark ? "#f3f4f6" : "#111827",
                   cursor: "pointer",
                 }),
               },
