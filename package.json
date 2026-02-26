@@ -12,7 +12,10 @@
     "test": "nx run-many -t test --projects=web,api"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@auth0/nextjs-auth0": "^3.3.0",
     "@heroicons/react": "^2.1.3",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
@@ -21,8 +24,9 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "@react-pdf/renderer": "^4.3.2",
-    "@stytch/nextjs": "^21.1.0",
-    "@stytch/vanilla-js": "^5.3.0",
+    "bullmq": "^5.69.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
     "decamelize-keys": "^2.0.1",
     "dotenv": "^17.3.1",
     "flowbite": "^2.3.0",
@@ -30,7 +34,6 @@
     "jwks-rsa": "^3.2.2",
     "neo4j-driver": "^5.23.0",
     "next": "14.2.3",
-    "next-auth": "^4.24.7",
     "openai": "^6.22.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -42,8 +45,8 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^6.9.2",
     "rxjs": "^7.8.1",
-    "stytch": "^11.4.2",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
@@ -77,5 +80,4 @@
     "typescript": "5.7.3"
   },
   "nx": {}
-
 }

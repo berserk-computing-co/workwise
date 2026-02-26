@@ -1,22 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchSourceItems } from "./one_build_client";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const material = searchParams.get("material");
   if (!material || !material.trim()) {
-    return NextResponse.json({ error: "material query param is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "material query param is required" },
+      { status: 400 },
+    );
   }
 
-  const response = await fetchSourceItems({
-    state: "UT",
-    zipcode: "84111",
-    searchTerm: material.trim(),
-  });
+  const zip = searchParams.get("zip") || "84111";
 
-  if (!response) {
-    return NextResponse.json({ error: "Failed to fetch pricing data" }, { status: 502 });
+  const url = new URL("/pricing/lookup", API_BASE);
+  url.searchParams.set("description", material.trim());
+  url.searchParams.set("zip", zip);
+
+  const res = await fetch(url.toString());
+
+  if (!res.ok) {
+    return NextResponse.json(
+      { error: "Failed to fetch pricing data" },
+      { status: res.status },
+    );
   }
 
-  return NextResponse.json(response.data.sources.nodes);
+  const data = await res.json();
+  return NextResponse.json(data);
 }

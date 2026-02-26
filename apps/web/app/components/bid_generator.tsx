@@ -1,60 +1,46 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
-import Image from "next/image";
-import { Button, Card, Spinner } from "flowbite-react";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@auth0/nextjs-auth0/client";
+import { ProgressOverlay } from "@/app/components/progress-overlay";
 
-// --- Types ---
-
-type PageState = "idle" | "loading" | "done";
-
-const PROGRESS_STEPS = [
-  { label: "Analyzing project", detail: "Reading your description..." },
-  { label: "Looking up prices", detail: "Searching 1Build for materials & labor..." },
-  { label: "Generating PDF", detail: "Building your bid document..." },
-];
-
-// --- Sub-views ---
+type PageState = "idle" | "generating" | "done";
 
 function IdleView({
   description,
   onDescriptionChange,
-  email,
-  onEmailChange,
   zip,
   onZipChange,
-  imageFile,
-  onImageChange,
   onSubmit,
   error,
+  isLoggedIn,
+  submitting,
 }: {
   description: string;
   onDescriptionChange: (v: string) => void;
-  email: string;
-  onEmailChange: (v: string) => void;
   zip: string;
   onZipChange: (v: string) => void;
-  imageFile: File | null;
-  onImageChange: (f: File | null) => void;
   onSubmit: () => void;
   error: string | null;
+  isLoggedIn: boolean;
+  submitting: boolean;
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   return (
-    <div className="flex flex-col items-center gap-6 w-full">
-      <Image src="/workwise.png" width={300} height={150} alt="Workwise" priority />
+    <div className="flex flex-col items-center gap-4 w-full">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-slate-100">Generate a Bid Instantly</h1>
-        <p className="text-gray-600 dark:text-slate-400 mt-1 text-sm">
-          Describe your project and we&apos;ll generate an AI-powered bid estimate and send it to our network of licensed contractors. Your bid is tentative until a contractor reviews and accepts it.
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          Generate an Estimate
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+          Describe your project and we&apos;ll generate an AI-powered estimate
+          with real material and labor pricing.
         </p>
       </div>
 
       <div className="w-full">
         <textarea
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-400 dark:placeholder-slate-400"
+          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 resize-none dark:bg-[#0f0f12] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500"
           style={{ minHeight: 140 }}
           placeholder="e.g. Build a 500 sq ft cedar deck in the backyard with stairs and railing..."
           value={description}
@@ -68,39 +54,11 @@ function IdleView({
           inputMode="numeric"
           pattern="[0-9]*"
           maxLength={5}
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-400 dark:placeholder-slate-400"
+          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 dark:bg-[#0f0f12] dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500"
           placeholder="ZIP code"
           aria-label="ZIP code"
           value={zip}
           onChange={(e) => onZipChange(e.target.value.replace(/\D/g, ""))}
-        />
-      </div>
-
-      <div className="w-full">
-        <input
-          type="email"
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:focus:border-blue-400 dark:placeholder-slate-400"
-          placeholder="you@example.com"
-          aria-label="Your email"
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-        />
-      </div>
-
-      <div className="flex flex-col items-start w-full gap-2">
-        <button
-          type="button"
-          className="text-sm text-gray-600 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 focus:outline-none"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          📷 Attach a photo (optional){imageFile ? ` — ${imageFile.name}` : ""}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => onImageChange(e.target.files?.[0] ?? null)}
         />
       </div>
 
@@ -110,179 +68,146 @@ function IdleView({
         </div>
       )}
 
-      <Button
-        color="blue"
-        onClick={onSubmit}
-        disabled={!description.trim() || !email.trim() || zip.length !== 5}
-        className="w-full"
-      >
-        Generate Bid
-      </Button>
+      {isLoggedIn ? (
+        <button
+          onClick={onSubmit}
+          disabled={!description.trim() || zip.length !== 5 || submitting}
+          className="w-full rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+        >
+          {submitting ? "Creating project..." : "Generate Estimate"}
+        </button>
+      ) : (
+        <a
+          href="/api/auth/login"
+          className="w-full inline-flex items-center justify-center rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity"
+        >
+          Sign in to Generate
+        </a>
+      )}
     </div>
   );
 }
-
-function LoadingView({ stepIndex }: { stepIndex: number }) {
-  const step = PROGRESS_STEPS[stepIndex] ?? PROGRESS_STEPS[PROGRESS_STEPS.length - 1];
-
-  return (
-    <div className="flex flex-col items-center gap-8 w-full py-4">
-      <Spinner size="xl" color="blue" />
-      <div className="text-center">
-        <p className="text-lg font-semibold text-gray-800 dark:text-slate-100">{step.label}</p>
-        <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">{step.detail}</p>
-      </div>
-
-      {/* Dot progress indicator */}
-      <div className="flex gap-3">
-        {PROGRESS_STEPS.map((_, i) => (
-          <div
-            key={i}
-            className={`w-3 h-3 rounded-full transition-colors duration-500 ${
-              i <= stepIndex ? "bg-blue-500 dark:bg-blue-400" : "bg-slate-300 dark:bg-slate-600"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DoneView({
-  onDownload,
-  onReset,
-}: {
-  onDownload: () => void;
-  onReset: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-6 w-full py-4">
-      <CheckCircleIcon className="h-16 w-16 text-green-600 dark:text-green-400" />
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100">Your bid is ready!</h2>
-        <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">
-          The PDF includes real material and labor pricing.
-        </p>
-      </div>
-      <Button color="blue" onClick={onDownload} className="w-full">
-        Download PDF
-      </Button>
-      <Button color="light" onClick={onReset} className="w-full">
-        Start Over
-      </Button>
-    </div>
-  );
-}
-
-// --- Main component ---
 
 export function BidGenerator() {
+  const router = useRouter();
+  const { user } = useUser();
+
   const [pageState, setPageState] = useState<PageState>("idle");
   const [description, setDescription] = useState("");
-  const [email, setEmail] = useState("");
   const [zip, setZip] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [stepIndex, setStepIndex] = useState(0);
-
-  // Store blob URL in a ref to avoid stale closures and prevent re-renders
-  const blobUrlRef = useRef<string | null>(null);
-  const stepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Advance progress steps every 5 seconds while loading
-  useEffect(() => {
-    if (pageState === "loading") {
-      setStepIndex(0);
-      stepIntervalRef.current = setInterval(() => {
-        setStepIndex((prev) => Math.min(prev + 1, PROGRESS_STEPS.length - 1));
-      }, 5000);
-    } else {
-      if (stepIntervalRef.current) {
-        clearInterval(stepIntervalRef.current);
-        stepIntervalRef.current = null;
-      }
-    }
-    return () => {
-      if (stepIntervalRef.current) clearInterval(stepIntervalRef.current);
-    };
-  }, [pageState]);
+  const [submitting, setSubmitting] = useState(false);
+  const [generatingJobId, setGeneratingJobId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
 
   async function handleSubmit() {
+    if (!user) {
+      router.push("/api/auth/login");
+      return;
+    }
+
     setError(null);
-    setPageState("loading");
+    setSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append("description", description);
-      formData.append("email", email);
-      formData.append("zip", zip);
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
-
-      // Do NOT set Content-Type — browser sets it with the correct multipart boundary
-      const response = await fetch("/api/bids/generate", {
+      // 1. Create project on the NestJS backend
+      const createRes = await fetch("/api/proxy/projects", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: description.trim(),
+          address: "",
+          zipCode: zip,
+        }),
       });
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Generation failed");
+      if (!createRes.ok) {
+        const body = await createRes.json().catch(() => ({}));
+        throw new Error(
+          (body as { message?: string }).message || "Failed to create project",
+        );
       }
 
-      const blob = await response.blob();
-      blobUrlRef.current = URL.createObjectURL(blob);
-      setPageState("done");
+      const project = await createRes.json();
+      setProjectId(project.id);
+
+      // 2. Trigger generation on the NestJS backend
+      const genRes = await fetch(`/api/proxy/projects/${project.id}/generate`, {
+        method: "POST",
+      });
+
+      if (!genRes.ok) {
+        const body = await genRes.json().catch(() => ({}));
+        throw new Error(
+          (body as { message?: string }).message ||
+            "Failed to start generation",
+        );
+      }
+
+      const { jobId } = await genRes.json();
+
+      // 3. Show progress overlay — SSE handles the rest
+      setGeneratingJobId(jobId);
+      setPageState("generating");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
-      setPageState("idle");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  function handleDownload() {
-    if (!blobUrlRef.current) return;
-    const a = document.createElement("a");
-    a.href = blobUrlRef.current;
-    a.download = "bid.pdf";
-    a.click();
+  function handleGenerateComplete() {
+    setGeneratingJobId(null);
+    if (projectId) {
+      router.push(`/projects/${projectId}`);
+    }
+  }
+
+  function handleProgressClose() {
+    setGeneratingJobId(null);
+    // If job was cancelled/errored, go back to idle with the project link
+    if (projectId) {
+      setPageState("idle");
+      setError(
+        "Generation was interrupted. You can try again from the project page.",
+      );
+    }
   }
 
   function handleReset() {
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    }
     setDescription("");
-    setEmail("");
     setZip("");
-    setImageFile(null);
     setError(null);
+    setProjectId(null);
     setPageState("idle");
   }
 
   return (
-    <div className="flex justify-center w-full">
-      <Card className="bg-blue-100 dark:bg-slate-800 w-full max-w-2xl p-8">
-        {pageState === "idle" && (
+    <>
+      <div className="bg-gray-50 dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-2xl w-full max-w-2xl p-8">
+        {(pageState === "idle" || pageState === "generating") && (
           <IdleView
             description={description}
             onDescriptionChange={setDescription}
-            email={email}
-            onEmailChange={setEmail}
             zip={zip}
             onZipChange={setZip}
-            imageFile={imageFile}
-            onImageChange={setImageFile}
             onSubmit={handleSubmit}
             error={error}
+            isLoggedIn={!!user}
+            submitting={submitting}
           />
         )}
-        {pageState === "loading" && <LoadingView stepIndex={stepIndex} />}
-        {pageState === "done" && (
-          <DoneView onDownload={handleDownload} onReset={handleReset} />
-        )}
-      </Card>
-    </div>
+      </div>
+
+      <ProgressOverlay
+        jobId={generatingJobId}
+        onComplete={handleGenerateComplete}
+        onClose={handleProgressClose}
+      />
+    </>
   );
 }
