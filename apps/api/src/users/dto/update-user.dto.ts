@@ -8,8 +8,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   lastName?: string;
-
-  @IsOptional()
-  @IsString()
-  phone?: string;
 }

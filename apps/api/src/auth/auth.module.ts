@@ -8,11 +8,11 @@ import { StytchAuthGuard } from './stytch-auth.guard.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { User } from '../users/entities/user.entity.js';
-import { Company } from '../users/entities/company.entity.js';
+import { Organization } from '../users/entities/organization.entity.js';
 
 @Global()
 @Module({
-  imports: [PassportModule, TypeOrmModule.forFeature([User, Company])],
+  imports: [PassportModule, TypeOrmModule.forFeature([User, Organization])],
   controllers: [AuthController],
   providers: [
     Auth0JwtStrategy,

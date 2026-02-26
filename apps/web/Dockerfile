@@ -1,4 +1,4 @@
-FROM node:18-alpine as base
+FROM node:20-alpine as base
 
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -8,6 +8,9 @@ COPY package.json package-lock.json ./
 RUN npm ci && npm cache clean --force
 
 FROM base as builder
+
+ARG OPENAI_API_KEY
+ENV OPENAI_API_KEY=$OPENAI_API_KEY
 
 WORKDIR /app
 

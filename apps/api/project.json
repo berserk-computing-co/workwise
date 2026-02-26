@@ -5,6 +5,13 @@
   "projectType": "application",
   "tags": ["type:app", "scope:backend"],
   "targets": {
+    "check-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx tsc --noEmit",
+        "cwd": "apps/api"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{projectRoot}/dist"],
