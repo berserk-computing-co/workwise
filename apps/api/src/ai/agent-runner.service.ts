@@ -12,11 +12,65 @@ import type {
   AgentTool,
 } from "./interfaces/agent.interfaces.js";
 
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 5_000;
+
+function parseRetryAfter(error: unknown): number | null {
+  if (
+    error &&
+    typeof error === "object" &&
+    "headers" in error &&
+    error.headers &&
+    typeof error.headers === "object" &&
+    "get" in error.headers &&
+    typeof error.headers.get === "function"
+  ) {
+    const val = error.headers.get("retry-after");
+    if (val) {
+      const secs = Number(val);
+      if (!Number.isNaN(secs) && secs > 0) return secs * 1000;
+    }
+  }
+  return null;
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (error && typeof error === "object" && "status" in error) {
+    return (error as { status: number }).status === 429;
+  }
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.startsWith("429 ");
+}
+
 @Injectable()
 export class AgentRunner {
   private readonly logger = new Logger(AgentRunner.name);
 
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
+
+  private async chatWithRetry(
+    params: Parameters<AiProvider["chat"]>[0],
+    agentName: string,
+  ): ReturnType<AiProvider["chat"]> {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await this.provider.chat(params);
+      } catch (err) {
+        if (!isRateLimitError(err) || attempt === MAX_RETRIES) throw err;
+
+        const retryAfterMs =
+          parseRetryAfter(err) ??
+          BASE_DELAY_MS * Math.pow(2, attempt);
+
+        this.logger.warn(
+          `[${agentName}] Rate limited (attempt ${attempt + 1}/${MAX_RETRIES}), retrying in ${Math.round(retryAfterMs / 1000)}s...`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, retryAfterMs));
+      }
+    }
+    throw new Error("unreachable");
+  }
 
   async run(config: AgentConfig, initialPrompt: string): Promise<AgentResult> {
     const { maxTokens, model, systemPrompt, tools, serverTools, outputFormat } =
@@ -30,18 +84,42 @@ export class AgentRunner {
     let iterations = 0;
     let toolCallCount = 0;
 
+    this.logger.log(
+      `[${config.name}] Starting agent loop (model=${model}, maxIter=${config.maxIterations}, tools=[${tools.map((t) => t.definition.name).join(", ")}], serverTools=${serverTools?.length ?? 0})`,
+    );
+
     while (iterations < config.maxIterations) {
       const start = Date.now();
 
-      const response = await this.provider.chat({
-        model,
-        system: systemPrompt,
-        messages,
-        tools: tools.map((t) => t.definition),
-        serverTools,
-        maxTokens,
-        outputFormat,
-      });
+      let response;
+      try {
+        response = await this.chatWithRetry(
+          {
+            model,
+            system: systemPrompt,
+            messages,
+            tools: tools.map((t) => t.definition),
+            serverTools,
+            maxTokens,
+            outputFormat,
+          },
+          config.name,
+        );
+      } catch (apiError) {
+        const msg =
+          apiError instanceof Error ? apiError.message : String(apiError);
+        this.logger.error(
+          `[${config.name}] API call failed on iteration ${iterations}: ${msg}`,
+          apiError instanceof Error ? apiError.stack : undefined,
+        );
+        throw apiError;
+      }
+
+      const latencyMs = Date.now() - start;
+
+      this.logger.debug(
+        `[${config.name}] iter=${iterations} stop=${response.stopReason} tools=${response.toolCalls.length} latency=${latencyMs}ms tokens=${response.usage.inputTokens}in/${response.usage.outputTokens}out`,
+      );
 
       steps.push({
         type: "llm_response",
@@ -51,16 +129,22 @@ export class AgentRunner {
           text: response.text,
           usage: response.usage,
         },
-        latencyMs: Date.now() - start,
+        latencyMs,
       });
 
       // DONE — model finished on its own
       if (response.stopReason === "end_turn") {
+        this.logger.log(
+          `[${config.name}] Completed: ${iterations} iterations, ${toolCallCount} tool calls, output=${response.text.length} chars`,
+        );
         return { text: response.text, steps, iterations, toolCallCount };
       }
 
       // PAUSE TURN — server tool loop hit max iterations, echo and continue
       if (response.stopReason === "pause_turn") {
+        this.logger.debug(
+          `[${config.name}] pause_turn at iteration ${iterations}, sending continue`,
+        );
         messages.push({
           role: "assistant",
           content: response.rawAssistantContent,
