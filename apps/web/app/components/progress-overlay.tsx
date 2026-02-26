@@ -11,45 +11,69 @@ interface ProgressOverlayProps {
   onClose: () => void;
 }
 
-const STEP_CONFIG: Record<string, { label: string; description: string }> = {
-  scope_decomposition: {
+// Pipeline phases — parallel steps grouped into one phase
+const PHASES: { steps: string[]; label: string; description: string }[] = [
+  {
+    steps: ["scope_decomposition"],
     label: "Analyzing project scope",
     description: "Breaking down the project into sections and line items",
   },
-  price_resolution: {
-    label: "Looking up material prices",
-    description: "Fetching material and labor costs from our database",
+  {
+    steps: ["price_resolution", "web_price_resolution"],
+    label: "Resolving prices",
+    description: "Searching database and web for material and labor costs",
   },
-  web_price_resolution: {
-    label: "Searching web for prices",
-    description: "Sourcing current pricing data from the web",
-  },
-  price_merge: {
+  {
+    steps: ["price_merge"],
     label: "Merging price data",
     description: "Combining sources for best accuracy",
   },
-  option_generation: {
+  {
+    steps: ["option_generation"],
     label: "Generating options",
     description: "Creating good / better / best pricing tiers",
   },
-  calculation: {
+  {
+    steps: ["calculation"],
     label: "Calculating totals",
     description: "Computing final totals and saving your estimate",
   },
-};
+];
 
-const TOTAL_STEPS = Object.keys(STEP_CONFIG).length;
+type PhaseStatus = "pending" | "running" | "completed" | "error";
+
+function getPhaseStatus(
+  phase: { steps: string[] },
+  stepMap: Map<string, ProgressStep>,
+): PhaseStatus {
+  const statuses = phase.steps.map(
+    (s) => stepMap.get(s)?.status ?? "pending",
+  );
+  if (statuses.some((s) => s === "error")) return "error";
+  if (statuses.every((s) => s === "completed")) return "completed";
+  if (statuses.some((s) => s === "running" || s === "completed"))
+    return "running";
+  return "pending";
+}
+
+function getPhaseMessage(
+  phase: { steps: string[] },
+  stepMap: Map<string, ProgressStep>,
+): string | null {
+  for (const s of phase.steps) {
+    const step = stepMap.get(s);
+    if (step?.status === "error" && step.message) return step.message;
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function Spinner({ size = "md" }: { size?: "sm" | "md" }) {
-  const px = size === "sm" ? "h-4 w-4" : "h-5 w-5";
+function Spinner() {
   return (
-    <div
-      className={`${px} rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-white animate-spin flex-shrink-0`}
-    />
+    <div className="h-5 w-5 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-white animate-spin flex-shrink-0" />
   );
 }
 
@@ -69,45 +93,48 @@ function ErrorDot() {
   );
 }
 
-function StepRow({ step }: { step: ProgressStep }) {
-  const config = STEP_CONFIG[step.step];
-  const label = config?.label ?? step.step;
-  const description = config?.description;
-  const isRunning = step.status === "running";
-  const isCompleted = step.status === "completed";
-  const isError = step.status === "error";
-
+function PhaseRow({
+  label,
+  description,
+  status,
+  errorMessage,
+}: {
+  label: string;
+  description: string;
+  status: PhaseStatus;
+  errorMessage: string | null;
+}) {
   return (
     <div className="flex items-start gap-3.5 py-3.5 animate-[stepIn_0.35s_ease-out_both]">
       <div className="mt-0.5">
-        {isCompleted ? (
+        {status === "completed" ? (
           <CompletedCheck />
-        ) : isError ? (
+        ) : status === "error" ? (
           <ErrorDot />
-        ) : isRunning ? (
+        ) : status === "running" ? (
           <Spinner />
         ) : null}
       </div>
       <div className="flex flex-col min-w-0 flex-1">
         <span
           className={
-            isError
+            status === "error"
               ? "text-sm font-medium text-red-500 dark:text-red-400"
-              : isRunning
+              : status === "running"
                 ? "text-sm font-medium text-gray-900 dark:text-gray-100"
                 : "text-sm text-gray-500 dark:text-gray-500"
           }
         >
           {label}
         </span>
-        {isRunning && description && (
+        {status === "running" && (
           <span className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             {description}
           </span>
         )}
-        {isError && step.message && (
+        {status === "error" && errorMessage && (
           <span className="text-xs text-red-400 dark:text-red-500 mt-0.5">
-            {step.message}
+            {errorMessage}
           </span>
         )}
       </div>
@@ -166,17 +193,36 @@ export function ProgressOverlay({
   const isOpen = jobId !== null;
   if (!isOpen) return null;
 
-  const completedCount = steps.filter((s) => s.status === "completed").length;
-  const progress = isComplete ? 100 : (completedCount / TOTAL_STEPS) * 100;
+  // Build step lookup
+  const stepMap = new Map(steps.map((s) => [s.step, s]));
 
-  // Progressive reveal — only show completed + running + error steps
-  const visibleSteps = steps.filter(
-    (s) =>
-      s.status === "completed" || s.status === "running" || s.status === "error",
+  // Compute phase statuses
+  const phaseStatuses = PHASES.map((phase) => ({
+    ...phase,
+    status: getPhaseStatus(phase, stepMap),
+    errorMessage: getPhaseMessage(phase, stepMap),
+  }));
+
+  // Only show completed + running + error phases (progressive reveal)
+  const visiblePhases = phaseStatuses.filter(
+    (p) => p.status !== "pending",
   );
 
-  const runningStep = steps.find((s) => s.status === "running");
-  const stepNumber = completedCount + (runningStep ? 1 : 0);
+  const completedPhases = phaseStatuses.filter(
+    (p) => p.status === "completed",
+  ).length;
+  const currentPhase =
+    completedPhases +
+    (phaseStatuses.some((p) => p.status === "running") ? 1 : 0);
+  const progress = isComplete
+    ? 100
+    : (completedPhases / PHASES.length) * 100;
+
+  // Better error message for connection drops
+  const displayError =
+    error === "Connection lost. Please try again."
+      ? "Lost connection to the server. The generation may still be running — check the project page."
+      : error;
 
   return (
     <>
@@ -246,27 +292,33 @@ export function ProgressOverlay({
                   </span>
                 </div>
 
-                {/* Step counter */}
-                {stepNumber > 0 && (
+                {/* Phase counter */}
+                {currentPhase > 0 && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-                    Step {stepNumber} of {TOTAL_STEPS}
+                    Step {currentPhase} of {PHASES.length}
                   </p>
                 )}
-                {stepNumber === 0 && <div className="mb-4" />}
+                {currentPhase === 0 && <div className="mb-4" />}
 
                 {/* Error banner */}
-                {error && (
+                {displayError && (
                   <div className="rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 px-4 py-3 text-sm text-red-600 dark:text-red-400 mb-4">
-                    {error}
+                    {displayError}
                   </div>
                 )}
 
-                {/* Steps list */}
+                {/* Phases list */}
                 <div className="min-h-[100px]">
-                  {visibleSteps.length > 0 ? (
+                  {visiblePhases.length > 0 ? (
                     <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {visibleSteps.map((step) => (
-                        <StepRow key={step.step} step={step} />
+                      {visiblePhases.map((phase, i) => (
+                        <PhaseRow
+                          key={i}
+                          label={phase.label}
+                          description={phase.description}
+                          status={phase.status}
+                          errorMessage={phase.errorMessage}
+                        />
                       ))}
                     </div>
                   ) : !error ? (
