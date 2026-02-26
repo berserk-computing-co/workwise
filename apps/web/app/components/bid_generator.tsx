@@ -187,7 +187,7 @@ export function BidGenerator() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-6">
+    <>
       <div className="bg-gray-50 dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-2xl w-full max-w-2xl p-8">
         {(pageState === "idle" || pageState === "generating") && (
           <IdleView
@@ -208,6 +208,6 @@ export function BidGenerator() {
         onComplete={handleGenerateComplete}
         onClose={handleProgressClose}
       />
-    </div>
+    </>
   );
 }
