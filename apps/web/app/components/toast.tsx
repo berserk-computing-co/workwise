@@ -8,12 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  InformationCircleIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface Toast {
   id: string;
@@ -32,22 +27,10 @@ const ToastContext = createContext<ToastContextValue>({
 const MAX_TOASTS = 3;
 const AUTO_DISMISS_MS = 4000;
 
-const typeConfig = {
-  success: {
-    borderClass: "border-l-4 border-l-green-500",
-    Icon: CheckCircleIcon,
-    iconClass: "text-green-500",
-  },
-  error: {
-    borderClass: "border-l-4 border-l-red-500",
-    Icon: ExclamationCircleIcon,
-    iconClass: "text-red-500",
-  },
-  info: {
-    borderClass: "border-l-4 border-l-blue-500",
-    Icon: InformationCircleIcon,
-    iconClass: "text-blue-500",
-  },
+const dotClass = {
+  success: "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0",
+  error: "w-2 h-2 rounded-full bg-red-500 flex-shrink-0",
+  info: "w-2 h-2 rounded-full bg-blue-500 flex-shrink-0",
 };
 
 function ToastItem({
@@ -58,7 +41,6 @@ function ToastItem({
   onDismiss: (id: string) => void;
 }) {
   const [visible, setVisible] = useState(false);
-  const { borderClass, Icon, iconClass } = typeConfig[toast.type];
 
   useEffect(() => {
     const enterFrame = requestAnimationFrame(() => setVisible(true));
@@ -74,21 +56,19 @@ function ToastItem({
     <div
       role="alert"
       className={[
-        "rounded-lg shadow-lg p-4 flex items-center gap-3 min-w-[320px] max-w-[420px]",
-        "bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700",
-        borderClass,
+        "bg-white dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 min-w-[300px] max-w-[400px]",
         "transition-all duration-200 ease-out",
         visible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4",
       ].join(" ")}
     >
-      <Icon className={`h-5 w-5 flex-shrink-0 ${iconClass}`} />
-      <p className="flex-1 text-sm text-gray-900 dark:text-slate-100 line-clamp-2">
+      <span className={dotClass[toast.type]} />
+      <p className="flex-1 text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
         {toast.message}
       </p>
       <button
         onClick={handleDismiss}
         aria-label="Dismiss notification"
-        className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+        className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none rounded transition-colors"
       >
         <XMarkIcon className="h-4 w-4" />
       </button>

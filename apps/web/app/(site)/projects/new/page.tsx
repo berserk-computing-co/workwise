@@ -116,16 +116,14 @@ const CATEGORIES = [
 
 function BotCard({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="border-l-4 border-blue-500 bg-white dark:bg-slate-800 rounded-lg shadow-sm p-4 flex gap-3">
-      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-base select-none">
-        🤖
+    <div className="bg-gray-50 dark:bg-[#1a1a1e] rounded-xl p-5 border border-gray-100 dark:border-gray-800 flex gap-3">
+      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm select-none">
+        ✦
       </div>
       <div>
-        <p className="font-semibold text-gray-900 dark:text-slate-100">
-          {title}
-        </p>
+        <p className="font-medium text-gray-900 dark:text-gray-100">{title}</p>
         {subtitle && (
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {subtitle}
           </p>
         )}
@@ -144,20 +142,20 @@ function LockedAnswerCard({
   onEdit: () => void;
 }) {
   return (
-    <div className="bg-blue-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 flex items-start justify-between gap-3">
+    <div className="bg-white dark:bg-[#0f0f12] rounded-xl p-5 border border-gray-100 dark:border-gray-800 ml-6 flex items-start justify-between gap-3">
       <div>
         {label && (
-          <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">
+          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">
             {label}
           </p>
         )}
-        <p className="text-sm text-gray-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+        <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">
           {value}
         </p>
       </div>
       <button
         onClick={onEdit}
-        className="flex-shrink-0 text-xs text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+        className="flex-shrink-0 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none rounded transition-colors"
       >
         Change
       </button>
@@ -223,7 +221,7 @@ function Step1Address({
         title="Where's the project?"
         subtitle="Enter the project address to get started."
       />
-      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-[#0f0f12] border border-gray-100 dark:border-gray-800 rounded-xl p-4">
         {mapsLoaded ? (
           <GooglePlacesAutocomplete
             apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
@@ -237,17 +235,25 @@ function Step1Address({
               styles: {
                 control: (base) => ({
                   ...base,
-                  border: "1px solid #d1d5db",
-                  borderRadius: "0.5rem",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "0.75rem",
                   boxShadow: "none",
                   padding: "2px 4px",
-                  "&:hover": { borderColor: "#3b82f6" },
+                  backgroundColor: "transparent",
+                  "&:hover": { borderColor: "#9ca3af" },
                 }),
                 input: (base) => ({ ...base, color: "inherit" }),
-                menu: (base) => ({ ...base, zIndex: 50 }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 50,
+                  borderRadius: "0.75rem",
+                  border: "1px solid #e5e7eb",
+                  boxShadow:
+                    "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+                }),
                 option: (base, state) => ({
                   ...base,
-                  backgroundColor: state.isFocused ? "#eff6ff" : "white",
+                  backgroundColor: state.isFocused ? "#f9fafb" : "white",
                   color: "#111827",
                   cursor: "pointer",
                 }),
@@ -259,7 +265,7 @@ function Step1Address({
             type="text"
             disabled
             placeholder="Loading address search..."
-            className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2 text-sm text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-700"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm text-gray-400 dark:text-gray-500 bg-transparent"
           />
         )}
         {picking && (
@@ -324,7 +330,7 @@ function Step2Description({
         title="What work needs to be done?"
         subtitle="Be as detailed as you can — it helps us generate a more accurate estimate."
       />
-      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 shadow-sm space-y-3">
+      <div className="space-y-3">
         <textarea
           ref={textareaRef}
           value={description}
@@ -336,7 +342,7 @@ function Step2Description({
               : "Describe the project — what rooms, what kind of work, any specific materials or requirements..."
           }
           rows={3}
-          className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2 text-base text-gray-900 dark:text-slate-100 bg-transparent placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden transition-all"
+          className="w-full bg-white dark:bg-[#0f0f12] border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 overflow-hidden transition-all"
           style={{ minHeight: "80px", maxHeight: "200px" }}
         />
 
@@ -346,10 +352,10 @@ function Step2Description({
             <button
               key={cat}
               onClick={() => handleCategoryToggle(cat)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-full px-3 py-1.5 text-sm border transition-colors cursor-pointer ${
                 category === cat
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                  ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-transparent"
+                  : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
               }`}
             >
               {cat}
@@ -358,7 +364,7 @@ function Step2Description({
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400 dark:text-slate-500">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {description.trim().length < 20
               ? `${20 - description.trim().length} more characters needed`
               : "Press ⌘↵ or click Continue"}
@@ -366,7 +372,7 @@ function Step2Description({
           <button
             onClick={handleSubmit}
             disabled={!canContinue}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
           >
             Continue
           </button>
@@ -406,7 +412,7 @@ function Step3Client({
         title="Who's the client?"
         subtitle="Optional — you can add this later."
       />
-      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 shadow-sm space-y-3">
+      <div className="space-y-3">
         <input
           ref={inputRef}
           type="text"
@@ -414,18 +420,18 @@ function Step3Client({
           onChange={(e) => setClientName(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Client name"
-          className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2 text-base text-gray-900 dark:text-slate-100 bg-transparent placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+          className="w-full bg-white dark:bg-[#0f0f12] border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 transition-colors"
         />
         <div className="flex items-center justify-between">
           <button
             onClick={onSkip}
-            className="text-sm text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+            className="text-sm text-gray-400 hover:text-gray-600 focus:outline-none rounded transition-colors"
           >
             Skip
           </button>
           <button
             onClick={() => onNext({ clientName: clientName.trim() })}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity"
           >
             Continue
           </button>
@@ -456,58 +462,58 @@ function Step4Summary({
         title="Ready to go!"
         subtitle="Review your project details below."
       />
-      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 shadow-sm space-y-3">
-        <div className="space-y-2 text-sm">
+      <div className="bg-gray-50 dark:bg-[#1a1a1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 space-y-4">
+        <div className="space-y-3 text-sm">
           <div>
-            <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
               Address
             </p>
-            <p className="text-gray-800 dark:text-slate-200">
+            <p className="text-gray-800 dark:text-gray-200">
               {state.formattedAddress}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
               Description
             </p>
-            <p className="text-gray-800 dark:text-slate-200 whitespace-pre-wrap">
+            <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
               {state.description}
             </p>
           </div>
           {state.category && (
             <div>
-              <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
                 Category
               </p>
-              <p className="text-gray-800 dark:text-slate-200">
+              <p className="text-gray-800 dark:text-gray-200">
                 {state.category}
               </p>
             </div>
           )}
           {state.clientName && (
             <div>
-              <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">
                 Client
               </p>
-              <p className="text-gray-800 dark:text-slate-200">
+              <p className="text-gray-800 dark:text-gray-200">
                 {state.clientName}
               </p>
             </div>
           )}
         </div>
 
-        <div className="pt-2 flex flex-col sm:flex-row gap-3">
+        <div className="pt-1 flex flex-col sm:flex-row gap-3">
           <button
             onClick={onSaveDraft}
             disabled={submitting}
-            className="flex-1 rounded-lg border border-gray-300 dark:border-slate-600 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? "Saving..." : "Save as Draft"}
           </button>
           <button
             onClick={onGenerate}
             disabled={submitting}
-            className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
           >
             {submitting ? "Creating..." : "Generate Estimate"}
           </button>
@@ -634,17 +640,17 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-4">
+    <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="space-y-4">
         {/* Header */}
         <div className="mb-6">
           <button
             onClick={() => router.push("/projects")}
-            className="text-sm text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none rounded"
           >
             ← Back to Projects
           </button>
-          <h1 className="mt-3 text-2xl font-bold text-gray-900 dark:text-slate-100">
+          <h1 className="mt-3 text-2xl font-semibold text-gray-900 dark:text-gray-100">
             New Project
           </h1>
         </div>

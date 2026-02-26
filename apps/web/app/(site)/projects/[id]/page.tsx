@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Button, Modal, Spinner, TextInput, Label } from "flowbite-react";
+import { Modal, TextInput, Label } from "flowbite-react";
 import { ProjectDetailSkeleton } from "@/app/components/skeletons";
 import {
   ChevronDownIcon,
@@ -27,13 +27,14 @@ import { useToast } from "@/app/components/toast";
 // ---------------------------------------------------------------------------
 
 const STATUS_STYLES: Record<ProjectStatus, string> = {
-  draft: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  draft: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
   generating:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 animate-pulse",
-  review: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  sent: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-  accepted: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  rejected: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse",
+  review: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
+  sent: "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
+  accepted:
+    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
+  rejected: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
 };
 
 const formatCurrency = (amount: number) =>
@@ -117,7 +118,7 @@ function EditableField({
       onBlur: () => void commit(),
       onKeyDown: handleKeyDown,
       className: [
-        "w-full rounded border border-blue-400 bg-white dark:bg-slate-700 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400",
+        "w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1e] px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10",
         inputClassName,
       ]
         .filter(Boolean)
@@ -146,7 +147,7 @@ function EditableField({
       {renderDisplay(value)}
       <button
         onClick={startEdit}
-        className="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 p-0.5 rounded text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
+        className="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 p-0.5 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         aria-label="Edit"
       >
         <PencilIcon className="h-3.5 w-3.5" />
@@ -225,7 +226,7 @@ function EditableCell({
         onBlur={() => void commit()}
         onKeyDown={handleKeyDown}
         className={[
-          "w-full rounded border border-blue-400 bg-white dark:bg-slate-700 px-2 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400",
+          "w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1e] px-2 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10",
           className,
         ]
           .filter(Boolean)
@@ -238,7 +239,7 @@ function EditableCell({
     <button
       onClick={startEdit}
       className={[
-        "w-full text-left rounded px-1 py-0.5 -mx-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-text",
+        "w-full text-left rounded px-1 py-0.5 -mx-1 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors cursor-text",
         className,
       ]
         .filter(Boolean)
@@ -373,23 +374,21 @@ function AddItemModal({
         </Modal.Body>
         <Modal.Footer>
           <div className="flex w-full justify-end gap-2">
-            <Button
-              color="gray"
-              size="sm"
+            <button
+              type="button"
               onClick={onClose}
               disabled={isSubmitting}
+              className="rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
               Cancel
-            </Button>
-            <Button
-              color="blue"
-              size="sm"
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting}
-              isProcessing={isSubmitting}
+              className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
             >
-              Add Item
-            </Button>
+              {isSubmitting ? "Adding…" : "Add Item"}
+            </button>
           </div>
         </Modal.Footer>
       </form>
@@ -464,23 +463,27 @@ function AddSectionModal({
             if (e.key === "Escape") onClose();
           }}
           placeholder="Section name"
-          className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 bg-transparent placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 transition-colors"
         />
       </Modal.Body>
       <Modal.Footer>
         <div className="flex w-full justify-end gap-2">
-          <Button color="gray" size="sm" onClick={onClose} disabled={saving}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+          >
             Cancel
-          </Button>
-          <Button
-            color="blue"
-            size="sm"
+          </button>
+          <button
+            type="button"
             onClick={() => void handleSave()}
             disabled={saving || !name.trim()}
-            isProcessing={saving}
+            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
           >
-            Add Section
-          </Button>
+            {saving ? "Adding…" : "Add Section"}
+          </button>
         </div>
       </Modal.Footer>
     </Modal>
@@ -626,85 +629,90 @@ function SectionPanel({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
+    <div className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors group">
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-3 flex-1 text-left min-w-0"
+      <div
+        className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 dark:hover:bg-[#1a1a1e] transition-colors group cursor-pointer"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <div
+          className="flex items-center gap-3 flex-1 min-w-0"
+          onClick={(e) => e.stopPropagation()}
         >
           <EditableField
             value={section.name}
             onSave={handleSaveSectionName}
             className="min-w-0"
             renderDisplay={(v) => (
-              <span className="font-semibold text-gray-900 dark:text-slate-100">
+              <span className="font-medium text-gray-900 dark:text-gray-100">
                 {v}
               </span>
             )}
           />
-          <span className="rounded-full bg-gray-100 dark:bg-slate-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-slate-400 shrink-0">
+          <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">
             {localItems.length} {localItems.length === 1 ? "item" : "items"}
           </span>
-        </button>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700 dark:text-slate-300">
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {formatCurrency(section.subtotal)}
           </span>
           <button
-            onClick={() => onDeleteRequest(section.id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 focus:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteRequest(section.id);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 focus:opacity-100"
             aria-label="Delete section"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
           <ChevronDownIcon
-            className={`h-5 w-5 text-gray-400 dark:text-slate-500 transition-transform ${open ? "rotate-180" : ""}`}
-            onClick={() => setOpen((o) => !o)}
+            className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}
           />
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-gray-200 dark:border-slate-700">
+        <div className="border-t border-gray-100 dark:border-gray-800">
           {localItems.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-gray-500 dark:text-slate-400">
+            <p className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
               No items in this section
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/40">
-                    <th className="px-5 py-2.5 text-left font-medium text-gray-500 dark:text-slate-400">
+                  <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1e]/50">
+                    <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
                       Description
                     </th>
-                    <th className="px-4 py-2.5 text-right font-medium text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                    <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
                       Qty
                     </th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-500 dark:text-slate-400">
+                    <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
                       Unit
                     </th>
-                    <th className="px-4 py-2.5 text-right font-medium text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                    <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
                       Unit Cost
                     </th>
-                    <th className="px-4 py-2.5 text-right font-medium text-gray-500 dark:text-slate-400 whitespace-nowrap">
+                    <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
                       Ext. Cost
                     </th>
-                    <th className="px-5 py-2.5 text-left font-medium text-gray-500 dark:text-slate-400">
+                    <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
                       Source
                     </th>
                     <th className="px-2 py-2.5 w-20" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                <tbody>
                   {localItems.map((item, index) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors group/row"
+                      className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-[#1a1a1e]/50 transition-colors group/row"
                     >
                       {/* Description */}
-                      <td className="px-5 py-2 text-gray-900 dark:text-slate-100 min-w-[200px]">
+                      <td className="py-3 px-4 text-gray-900 dark:text-gray-100 min-w-[200px]">
                         <EditableCell
                           value={item.description}
                           type="text"
@@ -714,7 +722,7 @@ function SectionPanel({
                         />
                       </td>
                       {/* Qty */}
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-slate-300 w-20">
+                      <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-20">
                         <EditableCell
                           value={item.quantity}
                           type="number"
@@ -726,7 +734,7 @@ function SectionPanel({
                         />
                       </td>
                       {/* Unit */}
-                      <td className="px-4 py-2 text-gray-700 dark:text-slate-300 w-20">
+                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300 w-20">
                         <EditableCell
                           value={item.unit}
                           type="text"
@@ -736,7 +744,7 @@ function SectionPanel({
                         />
                       </td>
                       {/* Unit Cost */}
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-slate-300 w-28">
+                      <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-28">
                         <EditableCell
                           value={item.unitCost}
                           type="number"
@@ -748,28 +756,28 @@ function SectionPanel({
                         />
                       </td>
                       {/* Ext Cost (optimistic) */}
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-slate-300 w-28">
+                      <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-28">
                         {formatCurrency(item.extendedCost)}
                       </td>
                       {/* Source */}
-                      <td className="px-5 py-2">
+                      <td className="py-3 px-4">
                         {item.source ? (
-                          <span className="inline-flex rounded-full bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                          <span className="inline-flex rounded-full px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                             {item.source}
                           </span>
                         ) : (
-                          <span className="text-gray-400 dark:text-slate-600">
+                          <span className="text-gray-300 dark:text-gray-700">
                             —
                           </span>
                         )}
                       </td>
                       {/* Actions */}
-                      <td className="px-2 py-2 w-20">
+                      <td className="py-3 px-2 w-20">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
                           <button
                             onClick={() => void handleReorder(index, "up")}
                             disabled={index === 0}
-                            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 disabled:opacity-20"
+                            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
                             aria-label="Move up"
                           >
                             <ChevronUpIcon className="h-3.5 w-3.5" />
@@ -777,14 +785,14 @@ function SectionPanel({
                           <button
                             onClick={() => void handleReorder(index, "down")}
                             disabled={index === localItems.length - 1}
-                            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 disabled:opacity-20"
+                            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
                             aria-label="Move down"
                           >
                             <ChevronDownIcon className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => void handleDeleteItem(item.id)}
-                            className="p-1 rounded text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
+                            className="p-1 rounded text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
                             aria-label="Delete item"
                           >
                             <TrashIcon className="h-3.5 w-3.5" />
@@ -798,10 +806,10 @@ function SectionPanel({
             </div>
           )}
           {/* Add item button */}
-          <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700">
+          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={() => onAddItem(section.id)}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+              className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors focus:outline-none"
             >
               + Add Item
             </button>
@@ -869,30 +877,28 @@ function OptionCard({
 
   return (
     <div
-      className={`bg-white dark:bg-slate-800 rounded-lg border p-5 flex flex-col gap-2 ${
-        recommended
-          ? "border-blue-500 dark:border-blue-500 ring-2 ring-blue-500"
-          : "border-gray-200 dark:border-slate-700"
+      className={`bg-gray-50 dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-xl p-5 flex flex-col gap-2 ${
+        recommended ? "ring-2 ring-gray-900 dark:ring-white" : ""
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-700 dark:text-slate-300 uppercase tracking-wide">
+        <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">
           {tierLabels[option.tier]}
         </span>
         {recommended && (
-          <span className="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+          <span className="rounded-full bg-gray-900 dark:bg-white px-2 py-0.5 text-xs font-medium text-white dark:text-gray-900">
             Recommended
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
+      <p className="text-2xl font-semibold mt-1 text-gray-900 dark:text-gray-100">
         {formatCurrency(option.total)}
       </p>
       <EditableField
         value={String(option.multiplier)}
         onSave={handleSaveMultiplier}
         renderDisplay={(v) => (
-          <span className="text-sm text-gray-500 dark:text-slate-400">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {v}x multiplier
           </span>
         )}
@@ -1082,23 +1088,21 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
-        <div className="max-w-5xl mx-auto">
-          <ProjectDetailSkeleton />
-        </div>
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <ProjectDetailSkeleton />
       </div>
     );
   }
 
   if (notFound || !project) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center gap-4">
-        <p className="text-xl font-semibold text-gray-900 dark:text-slate-100">
+      <div className="flex flex-col items-center justify-center gap-4 py-24">
+        <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Project not found
         </p>
         <Link
           href="/projects"
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
         >
           ← Back to Projects
         </Link>
@@ -1112,147 +1116,138 @@ export default function ProjectDetailPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Back link */}
-        <Link
-          href="/projects"
-          className="inline-block mb-4 text-sm text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition-colors"
-        >
-          ← Projects
-        </Link>
+    <div className="max-w-5xl mx-auto px-6 py-8">
+      {/* Back link */}
+      <Link
+        href="/projects"
+        className="inline-block mb-6 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+      >
+        ← Projects
+      </Link>
 
-        {/* Header card */}
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <EditableField
-                value={project.description}
-                onSave={handleSaveDescription}
-                multiline
-                className="mb-1"
-                renderDisplay={(v) => (
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-                    {v}
-                  </h1>
-                )}
-              />
-              <p className="text-gray-500 dark:text-slate-400 text-sm mb-1">
-                {project.address}, {project.zipCode}
-              </p>
-              {project.clientName && (
-                <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
-                  {project.clientName}
-                </p>
+      {/* Header */}
+      <div className="bg-gray-50 dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-xl p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <EditableField
+              value={project.description}
+              onSave={handleSaveDescription}
+              multiline
+              className="mb-1"
+              renderDisplay={(v) => (
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                  {v}
+                </h1>
               )}
-              <span
-                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[project.status]}`}
-              >
-                {project.status.charAt(0).toUpperCase() +
-                  project.status.slice(1)}
-              </span>
-            </div>
-            <div className="flex-shrink-0 text-right">
-              <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">
-                {formatCurrency(project.total)}
+            />
+            <p className="text-sm text-gray-500 mb-1">
+              {project.address}, {project.zipCode}
+            </p>
+            {project.clientName && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+                {project.clientName}
               </p>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                Total estimate
-              </p>
-            </div>
+            )}
+            <span
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[project.status]}`}
+            >
+              {project.status.charAt(0).toUpperCase() +
+                project.status.slice(1)}
+            </span>
           </div>
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t border-gray-100 dark:border-slate-700">
-            <Button
-              color="blue"
-              size="sm"
-              disabled={project.status === "generating" || generating}
-              onClick={() => void handleGenerate()}
-              isProcessing={generating}
-            >
-              Generate Estimate
-            </Button>
-            <Button
-              color="gray"
-              size="sm"
-              outline
-              disabled={duplicating}
-              isProcessing={duplicating}
-              onClick={() => void handleDuplicate()}
-            >
-              Duplicate
-            </Button>
-            <Button
-              color="failure"
-              size="sm"
-              outline
-              onClick={() => setShowDeleteModal(true)}
-            >
-              Delete
-            </Button>
+          <div className="flex-shrink-0 text-right">
+            <p className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+              {formatCurrency(project.total)}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Total estimate
+            </p>
           </div>
         </div>
 
-        {/* Sections */}
-        <div className="flex flex-col gap-4 mb-4">
-          {project.sections.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 px-5 py-10 text-center">
-              <p className="text-gray-500 dark:text-slate-400 text-sm">
-                No sections yet. Generate an estimate to get started.
-              </p>
-            </div>
-          ) : (
-            project.sections.map((section) => (
-              <SectionPanel
-                key={section.id}
-                section={section}
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+          <button
+            disabled={project.status === "generating" || generating}
+            onClick={() => void handleGenerate()}
+            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-40"
+          >
+            {generating ? "Generating…" : "Generate Estimate"}
+          </button>
+          <button
+            disabled={duplicating}
+            onClick={() => void handleDuplicate()}
+            className="rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
+          >
+            {duplicating ? "Duplicating…" : "Duplicate"}
+          </button>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="rounded-full border border-gray-200 dark:border-gray-700 text-red-600 dark:text-red-400 px-5 py-2.5 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="flex flex-col gap-3 mb-4">
+        {project.sections.length === 0 ? (
+          <div className="border border-gray-100 dark:border-gray-800 rounded-xl px-5 py-10 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No sections yet. Generate an estimate to get started.
+            </p>
+          </div>
+        ) : (
+          project.sections.map((section) => (
+            <SectionPanel
+              key={section.id}
+              section={section}
+              projectId={id}
+              onRefetch={fetchProject}
+              addToast={addToast}
+              onDeleteRequest={(sectionId) => setDeleteSectionId(sectionId)}
+              onAddItem={(sectionId) => setAddItemSectionId(sectionId)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Add Section */}
+      <div className="mb-8">
+        <button
+          onClick={() => setShowAddSection(true)}
+          className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors focus:outline-none"
+        >
+          + Add Section
+        </button>
+      </div>
+
+      {/* Options panel */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Estimate Options
+        </h2>
+        {sortedOptions.length === 0 ? (
+          <div className="border border-gray-100 dark:border-gray-800 rounded-xl px-5 py-10 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Generate an estimate to see pricing options
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {sortedOptions.map((option) => (
+              <OptionCard
+                key={option.id}
+                option={option}
+                recommended={option.tier === "better"}
                 projectId={id}
                 onRefetch={fetchProject}
                 addToast={addToast}
-                onDeleteRequest={(sectionId) => setDeleteSectionId(sectionId)}
-                onAddItem={(sectionId) => setAddItemSectionId(sectionId)}
               />
-            ))
-          )}
-        </div>
-
-        {/* Add Section */}
-        <div className="mb-8">
-          <button
-            onClick={() => setShowAddSection(true)}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
-          >
-            + Add Section
-          </button>
-        </div>
-
-        {/* Options panel */}
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">
-            Estimate Options
-          </h2>
-          {sortedOptions.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 px-5 py-10 text-center">
-              <p className="text-gray-500 dark:text-slate-400 text-sm">
-                Generate an estimate to see pricing options
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {sortedOptions.map((option) => (
-                <OptionCard
-                  key={option.id}
-                  option={option}
-                  recommended={option.tier === "better"}
-                  projectId={id}
-                  onRefetch={fetchProject}
-                  addToast={addToast}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* SSE Progress overlay */}
@@ -1270,29 +1265,28 @@ export default function ProjectDetailPage() {
       >
         <Modal.Header>Delete Project?</Modal.Header>
         <Modal.Body>
-          <p className="text-gray-700 dark:text-slate-300 text-sm">
+          <p className="text-gray-700 dark:text-gray-300 text-sm">
             This action cannot be undone.
           </p>
         </Modal.Body>
         <Modal.Footer>
           <div className="flex w-full justify-end gap-2">
-            <Button
-              color="gray"
-              size="sm"
+            <button
+              type="button"
               onClick={() => setShowDeleteModal(false)}
               disabled={deleting}
+              className="rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
               Cancel
-            </Button>
-            <Button
-              color="failure"
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={() => void handleDelete()}
               disabled={deleting}
-              isProcessing={deleting}
+              className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
             >
-              Delete
-            </Button>
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
           </div>
         </Modal.Footer>
       </Modal>
@@ -1305,30 +1299,29 @@ export default function ProjectDetailPage() {
       >
         <Modal.Header>Delete Section?</Modal.Header>
         <Modal.Body>
-          <p className="text-gray-700 dark:text-slate-300 text-sm">
+          <p className="text-gray-700 dark:text-gray-300 text-sm">
             Items will be moved to the &ldquo;Other&rdquo; section. This action
             cannot be undone.
           </p>
         </Modal.Body>
         <Modal.Footer>
           <div className="flex w-full justify-end gap-2">
-            <Button
-              color="gray"
-              size="sm"
+            <button
+              type="button"
               onClick={() => setDeleteSectionId(null)}
               disabled={deletingSection}
+              className="rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
               Cancel
-            </Button>
-            <Button
-              color="failure"
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={() => void handleDeleteSection()}
               disabled={deletingSection}
-              isProcessing={deletingSection}
+              className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
             >
-              Delete
-            </Button>
+              {deletingSection ? "Deleting…" : "Delete"}
+            </button>
           </div>
         </Modal.Footer>
       </Modal>

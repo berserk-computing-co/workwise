@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Button, Modal, Spinner } from "flowbite-react";
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useJobProgress } from "../hooks/use-job-progress";
 import type { ProgressStep, StepStatus } from "../hooks/use-job-progress";
 
@@ -24,22 +20,20 @@ const STEP_LABELS: Record<string, string> = {
   calculation: "Calculating totals",
 };
 
-function StepIcon({ status }: { status: StepStatus }) {
+function StepDot({ status }: { status: StepStatus }) {
   if (status === "completed") {
-    return (
-      <CheckCircleIcon className="h-5 w-5 flex-shrink-0 text-green-500 dark:text-green-400" />
-    );
+    return <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />;
   }
   if (status === "error") {
-    return (
-      <ExclamationCircleIcon className="h-5 w-5 flex-shrink-0 text-red-500 dark:text-red-400" />
-    );
+    return <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />;
   }
   if (status === "running") {
-    return <Spinner size="sm" color="info" />;
+    return (
+      <span className="w-2 h-2 rounded-full bg-gray-900 dark:bg-white animate-pulse flex-shrink-0" />
+    );
   }
   return (
-    <span className="inline-block h-5 w-5 flex-shrink-0 rounded-full border-2 border-gray-300 dark:border-slate-600" />
+    <span className="w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
   );
 }
 
@@ -50,25 +44,25 @@ function StepRow({ step }: { step: ProgressStep }) {
 
   return (
     <li className="flex items-start gap-3 py-2">
-      <div className="mt-0.5">
-        <StepIcon status={step.status} />
+      <div className="mt-1.5">
+        <StepDot status={step.status} />
       </div>
       <div className="flex flex-col min-w-0">
         <span
           className={
             isError
-              ? "text-sm font-medium text-red-600 dark:text-red-400"
+              ? "text-sm text-red-500 dark:text-red-400"
               : isRunning
-                ? "text-sm font-medium text-blue-600 dark:text-blue-400"
+                ? "text-sm font-medium text-gray-900 dark:text-gray-100"
                 : step.status === "completed"
-                  ? "text-sm font-medium text-gray-900 dark:text-slate-100"
-                  : "text-sm font-medium text-gray-400 dark:text-slate-500"
+                  ? "text-sm text-gray-600 dark:text-gray-400"
+                  : "text-sm text-gray-600 dark:text-gray-400"
           }
         >
           {label}
         </span>
         {step.message && (
-          <span className="text-xs text-gray-500 dark:text-slate-400 truncate">
+          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {step.message}
           </span>
         )}
@@ -104,26 +98,31 @@ export function ProgressOverlay({
 
   const isOpen = jobId !== null;
 
+  if (!isOpen) return null;
+
   return (
-    <Modal dismissible={false} show={isOpen} size="md" onClose={onClose}>
-      <Modal.Header>Generating Estimate</Modal.Header>
-      <Modal.Body>
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+      <div className="bg-white dark:bg-[#1a1a1e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xl max-w-md w-full mx-4 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Generating Estimate
+        </h2>
+
         <div className="flex flex-col gap-4">
           {isComplete ? (
             <div className="flex flex-col items-center gap-3 py-4">
-              <CheckCircleIcon className="h-12 w-12 text-green-500 dark:text-green-400" />
-              <p className="text-base font-semibold text-gray-900 dark:text-slate-100">
+              <CheckCircleIcon className="h-10 w-10 text-emerald-500" />
+              <p className="text-base font-medium text-gray-900 dark:text-gray-100">
                 Estimate generated successfully!
               </p>
             </div>
           ) : error ? (
-            <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-400">
+            <div className="rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 px-4 py-3 text-sm text-red-600 dark:text-red-400">
               {error}
             </div>
           ) : null}
 
           {steps.length > 0 && (
-            <ul className="divide-y divide-gray-100 dark:divide-slate-700">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {steps.map((step) => (
                 <StepRow key={step.step} step={step} />
               ))}
@@ -132,28 +131,33 @@ export function ProgressOverlay({
 
           {!isComplete && steps.length === 0 && !error && (
             <div className="flex items-center gap-3 py-4">
-              <Spinner size="md" color="info" />
-              <span className="text-sm text-gray-600 dark:text-slate-400">
+              <span className="w-2 h-2 rounded-full bg-gray-900 dark:bg-white animate-pulse flex-shrink-0" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 Starting pipeline...
               </span>
             </div>
           )}
         </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <div className="flex w-full justify-end gap-2">
+
+        <div className="mt-5 flex justify-end gap-3">
           {error && (
-            <Button color="blue" onClick={onClose}>
+            <button
+              onClick={onClose}
+              className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity"
+            >
               Close
-            </Button>
+            </button>
           )}
           {!isComplete && (
-            <Button color="gray" onClick={onClose}>
+            <button
+              onClick={onClose}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
               Cancel
-            </Button>
+            </button>
           )}
         </div>
-      </Modal.Footer>
-    </Modal>
+      </div>
+    </div>
   );
 }
