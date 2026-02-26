@@ -31,7 +31,7 @@ export class PriceResolutionStep implements PipelineStep<BidEngineContext> {
       context.zipCode,
     );
 
-    context.pricedItems = flatItems.map((item, i) => {
+    context.oneBuildResults = flatItems.map((item, i) => {
       const result = results[i];
       if (result.matched) {
         return {
