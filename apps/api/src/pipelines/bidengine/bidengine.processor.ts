@@ -57,6 +57,10 @@ export class BidEngineProcessor extends WorkerHost {
         category: project.category,
       };
 
+      this.logger.log(
+        `Pipeline context: project=${project.id}, category="${project.category}", zip=${project.zipCode}, description="${project.description?.slice(0, 100)}"`,
+      );
+
       const onProgress = (
         step: string,
         status: StepStatus,
@@ -81,6 +85,10 @@ export class BidEngineProcessor extends WorkerHost {
       await this.pipelineJobs.complete(job.id!, {
         total: context.totals!.total,
       });
+      await this.projectRepo.update(projectId, {
+        status: "review",
+        currentJobId: null,
+      });
       this.logger.log(
         `Job ${job.id} completed — total: ${context.totals!.total}`,
       );
@@ -91,6 +99,10 @@ export class BidEngineProcessor extends WorkerHost {
         error instanceof Error ? error.stack : undefined,
       );
       await this.pipelineJobs.fail(job.id!, message);
+      await this.projectRepo.update(projectId, {
+        status: "draft",
+        currentJobId: null,
+      });
       throw error;
     }
   }

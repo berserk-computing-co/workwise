@@ -12,8 +12,8 @@ const validResponseText = JSON.stringify({
           description: "2x4 lumber",
           quantity: 100,
           unit: "LF",
-          unit_cost: 3.5,
           category: ItemCategory.Material,
+          pricing_hint: "material",
         },
       ],
     },
@@ -54,16 +54,16 @@ describe("ScopeDecompositionStep", () => {
     expect(step.name).toBe("scope_decomposition");
   });
 
-  it('execute() calls provider.chat with model "claude-sonnet-4-6" and maxTokens 8192', async () => {
+  it('execute() calls provider.chat with model "claude-haiku-4-5-20251001" and maxTokens 8192', async () => {
     await step.execute(context);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     const callArgs = mockProvider.chat.mock.calls[0][0];
-    expect(callArgs.model).toBe("claude-sonnet-4-6");
+    expect(callArgs.model).toBe("claude-haiku-4-5-20251001");
     expect(callArgs.maxTokens).toBe(8192);
   });
 
-  it("execute() populates context.sections with snake_case→camelCase mapping (unit_cost → unitCost)", async () => {
+  it("execute() populates context.sections with parsed items and pricing_hint", async () => {
     await step.execute(context);
 
     expect(context.sections).toBeDefined();
@@ -78,8 +78,8 @@ describe("ScopeDecompositionStep", () => {
     expect(item.description).toBe("2x4 lumber");
     expect(item.quantity).toBe(100);
     expect(item.unit).toBe("LF");
-    expect(item.unitCost).toBe(3.5);
     expect(item.category).toBe(ItemCategory.Material);
+    expect(item.pricing_hint).toBe("material");
   });
 
   it('execute() throws when stopReason !== "end_turn"', async () => {

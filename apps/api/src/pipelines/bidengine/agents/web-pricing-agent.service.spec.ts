@@ -40,7 +40,6 @@ const mockItems = [
     description: "2x4x8 lumber stud",
     quantity: 50,
     unit: "each",
-    unitCost: 3.0,
     category: "material",
     sectionName: "Framing",
   },
@@ -48,7 +47,6 @@ const mockItems = [
     description: "Install framing",
     quantity: 8,
     unit: "hours",
-    unitCost: 0,
     category: "labor",
     sectionName: "Framing",
   },
@@ -74,8 +72,8 @@ describe("WebPricingAgentService", () => {
       expect(mockAgentRunner.run).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "web_pricing",
-          model: "claude-sonnet-4-6",
-          maxIterations: 15,
+          model: "claude-haiku-4-5-20251001",
+          maxIterations: 20,
           maxTokens: 8192,
         }),
         expect.any(String),
@@ -90,7 +88,7 @@ describe("WebPricingAgentService", () => {
       expect(config.serverTools[0]).toMatchObject({
         type: "web_search_20250305",
         name: "web_search",
-        max_uses: 15,
+        max_uses: 20,
       });
     });
 
@@ -146,12 +144,38 @@ describe("WebPricingAgentService", () => {
       mockAgentRunner.run.mockResolvedValueOnce({
         text: JSON.stringify({ results: [] }),
         iterations: 1,
-        toolCallCount: 0,
+        toolCallCount: 1,
       });
 
       const results = await service.priceItems([], "90210");
 
       expect(results).toEqual([]);
+    });
+
+    it("rejects hallucinated results when agent made 0 tool calls", async () => {
+      mockAgentRunner.run.mockResolvedValueOnce({
+        text: JSON.stringify({
+          results: [
+            { index: 0, matched: true, unitCost: 99, confidence: 0.9, category: "material" },
+          ],
+        }),
+        iterations: 0,
+        toolCallCount: 0,
+      });
+
+      const results = await service.priceItems(mockItems, "90210");
+
+      expect(results).toHaveLength(2);
+      expect(results[0]).toMatchObject({
+        matched: false,
+        unitCost: 0,
+        skipReason: "agent_did_not_search",
+      });
+      expect(results[1]).toMatchObject({
+        matched: false,
+        unitCost: 0,
+        skipReason: "agent_did_not_search",
+      });
     });
 
     it("propagates agentRunner errors", async () => {

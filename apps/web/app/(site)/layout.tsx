@@ -1,6 +1,7 @@
 import React from "react";
 import { WorkWiseNavbar } from "@/app/components/workwise_navbar";
-import { Footer } from "flowbite-react";
+import { UserProvider } from "@/app/hooks/use-backend-user";
+import { OnboardingGuard } from "@/app/components/onboarding-guard";
 
 export default function SiteLayout({
   children,
@@ -8,33 +9,22 @@ export default function SiteLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <UserProvider>
       <WorkWiseNavbar />
-      <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-blue-200 dark:bg-slate-900">
-        <div className="z-10 w-full max-w-5xl items-center justify-between font-mono">
-          {children}
-        </div>
-      </main>
-      <Footer container className="dark:bg-slate-900">
-        <div className="w-full text-center">
-          <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
-            <Footer.Brand
-              href="https://api.workwise.live"
-              src="/workwise.png"
-              alt="WorkWise Logo"
-              name="WorkWise"
-            />
-            <Footer.LinkGroup>
-              <Footer.Link href="#">About</Footer.Link>
-              <Footer.Link href="#">Privacy Policy</Footer.Link>
-              <Footer.Link href="#">Licensing</Footer.Link>
-              <Footer.Link href="#">Contact</Footer.Link>
-            </Footer.LinkGroup>
+      <OnboardingGuard>
+        <main className="min-h-[calc(100vh-64px)]">{children}</main>
+      </OnboardingGuard>
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400 dark:text-gray-500">
+          <div className="flex items-center gap-2">
+            <img src="/hardhat-logo.png" className="h-5" alt="WorkWise" />
+            <span className="font-medium text-gray-500 dark:text-gray-400">
+              WorkWise
+            </span>
           </div>
-          <Footer.Divider />
-          <Footer.Copyright href="#" by="Berserk Computing" year={2024} />
+          <p>&copy; {new Date().getFullYear()} Berserk Computing</p>
         </div>
-      </Footer>
-    </>
+      </footer>
+    </UserProvider>
   );
 }

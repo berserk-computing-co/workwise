@@ -20,7 +20,7 @@ const pricingResultSchema = z.object({
       laborSource: z.string(),
       confidence: z.number().min(0).max(1),
       notes: z.string().optional(),
-      category: z.string(),
+      category: z.string().default("uncategorized"),
       skipReason: z.string().optional(),
     }),
   ),
@@ -46,12 +46,16 @@ export class OneBuildAgentService {
       description: string;
       quantity: number;
       unit: string;
-      unitCost: number;
       category: string;
       sectionName: string;
+      pricingHint?: string;
     }>,
     zipCode: string,
   ): Promise<PricingResult[]> {
+    this.logger.log(
+      `Starting OneBuild pricing: ${items.length} items, ZIP=${zipCode}`,
+    );
+
     const config: AgentConfig = {
       name: "onebuild_resolution",
       model: "claude-sonnet-4-6",
@@ -63,21 +67,56 @@ export class OneBuildAgentService {
     };
 
     const itemList = items
-      .map(
-        (item, i) =>
-          `${i}: ${JSON.stringify({ description: item.description, quantity: item.quantity, unit: item.unit, unitCost: item.unitCost, category: item.category })}`,
-      )
+      .map((item, i) => {
+        const entry: Record<string, unknown> = {
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          category: item.category,
+        };
+        if (item.pricingHint) {
+          entry.pricing_hint = item.pricingHint;
+        }
+        return `${i}: ${JSON.stringify(entry)}`;
+      })
       .join("\n");
 
     const initialPrompt = `Price the following ${items.length} items for ZIP code ${zipCode}:\n\n${itemList}`;
 
-    const result = await this.agentRunner.run(config, initialPrompt);
-
-    this.logger.log(
-      `Pricing agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls`,
+    this.logger.debug(
+      `OneBuild prompt length: ${initialPrompt.length} chars`,
     );
 
-    const parsed = pricingOutputFormat.parse(result.text);
-    return parsed.results;
+    let result;
+    try {
+      result = await this.agentRunner.run(config, initialPrompt);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `OneBuild agent runner failed: ${msg}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw err;
+    }
+
+    this.logger.log(
+      `OneBuild agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,
+    );
+
+    try {
+      const parsed = pricingOutputFormat.parse(result.text);
+      this.logger.log(
+        `OneBuild parsed ${parsed.results.length} results (${parsed.results.filter((r) => r.matched).length} matched)`,
+      );
+      return parsed.results;
+    } catch (parseErr) {
+      this.logger.error(
+        `OneBuild output parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+      );
+      this.logger.error(
+        `Raw agent output (first 500 chars): ${result.text.slice(0, 500)}`,
+      );
+      throw parseErr;
+    }
   }
 }

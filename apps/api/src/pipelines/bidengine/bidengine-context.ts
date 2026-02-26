@@ -4,7 +4,6 @@ export interface ScopeItem {
   description: string;
   quantity: number;
   unit: string;
-  unitCost: number;
   category: ItemCategory;
   pricing_hint?: string;
   labor_hours?: number;

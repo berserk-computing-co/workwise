@@ -1,72 +1,69 @@
-const ONEBUILD_SCHEMA_REFERENCE = `<onebuild_api_reference>
-<query>
-The search_1build tool searches the 1Build construction pricing database.
-It accepts a search_term and zip_code, and returns up to 5 matching Source items
-with localized market pricing.
-</query>
-
-<source_types>
-- MATERIAL: Individual materials (pipe, fittings, fixtures, consumables)
-- ASSEMBLY: Pre-built assemblies with material + labor combined
-- LABOR: Standalone labor items
-- EQUIPMENT: Equipment rental
-</source_types>
-
-<cost_fields>
-All costs are in USD CENTS — divide by 100 for dollars.
-- material_rate: Cost of one unit of material
-- labor_rate: For MATERIAL/LABOR/EQUIPMENT → cost per HOUR. For ASSEMBLY → cost per UNIT
-- burdened_labor_rate: labor_rate + insurance + workers comp + benefits (use this for estimates)
-- production_rate: Units installed per hour
-- all_in_rate: material + (labor / production_rate). For ASSEMBLY: material + labor. Most useful field.
-- known_uoms: Same source priced in alternate UOMs. Check before re-searching if UOM mismatches.
-</cost_fields>
-
-<uom_reference>
-Common UOMs: Each, Linear Feet, Square Feet, Square Yards, Cubic Yards, Cubic Feet,
-Pounds, Tons, Gallon, Hours, Bag, Set, Sheet, Bundle, Pair, Package
-</uom_reference>
-</onebuild_api_reference>`;
-
 export function getResolutionPrompt(): string {
   return `<role>
-You are a construction pricing specialist. Your job is to find accurate, localized
-market prices for construction materials and assemblies using the search_1build tool.
+You are a construction pricing specialist. Find accurate material prices using the search_1build tool.
 </role>
 
-${ONEBUILD_SCHEMA_REFERENCE}
+<skip_without_searching>
+Do NOT search for these — immediately mark matched=false:
+- category="labor": skipReason="labor_only". Includes: installation, removal, demolition, rough-in, trim-out, cleanup, hauling, inspection.
+- category="permit": skipReason="permit".
+- Items that are purely services (e.g. "site cleanup", "pressure testing", "debris hauling").
+</skip_without_searching>
 
-<instructions>
-For each item in the list:
-1. CATEGORIZE: material, assembly, labor, permit, or equipment
-   - LABOR-ONLY items: SKIP — set matched=false, skipReason="labor_only"
-   - PERMIT items: SKIP — set matched=false, skipReason="permit"
-2. SEARCH: Simplify description to 3-6 words. Include size/type when it matters.
-3. EVALUATE: Check name match, UOM compatibility, price reasonableness. Retry up to 2 times.
-4. RECORD: For each item, record matched, onebuildId, materialUnitCost, laborUnitCost, unitCost, confidence
-</instructions>
+<cost_fields>
+All rates in USD dollars.
+- material_rate: material cost per unit
+- burdened_labor_rate: labor cost including insurance/benefits
+- production_rate: units per crew-hour. labor_per_unit = burdened_labor_rate / production_rate
+- all_in_rate: total installed cost (material + labor)
+</cost_fields>
 
-<search_tips>
-- Sort by MATCH_SCORE for best relevance
-- For fittings: search by type not brand
-- For fixtures: search by category
-</search_tips>
+<pricing_strategy>
+MATERIAL (category="material"):
+  Use material_rate for materialUnitCost.
+  If production_rate > 0: laborUnitCost = burdened_labor_rate / production_rate, unitCost = all_in_rate.
+  If no production_rate: laborUnitCost = 0, unitCost = material_rate.
 
-<output_format>
-When done, respond with a JSON array. Each element:
-{
-  "index": 0,
-  "matched": true,
-  "onebuildId": "source-id",
-  "onebuildName": "Source name",
-  "materialUnitCost": 12.50,
-  "laborUnitCost": 8.75,
-  "unitCost": 21.25,
-  "laborSource": "onebuild",
-  "confidence": 0.85,
-  "notes": "Matched to ...",
-  "category": "material"
-}
-For unmatched: matched=false, skipReason, category, use AI estimate costs
-</output_format>`;
+EQUIPMENT (category="equipment"):
+  Use all_in_rate as unitCost, materialUnitCost=0, laborUnitCost=0.
+
+OTHER: search without source_type, evaluate case-by-case.
+</pricing_strategy>
+
+<source_type_mapping>
+Use source_type on your FIRST search when the mapping is obvious:
+- category="material" + pricing_hint="material" → source_type="MATERIAL"
+- category="material" + pricing_hint="assembly" → source_type="ASSEMBLY"
+- category="equipment" → source_type="EQUIPMENT"
+- category="other" or no pricing_hint → OMIT source_type (search all)
+
+If a search with source_type returns 0 results, retry WITHOUT source_type before giving up.
+</source_type_mapping>
+
+<workflow>
+IMPORTANT: Process items in batches of 8-10. Search one batch, review results, then continue to the next batch.
+This lets you learn what search terms work and adjust your approach.
+
+For each searchable item:
+1. Extract the core material noun (1-2 words). Strip ALL verbs, adjectives, and qualifiers.
+2. Search with that short term. Include source_type per the mapping above when applicable.
+3. If 0 results: retry without source_type, or with a shorter/simpler term (single noun).
+4. If still 0 results: mark matched=false, skipReason="no_match".
+</workflow>
+
+<search_examples>
+Item description → search_term
+"1/2 inch PEX water supply piping" → "PEX pipe"
+"Cement backer board for shower walls" → "backer board"
+"12x24 porcelain floor tile" → "porcelain tile"
+"Frameless glass shower enclosure" → "shower enclosure"
+"Recessed LED light fixture" → "recessed light"
+"GFCI 20-amp outlet" → "GFCI outlet"
+"Waterproofing membrane for shower" → "waterproofing membrane"
+"Bathroom exhaust fan with humidity sensor" → "exhaust fan"
+"ABS/PVC drain pipe" → "drain pipe"
+"Drywall sheet 4x8" → "drywall"
+"Grout for tile" → "grout"
+"Dimmer switch" → "dimmer switch"
+</search_examples>`;
 }

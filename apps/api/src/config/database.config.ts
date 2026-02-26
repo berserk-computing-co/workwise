@@ -34,6 +34,6 @@ export function typeOrmConfigFactory(config: ConfigService) {
     autoLoadEntities: true,
     synchronize: false,
     migrationsRun: true,
-    migrations: ['dist/migrations/*.js'],
+    migrations: ['dist/src/migrations/*.js'],
   };
 }

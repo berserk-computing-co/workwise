@@ -13,10 +13,17 @@ export class PriceMergeStep implements PipelineStep<BidEngineContext> {
     const oneBuild = context.oneBuildResults;
     const web = context.webResults;
 
+    this.logger.log(
+      `Merge input — oneBuild: ${oneBuild === undefined ? "undefined" : `${oneBuild.length} items`}, web: ${web === undefined ? "undefined" : `${web.length} items`}`,
+    );
+
     const oneBuildPresent = oneBuild && oneBuild.length > 0;
     const webPresent = web && web.length > 0;
 
     if (!oneBuildPresent && !webPresent) {
+      this.logger.error(
+        `Both pricing sources empty/failed — oneBuild=${oneBuild === undefined ? "undefined" : `[] (len=${oneBuild.length})`}, web=${web === undefined ? "undefined" : `[] (len=${web.length})`}`,
+      );
       throw new Error("Both pricing sources failed — cannot continue pipeline");
     }
 
