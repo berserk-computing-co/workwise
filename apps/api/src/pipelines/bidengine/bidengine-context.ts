@@ -4,7 +4,6 @@ export interface ScopeItem {
   description: string;
   quantity: number;
   unit: string;
-  unitCost: number;
   category: ItemCategory;
   pricing_hint?: string;
   labor_hours?: number;
@@ -49,6 +48,8 @@ export interface BidEngineContext {
 
   // Populated by pipeline steps
   sections?: ScopeSection[];
+  oneBuildResults?: PricedItem[];
+  webResults?: PricedItem[];
   pricedItems?: PricedItem[];
   options?: OptionData[];
   totals?: ProjectTotals;

@@ -61,7 +61,6 @@ describe("OptionGenerationStep", () => {
               description: "PEX pipe",
               quantity: 50,
               unit: "LF",
-              unitCost: 2.0,
               category: "material" as any,
             },
           ],
@@ -88,12 +87,12 @@ describe("OptionGenerationStep", () => {
     expect(step.name).toBe("option_generation");
   });
 
-  it('execute() calls provider.chat with model "claude-sonnet-4-6" and maxTokens 4096', async () => {
+  it('execute() calls provider.chat with model "claude-haiku-4-5-20251001" and maxTokens 4096', async () => {
     await step.execute(context);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     const callArgs = mockProvider.chat.mock.calls[0][0];
-    expect(callArgs.model).toBe("claude-sonnet-4-6");
+    expect(callArgs.model).toBe("claude-haiku-4-5-20251001");
     expect(callArgs.maxTokens).toBe(4096);
   });
 

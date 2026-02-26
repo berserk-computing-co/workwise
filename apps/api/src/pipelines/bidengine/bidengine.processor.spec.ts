@@ -27,6 +27,8 @@ const mockPipelineJobs = {
 
 const mockScopeStep = { name: "scope_decomposition", execute: jest.fn() };
 const mockPriceStep = { name: "price_resolution", execute: jest.fn() };
+const mockWebPriceStep = { name: "web_price_resolution", execute: jest.fn() };
+const mockMergeStep = { name: "price_merge", execute: jest.fn() };
 const mockOptionStep = { name: "option_generation", execute: jest.fn() };
 const mockCalcStep = { name: "calculation", execute: jest.fn() };
 
@@ -44,6 +46,8 @@ function makeProcessor() {
     mockPriceStep as any,
     mockOptionStep as any,
     mockCalcStep as any,
+    mockWebPriceStep as any,
+    mockMergeStep as any,
   );
 }
 
@@ -92,7 +96,7 @@ describe("BidEngineProcessor", () => {
     });
   });
 
-  it("calls pipelineRunner.run with jobId, context, 4 steps in order, and onProgress callback", async () => {
+  it("calls pipelineRunner.run with jobId, context, steps in order, and onProgress callback", async () => {
     await processor.process(mockJob as any);
 
     expect(mockPipelineRunner.run).toHaveBeenCalledTimes(1);
@@ -100,11 +104,21 @@ describe("BidEngineProcessor", () => {
     expect(jobId).toBe("job-1");
     expect(steps).toEqual([
       mockScopeStep,
-      mockPriceStep,
+      [mockPriceStep, mockWebPriceStep],
+      mockMergeStep,
       mockOptionStep,
       mockCalcStep,
     ]);
     expect(typeof onProgress).toBe("function");
+  });
+
+  it("passes parallel pricing group to pipeline runner", async () => {
+    await processor.process(mockJob as any);
+
+    const [, , steps] = mockPipelineRunner.run.mock.calls[0];
+    expect(Array.isArray(steps[1])).toBe(true);
+    expect(steps[1]).toContain(mockPriceStep);
+    expect(steps[1]).toContain(mockWebPriceStep);
   });
 
   it("passes onProgress callback that calls pipelineJobs.updateStep", async () => {

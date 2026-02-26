@@ -9,6 +9,8 @@ import { PipelineJobService } from "../../pipeline/services/pipeline-job.service
 import type { StepStatus } from "../../pipeline/pipeline.enums.js";
 import { ScopeDecompositionStep } from "./steps/scope-decomposition.step.js";
 import { PriceResolutionStep } from "./steps/price-resolution.step.js";
+import { WebPriceResolutionStep } from "./steps/web-price-resolution.step.js";
+import { PriceMergeStep } from "./steps/price-merge.step.js";
 import { OptionGenerationStep } from "./steps/option-generation.step.js";
 import { CalculationStep } from "./steps/calculation.step.js";
 import type { BidEngineContext } from "./bidengine-context.js";
@@ -27,6 +29,8 @@ export class BidEngineProcessor extends WorkerHost {
     private readonly priceStep: PriceResolutionStep,
     private readonly optionStep: OptionGenerationStep,
     private readonly calcStep: CalculationStep,
+    private readonly webPriceStep: WebPriceResolutionStep,
+    private readonly mergeStep: PriceMergeStep,
   ) {
     super();
   }
@@ -53,6 +57,10 @@ export class BidEngineProcessor extends WorkerHost {
         category: project.category,
       };
 
+      this.logger.log(
+        `Pipeline context: project=${project.id}, category="${project.category}", zip=${project.zipCode}, description="${project.description?.slice(0, 100)}"`,
+      );
+
       const onProgress = (
         step: string,
         status: StepStatus,
@@ -64,12 +72,22 @@ export class BidEngineProcessor extends WorkerHost {
       await this.pipelineRunner.run(
         job.id!,
         context,
-        [this.scopeStep, this.priceStep, this.optionStep, this.calcStep],
+        [
+          this.scopeStep,
+          [this.priceStep, this.webPriceStep],
+          this.mergeStep,
+          this.optionStep,
+          this.calcStep,
+        ],
         onProgress,
       );
 
       await this.pipelineJobs.complete(job.id!, {
         total: context.totals!.total,
+      });
+      await this.projectRepo.update(projectId, {
+        status: "review",
+        currentJobId: null,
       });
       this.logger.log(
         `Job ${job.id} completed — total: ${context.totals!.total}`,
@@ -81,6 +99,10 @@ export class BidEngineProcessor extends WorkerHost {
         error instanceof Error ? error.stack : undefined,
       );
       await this.pipelineJobs.fail(job.id!, message);
+      await this.projectRepo.update(projectId, {
+        status: "draft",
+        currentJobId: null,
+      });
       throw error;
     }
   }

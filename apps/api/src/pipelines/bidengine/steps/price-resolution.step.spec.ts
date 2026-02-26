@@ -53,14 +53,12 @@ describe("PriceResolutionStep", () => {
               description: "2x4 lumber",
               quantity: 100,
               unit: "LF",
-              unitCost: 3.5,
               category: ItemCategory.Material,
             },
             {
               description: "Framing labor",
               quantity: 16,
               unit: "HR",
-              unitCost: 25.0,
               category: ItemCategory.Labor,
             },
           ],
@@ -108,8 +106,8 @@ describe("PriceResolutionStep", () => {
   it("execute() maps matched result → PricedItem with source AiPriced", async () => {
     await step.execute(context);
 
-    expect(context.pricedItems).toBeDefined();
-    const matched = context.pricedItems![0];
+    expect(context.oneBuildResults).toBeDefined();
+    const matched = context.oneBuildResults![0];
     expect(matched.source).toBe(ItemSource.AiPriced);
     expect(matched.description).toBe("2x4 lumber");
     expect(matched.unitCost).toBe(3.5);
@@ -129,13 +127,23 @@ describe("PriceResolutionStep", () => {
   it("execute() maps unmatched result → PricedItem with source AiUnmatched", async () => {
     await step.execute(context);
 
-    expect(context.pricedItems).toBeDefined();
-    const unmatched = context.pricedItems![1];
+    expect(context.oneBuildResults).toBeDefined();
+    const unmatched = context.oneBuildResults![1];
     expect(unmatched.source).toBe(ItemSource.AiUnmatched);
     expect(unmatched.description).toBe("Framing labor");
     expect(unmatched.sectionName).toBe("Framing");
     expect(unmatched.sourceData).toMatchObject({
       skipReason: "no match found",
     });
+  });
+
+  it("graceful degradation — sets empty array on agent failure", async () => {
+    mockOneBuildAgent.priceItems.mockRejectedValueOnce(
+      new Error("API timeout"),
+    );
+
+    await step.execute(context);
+
+    expect(context.oneBuildResults).toEqual([]);
   });
 });
