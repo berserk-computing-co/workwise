@@ -58,9 +58,7 @@ export class OneBuildAgentService {
 
     const config: AgentConfig = {
       name: "onebuild_resolution",
-      // TODO: Using Haiku to reduce token costs while iterating on pipeline.
-      // Revisit upgrading to Sonnet once item count is optimized and prompt tokens are lower.
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-6",
       systemPrompt: getResolutionPrompt(),
       tools: [createSearch1BuildTool(this.oneBuildService)],
       maxIterations: 30,

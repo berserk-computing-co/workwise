@@ -53,14 +53,12 @@ describe("PriceResolutionStep", () => {
               description: "2x4 lumber",
               quantity: 100,
               unit: "LF",
-              unitCost: 3.5,
               category: ItemCategory.Material,
             },
             {
               description: "Framing labor",
               quantity: 16,
               unit: "HR",
-              unitCost: 25.0,
               category: ItemCategory.Labor,
             },
           ],
@@ -137,5 +135,15 @@ describe("PriceResolutionStep", () => {
     expect(unmatched.sourceData).toMatchObject({
       skipReason: "no match found",
     });
+  });
+
+  it("graceful degradation — sets empty array on agent failure", async () => {
+    mockOneBuildAgent.priceItems.mockRejectedValueOnce(
+      new Error("API timeout"),
+    );
+
+    await step.execute(context);
+
+    expect(context.oneBuildResults).toEqual([]);
   });
 });

@@ -20,8 +20,10 @@ const scopeDecompositionSchema = z.object({
           description: z.string(),
           quantity: z.number(),
           unit: z.string(),
-          unit_cost: z.number(),
           category: z.nativeEnum(ItemCategory),
+          pricing_hint: z
+            .enum(["material", "assembly", "labor_rate", "skip"])
+            .optional(),
         }),
       ),
     }),
@@ -45,7 +47,9 @@ export class ScopeAgentService {
   ): Promise<AgentResult & { parsed: ScopeDecompositionOutput }> {
     const config = {
       name: "scope_decomposition",
-      model: "claude-sonnet-4-6",
+      // TODO: Using Haiku to reduce token costs while iterating on pipeline.
+      // Revisit upgrading to Sonnet once item count is optimized and prompt tokens are lower.
+      model: "claude-haiku-4-5-20251001",
       systemPrompt: getScopePrompt(category),
       tools: [],
       serverTools: [webSearchServerTool],

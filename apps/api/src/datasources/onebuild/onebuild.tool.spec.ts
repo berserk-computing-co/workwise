@@ -41,7 +41,7 @@ describe("createSearch1BuildTool", () => {
     expect(tool.definition.name).toBe("search_1build");
   });
 
-  it("execute() calls service.fetchSourceItems with search_term and zip_code", async () => {
+  it("execute() calls service.fetchSourceItems with search_term, zip_code, and source_type", async () => {
     mockService.fetchSourceItems.mockResolvedValue([]);
 
     await tool.execute({ search_term: "lumber", zip_code: "90210" });
@@ -49,6 +49,23 @@ describe("createSearch1BuildTool", () => {
     expect(mockService.fetchSourceItems).toHaveBeenCalledWith(
       "lumber",
       "90210",
+      undefined,
+    );
+  });
+
+  it("execute() passes source_type filter when provided", async () => {
+    mockService.fetchSourceItems.mockResolvedValue([]);
+
+    await tool.execute({
+      search_term: "install toilet",
+      zip_code: "90210",
+      source_type: "ASSEMBLY",
+    });
+
+    expect(mockService.fetchSourceItems).toHaveBeenCalledWith(
+      "install toilet",
+      "90210",
+      "ASSEMBLY",
     );
   });
 
