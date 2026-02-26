@@ -76,12 +76,6 @@ export const WorkWiseNavbar = () => {
         <NavbarLink href="/">Home</NavbarLink>
       </NavbarCollapse>
       <div className="flex items-center gap-2 md:order-2">
-        <Link
-          href="/join"
-          className="hidden sm:inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-slate-700 transition-colors"
-        >
-          Join as a contractor
-        </Link>
         <ThemeToggle />
         <NavbarProfile />
         <Navbar.Toggle />

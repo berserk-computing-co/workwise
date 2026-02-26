@@ -9,11 +9,10 @@ export const config = {
      * - / (home page)
      * - /widget (public embed)
      * - /api/auth/* (Auth0 handlers)
-     * - /join (contractor signup)
      * - /_next/static (static files)
      * - /_next/image (image optimization)
      * - /favicon.ico, /workwise.png (public assets)
      */
-    "/((?!$|widget|api/auth|join|_next/static|_next/image|favicon\\.ico|workwise\\.png).*)",
+    "/((?!$|widget|api/auth|_next/static|_next/image|favicon\\.ico|workwise\\.png).*)",
   ],
 };
