@@ -23,8 +23,7 @@ const optionGenerationSchema = z.object({
         overrides: z.record(z.string(), z.unknown()).default({}),
       }),
     )
-    .min(3)
-    .max(3),
+    .min(1),
 });
 
 const optionOutputFormat = zodOutputFormat(optionGenerationSchema);
@@ -37,7 +36,9 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
 
   async execute(context: BidEngineContext): Promise<void> {
     const response = await this.provider.chat({
-      model: "claude-sonnet-4-6",
+      // TODO: Using Haiku to reduce token costs while iterating on pipeline.
+      // Revisit upgrading to Sonnet once item count is optimized and prompt tokens are lower.
+      model: "claude-haiku-4-5-20251001",
       system: optionGenerationPrompt,
       messages: [{ role: "user", content: buildOptionPrompt(context) }],
       maxTokens: 4096,
@@ -52,7 +53,15 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
 
     const result = optionOutputFormat.parse(response.text);
 
-    context.options = result.options.map((o) => ({
+    // Deduplicate by tier — keep the first entry for each of good/better/best
+    const seen = new Set<string>();
+    const deduped = result.options.filter((o) => {
+      if (seen.has(o.tier)) return false;
+      seen.add(o.tier);
+      return true;
+    });
+
+    context.options = deduped.map((o) => ({
       tier: o.tier,
       label: o.label,
       description: o.description,
