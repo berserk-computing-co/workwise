@@ -12,6 +12,7 @@ export enum ItemSource {
   AiDecomposition = "ai_decomposition",
   AiPriced = "ai_priced",
   AiUnmatched = "ai_unmatched",
+  WebPriced = "web_priced",
   Manual = "manual",
   Template = "template",
 }

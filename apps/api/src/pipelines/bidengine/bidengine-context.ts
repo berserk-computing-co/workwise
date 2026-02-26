@@ -49,6 +49,8 @@ export interface BidEngineContext {
 
   // Populated by pipeline steps
   sections?: ScopeSection[];
+  oneBuildResults?: PricedItem[];
+  webResults?: PricedItem[];
   pricedItems?: PricedItem[];
   options?: OptionData[];
   totals?: ProjectTotals;
