@@ -25,6 +25,7 @@ const mockAgentResult = {
   }),
   iterations: 5,
   toolCallCount: 3,
+  truncated: false,
 };
 
 const mockAgentRunner = {
@@ -80,7 +81,7 @@ describe("WebPricingAgentService", () => {
       );
     });
 
-    it("passes server tool with max_uses: 15", async () => {
+    it("passes server tool with max_uses: 20", async () => {
       await service.priceItems(mockItems, "90210");
 
       const [config] = mockAgentRunner.run.mock.calls[0];
@@ -145,6 +146,7 @@ describe("WebPricingAgentService", () => {
         text: JSON.stringify({ results: [] }),
         iterations: 1,
         toolCallCount: 1,
+        truncated: false,
       });
 
       const results = await service.priceItems([], "90210");
@@ -161,6 +163,7 @@ describe("WebPricingAgentService", () => {
         }),
         iterations: 0,
         toolCallCount: 0,
+        truncated: false,
       });
 
       const results = await service.priceItems(mockItems, "90210");
@@ -175,6 +178,27 @@ describe("WebPricingAgentService", () => {
         matched: false,
         unitCost: 0,
         skipReason: "agent_did_not_search",
+      });
+    });
+
+    it("attempts JSON repair on truncated output", async () => {
+      const truncatedJson = '{"results":[{"index":0,"matched":true,"unitCost":5.0,"confidence":0.8,"category":"material"},{"index":1,"matched":tr';
+      mockAgentRunner.run.mockResolvedValueOnce({
+        text: truncatedJson,
+        iterations: 3,
+        toolCallCount: 5,
+        truncated: true,
+      });
+
+      const results = await service.priceItems(mockItems, "90210");
+
+      // Should salvage the first complete result
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        index: 0,
+        matched: true,
+        unitCost: 5.0,
+        category: "material",
       });
     });
 

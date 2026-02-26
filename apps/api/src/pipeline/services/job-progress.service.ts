@@ -33,8 +33,12 @@ export class JobProgressService {
   complete(jobId: string): void {
     const subject = this.subjects.get(jobId);
     if (subject) {
-      subject.complete();
-      setTimeout(() => this.subjects.delete(jobId), 30_000);
+      // Delay closing the RxJS stream so SSE clients have time to process
+      // the complete event before the connection ends (prevents onerror race).
+      setTimeout(() => {
+        subject.complete();
+        setTimeout(() => this.subjects.delete(jobId), 30_000);
+      }, 500);
     }
   }
 

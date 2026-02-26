@@ -54,4 +54,6 @@ export interface AgentResult {
   steps: AgentStep[];
   iterations: number;
   toolCallCount: number;
+  /** True when the final response was truncated due to hitting max_tokens. */
+  truncated: boolean;
 }

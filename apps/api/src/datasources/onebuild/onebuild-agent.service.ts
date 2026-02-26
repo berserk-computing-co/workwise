@@ -6,6 +6,7 @@ import { OneBuildService } from "./onebuild.service.js";
 import { getResolutionPrompt } from "./prompts/resolution.prompt.js";
 import { createSearch1BuildTool } from "./onebuild.tool.js";
 import type { AgentConfig } from "../../ai/interfaces/agent.interfaces.js";
+import { repairTruncatedResultsJson } from "../../ai/utils/json-repair.util.js";
 
 const pricingResultSchema = z.object({
   results: z.array(
@@ -58,7 +59,7 @@ export class OneBuildAgentService {
 
     const config: AgentConfig = {
       name: "onebuild_resolution",
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5-20251001",
       systemPrompt: getResolutionPrompt(),
       tools: [createSearch1BuildTool(this.oneBuildService)],
       maxIterations: 30,
@@ -87,26 +88,33 @@ export class OneBuildAgentService {
       `OneBuild prompt length: ${initialPrompt.length} chars`,
     );
 
-    let result;
-    try {
-      result = await this.agentRunner.run(config, initialPrompt);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(
-        `OneBuild agent runner failed: ${msg}`,
-        err instanceof Error ? err.stack : undefined,
-      );
-      throw err;
-    }
+    const result = await this.agentRunner.run(config, initialPrompt);
 
     this.logger.log(
       `OneBuild agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,
     );
 
+    let text = result.text;
+
+    if (result.truncated) {
+      this.logger.warn(
+        `OneBuild output was truncated (${text.length} chars), attempting JSON repair`,
+      );
+      const { repaired, success } = repairTruncatedResultsJson(text);
+      if (success) {
+        this.logger.log(
+          `JSON repair succeeded: salvaged ${repaired.length} of ${text.length} chars`,
+        );
+        text = repaired;
+      } else {
+        this.logger.warn(`JSON repair failed — parse will likely throw`);
+      }
+    }
+
     try {
-      const parsed = pricingOutputFormat.parse(result.text);
+      const parsed = pricingOutputFormat.parse(text);
       this.logger.log(
-        `OneBuild parsed ${parsed.results.length} results (${parsed.results.filter((r) => r.matched).length} matched)`,
+        `OneBuild parsed ${parsed.results.length} results (${parsed.results.filter((r) => r.matched).length} matched)${result.truncated ? " (repaired from truncated output)" : ""}`,
       );
       return parsed.results;
     } catch (parseErr) {

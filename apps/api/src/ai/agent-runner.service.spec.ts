@@ -61,6 +61,7 @@ describe("AgentRunner", () => {
     expect(result.text).toBe("done");
     expect(result.iterations).toBe(0);
     expect(result.toolCallCount).toBe(0);
+    expect(result.truncated).toBe(false);
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
   });
 
@@ -87,6 +88,7 @@ describe("AgentRunner", () => {
 
     expect(result.text).toBe("done");
     expect(result.toolCallCount).toBe(1);
+    expect(result.truncated).toBe(false);
   });
 
   it("sends error result for unknown tool name (hallucinated tool)", async () => {
@@ -179,6 +181,7 @@ describe("AgentRunner", () => {
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(2);
     expect(result.text).toBe("");
+    expect(result.truncated).toBe(false);
   });
 
   it("breaks loop on unexpected stop reason (max_tokens)", async () => {
@@ -197,6 +200,7 @@ describe("AgentRunner", () => {
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     expect(result.text).toBe("truncated");
     expect(result.iterations).toBe(0);
+    expect(result.truncated).toBe(false);
   });
 
   it("counts toolCallCount correctly across multiple iterations", async () => {

@@ -71,27 +71,50 @@ export class BidEngineController {
 
   @Public()
   @Get("jobs/:jobId/progress")
-  streamProgress(
+  async streamProgress(
     @Param("jobId") jobId: string,
     @Req() req: Request,
     @Res() res: Response,
-  ): void {
-    if (!this.pipelineJobs.has(jobId)) {
-      res.status(404).json({
-        statusCode: 404,
-        error: "Not Found",
-        message: "Job not found",
-      });
-      return;
-    }
-
+  ): Promise<void> {
+    // If the SSE subject is still alive, subscribe normally.
+    // If it's gone (page refresh after completion, late connect, etc.),
+    // look up the DB record and send the terminal state immediately.
     const observable = this.pipelineJobs.subscribe(jobId);
+
     if (!observable) {
-      res.status(404).json({
-        statusCode: 404,
-        error: "Not Found",
-        message: "Job not found",
-      });
+      const job = await this.pipelineJobs
+        .findOrFail(jobId)
+        .catch(() => null);
+
+      if (!job) {
+        res.status(404).json({
+          statusCode: 404,
+          error: "Not Found",
+          message: "Job not found",
+        });
+        return;
+      }
+
+      // Job exists in DB but SSE subject is gone — send terminal state
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
+
+      if (job.status === "completed") {
+        res.write(
+          `event: complete\ndata: ${JSON.stringify({ step: "", status: StepStatus.Complete, message: "Pipeline completed" })}\n\n`,
+        );
+      } else if (job.status === "failed") {
+        const msg =
+          (job.errors as { message?: string } | null)?.message ??
+          "Generation failed";
+        res.write(
+          `event: error\ndata: ${JSON.stringify({ step: "pipeline", status: StepStatus.Error, message: msg })}\n\n`,
+        );
+      }
+
+      res.end();
       return;
     }
 

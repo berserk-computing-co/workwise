@@ -5,9 +5,9 @@ export class CreateProjectDto {
   @IsString()
   description: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  address: string;
+  address?: string;
 
   @IsNotEmpty()
   @IsString()
