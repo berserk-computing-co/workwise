@@ -3,13 +3,13 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Spinner } from "flowbite-react";
 import { DocumentPlusIcon } from "@heroicons/react/24/outline";
 import {
   Project,
   ProjectStatus,
   PaginatedResponse,
 } from "@/app/types/project-api";
+import { ProjectsListSkeleton } from "@/app/components/skeletons";
 
 const STATUS_STYLES: Record<ProjectStatus, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
@@ -110,9 +110,7 @@ export default function ProjectsPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex justify-center py-24">
-            <Spinner size="xl" />
-          </div>
+          <ProjectsListSkeleton />
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <DocumentPlusIcon className="h-16 w-16 text-gray-300 dark:text-slate-600 mb-4" />

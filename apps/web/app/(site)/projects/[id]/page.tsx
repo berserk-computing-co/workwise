@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Button, Modal, Spinner, TextInput, Label } from "flowbite-react";
+import { ProjectDetailSkeleton } from "@/app/components/skeletons";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -1081,8 +1082,10 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
-        <Spinner size="xl" />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
+        <div className="max-w-5xl mx-auto">
+          <ProjectDetailSkeleton />
+        </div>
       </div>
     );
   }

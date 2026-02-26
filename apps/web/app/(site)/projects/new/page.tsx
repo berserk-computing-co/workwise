@@ -144,7 +144,7 @@ function LockedAnswerCard({
   onEdit: () => void;
 }) {
   return (
-    <div className="bg-blue-50 dark:bg-slate-750 border border-gray-200 dark:border-slate-700 rounded-lg p-3 flex items-start justify-between gap-3">
+    <div className="bg-blue-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 flex items-start justify-between gap-3">
       <div>
         {label && (
           <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">
@@ -259,7 +259,7 @@ function Step1Address({
             type="text"
             disabled
             placeholder="Loading address search..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-400 bg-gray-50"
+            className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2 text-sm text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-700"
           />
         )}
         {picking && (
