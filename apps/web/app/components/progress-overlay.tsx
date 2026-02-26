@@ -50,8 +50,8 @@ function getPhaseStatus(
     (s) => stepMap.get(s)?.status ?? "pending",
   );
   if (statuses.some((s) => s === "error")) return "error";
-  if (statuses.every((s) => s === "completed")) return "completed";
-  if (statuses.some((s) => s === "running" || s === "completed"))
+  if (statuses.every((s) => s === "complete" || s === "completed")) return "completed";
+  if (statuses.some((s) => s === "running" || s === "complete" || s === "completed"))
     return "running";
   return "pending";
 }
