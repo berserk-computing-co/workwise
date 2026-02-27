@@ -41,6 +41,7 @@ describe("JobProgressService", () => {
 
     service.emit("job-b", makeEvent("step1"));
     service.complete("job-b");
+    jest.advanceTimersByTime(1000);
   });
 
   it("emit() on unknown jobId is a no-op and does not throw", () => {
@@ -65,6 +66,7 @@ describe("JobProgressService", () => {
     });
 
     service.complete("job-d");
+    jest.advanceTimersByTime(1000);
   });
 
   it("error() emits event then completes the observable", (done) => {
@@ -85,6 +87,7 @@ describe("JobProgressService", () => {
       status: StepStatus.Error,
       message: "boom",
     });
+    jest.advanceTimersByTime(1000);
   });
 
   it("has() returns false for unknown jobs", () => {
