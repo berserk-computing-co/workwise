@@ -13,7 +13,7 @@ export class CalculationStep implements PipelineStep<BidEngineContext> {
 
   constructor(private readonly dataSource: DataSource) {}
 
-  async execute(context: BidEngineContext): Promise<void> {
+  async execute(context: BidEngineContext, _signal: AbortSignal): Promise<void> {
     const total = context.pricedItems!.reduce(
       (sum, item) => sum + item.quantity * item.unitCost,
       0,

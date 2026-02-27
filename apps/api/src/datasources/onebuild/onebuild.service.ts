@@ -71,6 +71,7 @@ export class OneBuildService {
     searchTerm: string,
     zipCode: string,
     sourceType?: string,
+    signal?: AbortSignal,
   ): Promise<SourceItem[]> {
     const state = zipToState(zipCode);
     const input: Record<string, unknown> = {
@@ -98,6 +99,7 @@ export class OneBuildService {
           "1build-api-key": this.apiKey,
         },
         body: JSON.stringify({ query: QUERY, variables }),
+        signal,
       });
     } catch (err) {
       this.logger.error(
@@ -113,7 +115,10 @@ export class OneBuildService {
       return [];
     }
 
-    let json: { data?: { sources?: { nodes?: SourceItem[] } }; errors?: unknown[] };
+    let json: {
+      data?: { sources?: { nodes?: SourceItem[] } };
+      errors?: unknown[];
+    };
     try {
       json = (await response.json()) as typeof json;
     } catch (err) {
@@ -144,10 +149,7 @@ export class OneBuildService {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const nodes = await this.fetchSourceItems(
-        item.description,
-        zipCode,
-      );
+      const nodes = await this.fetchSourceItems(item.description, zipCode);
 
       if (nodes.length === 0) {
         results.push({ index: i, matched: false });

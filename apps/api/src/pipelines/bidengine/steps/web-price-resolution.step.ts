@@ -12,7 +12,7 @@ export class WebPriceResolutionStep implements PipelineStep<BidEngineContext> {
 
   constructor(private readonly webPricingAgent: WebPricingAgentService) {}
 
-  async execute(context: BidEngineContext): Promise<void> {
+  async execute(context: BidEngineContext, signal: AbortSignal): Promise<void> {
     const flatItems: {
       description: string;
       quantity: number;
@@ -40,6 +40,7 @@ export class WebPriceResolutionStep implements PipelineStep<BidEngineContext> {
       const results = await this.webPricingAgent.priceItems(
         flatItems,
         context.zipCode,
+        signal,
       );
 
       const matched = results.filter((r) => r.matched).length;

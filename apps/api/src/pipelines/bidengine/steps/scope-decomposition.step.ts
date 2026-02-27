@@ -40,7 +40,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
 
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
-  async execute(context: BidEngineContext): Promise<void> {
+  async execute(context: BidEngineContext, signal: AbortSignal): Promise<void> {
     const response = await this.provider.chat({
       // TODO: Using Haiku to reduce token costs while iterating on pipeline.
       // Revisit upgrading to Sonnet once item count is optimized and prompt tokens are lower.
@@ -49,7 +49,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
       messages: [{ role: "user", content: buildUserPrompt(context) }],
       maxTokens: 8192,
       outputFormat: scopeOutputFormat,
-    });
+    }, signal);
 
     if (response.stopReason !== "end_turn") {
       throw new Error(

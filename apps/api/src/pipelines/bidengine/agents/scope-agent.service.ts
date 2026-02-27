@@ -44,6 +44,7 @@ export class ScopeAgentService {
     category: string,
     zipCode: string,
     address: string,
+    signal: AbortSignal,
   ): Promise<AgentResult & { parsed: ScopeDecompositionOutput }> {
     const config = {
       name: "scope_decomposition",
@@ -65,7 +66,7 @@ export class ScopeAgentService {
       address,
     });
 
-    const result = await this.agentRunner.run(config, initialPrompt);
+    const result = await this.agentRunner.run(config, initialPrompt, signal);
     const parsed = scopeOutputFormat.parse(result.text);
 
     return { ...result, parsed };
