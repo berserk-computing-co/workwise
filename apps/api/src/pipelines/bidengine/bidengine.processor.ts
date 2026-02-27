@@ -14,7 +14,7 @@ import { PriceMergeStep } from "./steps/price-merge.step.js";
 import { OptionGenerationStep } from "./steps/option-generation.step.js";
 import { CalculationStep } from "./steps/calculation.step.js";
 import type { BidEngineContext } from "./bidengine-context.js";
-import { CancellationService } from "src/pipeline/services/cancellation.service.js";
+import { CancellationService } from "../../pipeline/services/cancellation.service.js";
 
 @Injectable()
 @Processor("project-generation")
