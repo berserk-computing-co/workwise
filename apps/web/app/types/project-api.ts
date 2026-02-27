@@ -22,6 +22,7 @@ export interface Organization {
 export type ProjectStatus =
   | "draft"
   | "generating"
+  | "cancelled"
   | "review"
   | "sent"
   | "accepted"
