@@ -49,9 +49,11 @@ function makeBaseContext(): BidEngineContext {
 
 describe("PriceMergeStep", () => {
   let step: PriceMergeStep;
+  let signal: AbortSignal;
 
   beforeEach(() => {
     step = new PriceMergeStep();
+    signal = new AbortController().signal;
   });
 
   afterEach(() => {
@@ -71,7 +73,7 @@ describe("PriceMergeStep", () => {
       webResults: [makeWebItem("Shingles", "Roofing", 0.7, 12)],
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toHaveLength(1);
     const merged = context.pricedItems![0];
@@ -99,7 +101,7 @@ describe("PriceMergeStep", () => {
       webResults: [makeWebItem("Underlayment", "Roofing", 0.9, 7)],
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toHaveLength(1);
     const merged = context.pricedItems![0];
@@ -121,7 +123,7 @@ describe("PriceMergeStep", () => {
       webResults: [makeWebItem("Flashing", "Roofing", 0.8, 9)],
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toHaveLength(1);
     const merged = context.pricedItems![0];
@@ -136,7 +138,7 @@ describe("PriceMergeStep", () => {
       oneBuildResults: oneBuildItems,
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toBe(oneBuildItems);
   });
@@ -148,7 +150,7 @@ describe("PriceMergeStep", () => {
       webResults: webItems,
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toBe(webItems);
   });
@@ -156,7 +158,7 @@ describe("PriceMergeStep", () => {
   it("neither present — throws error", async () => {
     const context: BidEngineContext = { ...makeBaseContext() };
 
-    await expect(step.execute(context)).rejects.toThrow(
+    await expect(step.execute(context, signal)).rejects.toThrow(
       "Both pricing sources failed — cannot continue pipeline",
     );
   });
@@ -179,7 +181,7 @@ describe("PriceMergeStep", () => {
       webResults: [webItem],
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toHaveLength(1);
     expect(context.pricedItems![0].source).toBe(ItemSource.AiPriced);
@@ -201,7 +203,7 @@ describe("PriceMergeStep", () => {
       webResults: [webItem],
     };
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.pricedItems).toHaveLength(1);
     expect(context.pricedItems![0].source).toBe(ItemSource.WebPriced);

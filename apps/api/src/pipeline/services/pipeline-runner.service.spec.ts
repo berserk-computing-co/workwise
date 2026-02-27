@@ -4,9 +4,11 @@ import type { PipelineStep } from "../pipeline-step.interface.js";
 
 describe("PipelineRunner", () => {
   let runner: PipelineRunner;
+  let controller: AbortController;
 
   beforeEach(() => {
     runner = new PipelineRunner();
+    controller = new AbortController();
   });
 
   afterEach(() => {
@@ -28,7 +30,7 @@ describe("PipelineRunner", () => {
       }),
     };
 
-    await runner.run("job-1", {}, [stepA, stepB], jest.fn());
+    await runner.run("job-1", {}, [stepA, stepB], jest.fn(), controller);
 
     expect(order).toEqual(["A", "B"]);
     expect(stepA.execute).toHaveBeenCalledTimes(1);
@@ -42,7 +44,7 @@ describe("PipelineRunner", () => {
       execute: jest.fn().mockResolvedValue(undefined),
     };
 
-    await runner.run("job-2", {}, [step], onProgress);
+    await runner.run("job-2", {}, [step], onProgress, controller);
 
     expect(onProgress).toHaveBeenCalledTimes(2);
     expect(onProgress).toHaveBeenNthCalledWith(
@@ -62,7 +64,7 @@ describe("PipelineRunner", () => {
   it("completes without error when steps array is empty", async () => {
     const onProgress = jest.fn();
     await expect(
-      runner.run("job-3", {}, [], onProgress),
+      runner.run("job-3", {}, [], onProgress, controller),
     ).resolves.toBeUndefined();
     expect(onProgress).not.toHaveBeenCalled();
   });
@@ -74,9 +76,9 @@ describe("PipelineRunner", () => {
       execute: jest.fn().mockRejectedValue(error),
     };
 
-    await expect(runner.run("job-4", {}, [step], jest.fn())).rejects.toThrow(
-      "step failed",
-    );
+    await expect(
+      runner.run("job-4", {}, [step], jest.fn(), controller),
+    ).rejects.toThrow("step failed");
   });
 
   it("executes parallel step groups concurrently", async () => {
@@ -94,7 +96,7 @@ describe("PipelineRunner", () => {
       }),
     };
 
-    await runner.run("job-5", {}, [[stepB, stepC]], jest.fn());
+    await runner.run("job-5", {}, [[stepB, stepC]], jest.fn(), controller);
 
     expect(stepB.execute).toHaveBeenCalledTimes(1);
     expect(stepC.execute).toHaveBeenCalledTimes(1);
@@ -117,7 +119,7 @@ describe("PipelineRunner", () => {
     };
 
     await expect(
-      runner.run("job-6", {}, [[stepFail, stepOk], stepAfter], jest.fn()),
+      runner.run("job-6", {}, [[stepFail, stepOk], stepAfter], jest.fn(), controller),
     ).resolves.toBeUndefined();
 
     expect(stepOk.execute).toHaveBeenCalledTimes(1);
@@ -135,7 +137,7 @@ describe("PipelineRunner", () => {
       execute: jest.fn().mockResolvedValue(undefined),
     };
 
-    await runner.run("job-7", {}, [[stepFail, stepOk]], onProgress);
+    await runner.run("job-7", {}, [[stepFail, stepOk]], onProgress, controller);
 
     expect(onProgress).toHaveBeenCalledWith(
       "stepFail",
@@ -177,7 +179,7 @@ describe("PipelineRunner", () => {
       }),
     };
 
-    await runner.run("job-8", {}, [stepA, [stepB, stepC], stepD], jest.fn());
+    await runner.run("job-8", {}, [stepA, [stepB, stepC], stepD], jest.fn(), controller);
 
     expect(order[0]).toBe("A");
     expect(order).toContain("B");

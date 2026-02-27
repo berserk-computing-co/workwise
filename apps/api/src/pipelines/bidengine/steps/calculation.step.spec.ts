@@ -16,7 +16,10 @@ describe("CalculationStep", () => {
   let step: CalculationStep;
   let context: BidEngineContext;
 
+  let signal: AbortSignal;
+
   beforeEach(() => {
+    signal = new AbortController().signal;
     mockManager = {
       delete: jest.fn().mockResolvedValue(undefined),
       save: jest
@@ -113,7 +116,7 @@ describe("CalculationStep", () => {
   });
 
   it("execute() computes total from pricedItems: sum(quantity * unitCost)", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     // 100 * 3.50 + 16 * 25.00 = 350 + 400 = 750
     expect(context.totals).toBeDefined();
@@ -121,7 +124,7 @@ describe("CalculationStep", () => {
   });
 
   it("execute() runs transaction: deletes old sections + options, saves new ones", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     expect(mockManager.delete).toHaveBeenCalledWith(Section, {
@@ -134,7 +137,7 @@ describe("CalculationStep", () => {
   });
 
   it("execute() saves sections with correct sortOrder and rounded subtotal", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     const sectionSaveCall = mockManager.save.mock.calls.find(
       ([entity]) => entity === Section,
@@ -149,7 +152,7 @@ describe("CalculationStep", () => {
   });
 
   it("execute() saves items with extendedCost = round(quantity * unitCost, 2)", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     const itemSaveCalls = mockManager.save.mock.calls.filter(
       ([entity]) => entity === Item,
@@ -168,7 +171,7 @@ describe("CalculationStep", () => {
   });
 
   it("execute() saves options from context", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     const optionSaveCalls = mockManager.save.mock.calls.filter(
       ([entity]) => entity === Option,
@@ -187,7 +190,7 @@ describe("CalculationStep", () => {
   });
 
   it('execute() updates project status to "generated" with rounded total', async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockManager.update).toHaveBeenCalledWith(Project, "proj-1", {
       status: "generated",
@@ -196,7 +199,7 @@ describe("CalculationStep", () => {
   });
 
   it("execute() populates context.totals", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.totals).toBeDefined();
     expect(context.totals).toEqual({ total: 750 });

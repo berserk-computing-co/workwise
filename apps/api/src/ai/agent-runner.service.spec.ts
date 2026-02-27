@@ -43,9 +43,11 @@ const toolUseResponse = (): ChatResponse => ({
 
 describe("AgentRunner", () => {
   let runner: AgentRunner;
+  let signal: AbortSignal;
 
   beforeEach(() => {
     runner = new AgentRunner(mockProvider as any);
+    signal = new AbortController().signal;
     jest.clearAllMocks();
   });
 
@@ -56,7 +58,7 @@ describe("AgentRunner", () => {
   it("returns text immediately when provider responds with end_turn", async () => {
     mockProvider.chat.mockResolvedValueOnce(endTurnResponse());
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
     expect(result.text).toBe("done");
     expect(result.iterations).toBe(0);
@@ -71,9 +73,9 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(toolUseResponse())
       .mockResolvedValueOnce(endTurnResponse());
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
-    expect(mockTool.execute).toHaveBeenCalledWith({ key: "value" });
+    expect(mockTool.execute).toHaveBeenCalledWith({ key: "value" }, signal);
     expect(mockProvider.chat).toHaveBeenCalledTimes(2);
 
     const secondCallMessages = mockProvider.chat.mock.calls[1][0].messages;
@@ -111,7 +113,7 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(hallucinatedResponse)
       .mockResolvedValueOnce(endTurnResponse());
 
-    await runner.run(baseConfig, "hello");
+    await runner.run(baseConfig, "hello", signal);
 
     const secondCallMessages = mockProvider.chat.mock.calls[1][0].messages;
     const lastUserMessage = secondCallMessages[secondCallMessages.length - 1];
@@ -130,7 +132,7 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(toolUseResponse())
       .mockResolvedValueOnce(endTurnResponse());
 
-    await runner.run(baseConfig, "hello");
+    await runner.run(baseConfig, "hello", signal);
 
     const secondCallMessages = mockProvider.chat.mock.calls[1][0].messages;
     const lastUserMessage = secondCallMessages[secondCallMessages.length - 1];
@@ -155,7 +157,7 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(pauseResponse)
       .mockResolvedValueOnce(endTurnResponse());
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(2);
 
@@ -177,7 +179,7 @@ describe("AgentRunner", () => {
     mockTool.execute.mockResolvedValue("result");
     mockProvider.chat.mockResolvedValue(toolUseResponse());
 
-    const result = await runner.run(config, "hello");
+    const result = await runner.run(config, "hello", signal);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(2);
     expect(result.text).toBe("");
@@ -195,7 +197,7 @@ describe("AgentRunner", () => {
 
     mockProvider.chat.mockResolvedValueOnce(maxTokensResponse);
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     expect(result.text).toBe("truncated");
@@ -210,7 +212,7 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(toolUseResponse())
       .mockResolvedValueOnce(endTurnResponse());
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
     expect(result.toolCallCount).toBe(2);
     expect(result.iterations).toBe(2);
@@ -222,7 +224,7 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(toolUseResponse())
       .mockResolvedValueOnce(endTurnResponse());
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
     const llmSteps = result.steps.filter((s) => s.type === "llm_response");
     const toolSteps = result.steps.filter((s) => s.type === "tool_call");
@@ -248,7 +250,7 @@ describe("AgentRunner", () => {
       .mockResolvedValueOnce(toolUseResponse())
       .mockResolvedValueOnce(endTurnResponse());
 
-    const result = await runner.run(baseConfig, "hello");
+    const result = await runner.run(baseConfig, "hello", signal);
 
     const toolStep = result.steps.find((s) => s.type === "tool_call");
     expect(toolStep?.data.output).toBe(JSON.stringify(objectResult));

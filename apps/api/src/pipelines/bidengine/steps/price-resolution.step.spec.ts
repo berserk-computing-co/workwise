@@ -34,7 +34,10 @@ describe("PriceResolutionStep", () => {
   let step: PriceResolutionStep;
   let context: BidEngineContext;
 
+  let signal: AbortSignal;
+
   beforeEach(() => {
+    signal = new AbortController().signal;
     mockOneBuildAgent = {
       priceItems: jest.fn().mockResolvedValue(mockPricingResults),
     };
@@ -76,7 +79,7 @@ describe("PriceResolutionStep", () => {
   });
 
   it("execute() flattens sections into flat items with sectionName", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockOneBuildAgent.priceItems).toHaveBeenCalledTimes(1);
     const [flatItems] = mockOneBuildAgent.priceItems.mock.calls[0];
@@ -92,7 +95,7 @@ describe("PriceResolutionStep", () => {
   });
 
   it("execute() calls oneBuildAgent.priceItems with flat items and zipCode", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockOneBuildAgent.priceItems).toHaveBeenCalledWith(
       expect.arrayContaining([
@@ -100,11 +103,12 @@ describe("PriceResolutionStep", () => {
         expect.objectContaining({ description: "Framing labor" }),
       ]),
       "90210",
+      signal,
     );
   });
 
   it("execute() maps matched result → PricedItem with source AiPriced", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.oneBuildResults).toBeDefined();
     const matched = context.oneBuildResults![0];
@@ -125,7 +129,7 @@ describe("PriceResolutionStep", () => {
   });
 
   it("execute() maps unmatched result → PricedItem with source AiUnmatched", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.oneBuildResults).toBeDefined();
     const unmatched = context.oneBuildResults![1];
@@ -142,7 +146,7 @@ describe("PriceResolutionStep", () => {
       new Error("API timeout"),
     );
 
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.oneBuildResults).toEqual([]);
   });

@@ -19,7 +19,6 @@ const makeSourceItem = (overrides: Partial<SourceItem> = {}): SourceItem => ({
       calculatedUnitRateUsdCents: 700,
     },
   ],
-  imagesUrls: [],
   ...overrides,
 });
 
