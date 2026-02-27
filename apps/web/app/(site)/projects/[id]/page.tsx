@@ -1273,6 +1273,7 @@ export default function ProjectDetailPage() {
       {/* SSE Progress overlay */}
       <ProgressOverlay
         jobId={generatingJobId}
+        projectId={id}
         onComplete={() => void handleGenerateComplete()}
         onClose={() => setGeneratingJobId(null)}
       />
