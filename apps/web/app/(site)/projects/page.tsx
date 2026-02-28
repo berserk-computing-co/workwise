@@ -4,25 +4,13 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DocumentPlusIcon } from "@heroicons/react/24/outline";
-import {
+import type {
   Project,
   ProjectStatus,
   PaginatedResponse,
 } from "@/app/types/project-api";
 import { ProjectsListSkeleton } from "@/app/components/skeletons";
-
-const STATUS_STYLES: Record<ProjectStatus, string> = {
-  draft: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-  generating:
-    "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse",
-  cancelled:
-    "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400",
-  review: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-  sent: "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
-  accepted:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
-  rejected: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
-};
+import { STATUS_STYLES, formatCurrency } from "./_components/constants";
 
 const STATUS_TABS: { label: string; value: ProjectStatus | "all" }[] = [
   { label: "All", value: "all" },
@@ -33,11 +21,6 @@ const STATUS_TABS: { label: string; value: ProjectStatus | "all" }[] = [
   { label: "Accepted", value: "accepted" },
   { label: "Rejected", value: "rejected" },
 ];
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    amount,
-  );
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-US", {

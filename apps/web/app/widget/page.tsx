@@ -1,6 +1,6 @@
 "use client";
 
-import { BidGenerator } from "@/app/components/bid_generator";
+import { BidGenerator } from "@/app/components/bid-generator";
 
 export default function WidgetPage() {
   return (
