@@ -31,7 +31,7 @@ export interface OptionData {
   tier: OptionTier;
   label: string;
   description: string;
-  total: number;
+  multiplier: number;
   isRecommended: boolean;
   overrides: Record<string, unknown>;
 }

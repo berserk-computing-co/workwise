@@ -58,12 +58,14 @@ export class CalculationStep implements PipelineStep<BidEngineContext> {
       }
 
       for (const option of context.options!) {
+        const optionTotal = Math.round(total * option.multiplier * 100) / 100;
         await manager.save(Option, {
           projectId: context.projectId,
           tier: option.tier,
           label: option.label,
           description: option.description,
-          total: option.total,
+          total: optionTotal,
+          multiplier: option.multiplier,
           isRecommended: option.isRecommended,
           overrides: option.overrides,
         });

@@ -30,6 +30,9 @@ export class Option {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   total: number;
 
+  @Column({ type: 'decimal', precision: 8, scale: 4, default: 1.0 })
+  multiplier: number;
+
   @Column({ type: 'boolean', default: false, name: 'is_recommended' })
   isRecommended: boolean;
 

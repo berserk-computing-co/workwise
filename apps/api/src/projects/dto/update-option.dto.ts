@@ -14,6 +14,10 @@ export class UpdateOptionDto {
   total?: number;
 
   @IsOptional()
+  @IsNumber()
+  multiplier?: number;
+
+  @IsOptional()
   @IsBoolean()
   isRecommended?: boolean;
 }

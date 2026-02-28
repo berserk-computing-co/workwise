@@ -214,6 +214,13 @@ export class ProjectsService {
 
     const total = sections.reduce((sum, s) => sum + Number(s.subtotal), 0);
     await this.projectRepo.update(projectId, { total });
+
+    const options = await this.optionRepo.find({ where: { projectId } });
+    for (const option of options) {
+      option.total = Math.round(total * Number(option.multiplier) * 100) / 100;
+      await this.optionRepo.save(option);
+    }
+
     return this.projectRepo.findOneOrFail({ where: { id: projectId } });
   }
 

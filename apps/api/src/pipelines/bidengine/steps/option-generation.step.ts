@@ -18,7 +18,7 @@ const optionGenerationSchema = z.object({
         tier: z.nativeEnum(OptionTier),
         label: z.string(),
         description: z.string(),
-        total: z.number(),
+        multiplier: z.number(),
         is_recommended: z.boolean(),
         overrides: z.record(z.string(), z.unknown()).default({}),
       }),
@@ -27,6 +27,30 @@ const optionGenerationSchema = z.object({
 });
 
 const optionOutputFormat = zodOutputFormat(optionGenerationSchema);
+
+const DEFAULT_OPTIONS: Record<OptionTier, Omit<OptionData, "tier">> = {
+  [OptionTier.Good]: {
+    multiplier: 0.8,
+    label: "Budget",
+    description: "Standard materials, simplified scope.",
+    isRecommended: false,
+    overrides: {},
+  },
+  [OptionTier.Better]: {
+    multiplier: 1.0,
+    label: "Standard",
+    description: "Base estimate as specified.",
+    isRecommended: true,
+    overrides: {},
+  },
+  [OptionTier.Best]: {
+    multiplier: 1.3,
+    label: "Premium",
+    description: "Upgraded materials and finishes.",
+    isRecommended: false,
+    overrides: {},
+  },
+};
 
 @Injectable()
 export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
@@ -61,13 +85,24 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
       return true;
     });
 
-    context.options = deduped.map((o) => ({
-      tier: o.tier,
-      label: o.label,
-      description: o.description,
-      total: o.total,
-      isRecommended: o.is_recommended,
-      overrides: o.overrides as Record<string, unknown>,
-    }));
+    // Build a map of AI-returned options by tier
+    const byTier = new Map<OptionTier, OptionData>();
+    for (const o of deduped) {
+      byTier.set(o.tier, {
+        tier: o.tier,
+        label: o.label,
+        description: o.description,
+        multiplier: o.multiplier,
+        isRecommended: o.is_recommended,
+        overrides: o.overrides as Record<string, unknown>,
+      });
+    }
+
+    // Guarantee all 3 tiers exist — fill missing with defaults
+    const tiers = [OptionTier.Good, OptionTier.Better, OptionTier.Best];
+    context.options = tiers.map((tier) => {
+      if (byTier.has(tier)) return byTier.get(tier)!;
+      return { tier, ...DEFAULT_OPTIONS[tier] };
+    });
   }
 }

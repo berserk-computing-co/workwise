@@ -83,7 +83,7 @@ describe("CalculationStep", () => {
           tier: OptionTier.Good,
           label: "Basic",
           description: "Basic option",
-          total: 500,
+          multiplier: 0.8,
           isRecommended: false,
           overrides: {},
         },
@@ -91,7 +91,7 @@ describe("CalculationStep", () => {
           tier: OptionTier.Better,
           label: "Standard",
           description: "Standard option",
-          total: 750,
+          multiplier: 1.0,
           isRecommended: true,
           overrides: {},
         },
@@ -99,7 +99,7 @@ describe("CalculationStep", () => {
           tier: OptionTier.Best,
           label: "Premium",
           description: "Premium option",
-          total: 1000,
+          multiplier: 1.3,
           isRecommended: false,
           overrides: {},
         },
@@ -170,7 +170,7 @@ describe("CalculationStep", () => {
     expect(laborItemData.sortOrder).toBe(1);
   });
 
-  it("execute() saves options from context", async () => {
+  it("execute() saves options with total = base_total * multiplier", async () => {
     await step.execute(context, signal);
 
     const optionSaveCalls = mockManager.save.mock.calls.filter(
@@ -178,15 +178,26 @@ describe("CalculationStep", () => {
     );
     expect(optionSaveCalls).toHaveLength(3);
 
+    // base total = 750
     const [, goodData] = optionSaveCalls[0];
     expect(goodData.tier).toBe(OptionTier.Good);
     expect(goodData.label).toBe("Basic");
+    expect(goodData.total).toBe(600); // 750 * 0.8
+    expect(goodData.multiplier).toBe(0.8);
     expect(goodData.isRecommended).toBe(false);
     expect(goodData.projectId).toBe("proj-1");
 
     const [, betterData] = optionSaveCalls[1];
     expect(betterData.tier).toBe(OptionTier.Better);
+    expect(betterData.total).toBe(750); // 750 * 1.0
+    expect(betterData.multiplier).toBe(1.0);
     expect(betterData.isRecommended).toBe(true);
+
+    const [, bestData] = optionSaveCalls[2];
+    expect(bestData.tier).toBe(OptionTier.Best);
+    expect(bestData.total).toBe(975); // 750 * 1.3
+    expect(bestData.multiplier).toBe(1.3);
+    expect(bestData.isRecommended).toBe(false);
   });
 
   it('execute() updates project status to "generated" with rounded total', async () => {
