@@ -31,10 +31,11 @@ docker compose up --build       # Rebuild images first
 
 ## Architecture
 
-Nx monorepo, two apps:
+Nx monorepo, two apps + one shared library:
 
 - `apps/web/` — Next.js 14 frontend (port 4000). Auth0, Tailwind + Flowbite, App Router.
 - `apps/api/` — NestJS 11 backend. TypeORM + Postgres, BullMQ + Redis, Anthropic AI.
+- `libs/shared-types/` — `@workwise/shared-types`. Buildable Nx library with shared enums, model interfaces, request payloads, and utility types. Consumed by both apps via tsconfig path alias.
 
 The frontend proxies all API calls through `app/api/proxy/[...path]/route.ts` to inject Auth0 tokens server-side. Browser never calls the NestJS API directly.
 
@@ -65,6 +66,7 @@ The frontend proxies all API calls through `app/api/proxy/[...path]/route.ts` to
 
 ## Code Conventions
 
+- **Shared types** — All API contract types (enums, response models, request payloads) live in `@workwise/shared-types`. API enum files re-export from the shared lib. Frontend `project-api.ts` re-exports from the shared lib with local overrides for `Option` (has `multiplier`), `Project` (uses local `Option`), and `ProjectStatus` (string union for backward compat). Build with `npx nx build shared-types`.
 - **ESM imports** — Always use `.js` extension on relative imports in the API
 - **Env files** — `.env` committed with placeholders, `.env.local` gitignored with secrets. `ConfigModule` loads `.env.local` first.
 - **Auth** — `@Public()` decorator skips the global auth guard. `@CurrentUser()` extracts JWT payload.
