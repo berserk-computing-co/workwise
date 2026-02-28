@@ -1,24 +1,47 @@
-// User & Organization
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  auth0Id: string;
-  organizationId: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Re-export shared types that are used directly without modification
+export type {
+  Organization,
+  User,
+  Section,
+  Item,
+  PipelineJob as PipelineJobEntity,
+  PaginatedResponse,
+  AuthSetupPayload,
+  AuthSetupResponse,
+  JobProgressEvent,
+  CreateProjectPayload,
+  UpdateProjectPayload,
+  CreateItemPayload,
+  UpdateItemPayload,
+  ReorderItemsPayload,
+  ApiError,
+  ValidationErrorDetail,
+  ValidationErrorResponse,
+  GenerateResponse,
+  PaginationMeta,
+} from "@workwise/shared-types";
 
-export interface Organization {
-  id: string;
-  name: string;
-  zipCode: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Re-export enums that are safe to import as values
+export {
+  JobStatus,
+  StepStatus,
+  TargetType,
+  PipelineType,
+  ItemCategory,
+  ItemSource,
+  OptionTier,
+} from "@workwise/shared-types";
 
-// Project (the core entity)
+// Re-export the ProjectStatus enum under a different name for consumers that
+// need enum values; the string union below preserves backward compat.
+export { ProjectStatus as ProjectStatusEnum } from "@workwise/shared-types";
+
+// Re-export GenerateResponse as PipelineJob for backward compatibility
+export type { GenerateResponse as PipelineJob } from "@workwise/shared-types";
+
+// ProjectStatus kept as a string union so consumers can use string literals
+// and Record<ProjectStatus, string> with string keys (the enum would require
+// enum member keys and includes a Cancelled member consumers don't handle).
 export type ProjectStatus =
   | "draft"
   | "generating"
@@ -28,138 +51,49 @@ export type ProjectStatus =
   | "accepted"
   | "rejected";
 
+// Option with frontend-only fields not present in the shared entity.
+// multiplier is returned by the API but not in the shared model; tier is
+// kept as a string union so Record<Option["tier"], string> works with
+// string literal keys.
+export interface Option {
+  id: string;
+  projectId: string;
+  tier: "good" | "better" | "best";
+  label: string | null;
+  description: string | null;
+  total: number;
+  multiplier: number;
+  isRecommended: boolean;
+  overrides: Record<string, unknown>;
+  createdAt: string;
+}
+
+// Project re-declared locally so that options uses the local Option type
+// (which includes multiplier) rather than the shared model's Option type.
 export interface Project {
   id: string;
+  organizationId: string;
+  createdBy: string;
+  status: ProjectStatus;
   description: string;
+  category: string;
   address: string;
   zipCode: string;
-  category: string | null;
+  city: string | null;
+  state: string | null;
   clientName: string | null;
-  status: ProjectStatus;
   total: number;
   currentJobId: string | null;
-  organizationId: string;
-  sections: Section[];
+  metadata: Record<string, unknown>;
+  sections: import("@workwise/shared-types").Section[];
   options: Option[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
 
-export interface Section {
-  id: string;
-  name: string;
-  projectId: string;
-  subtotal: number;
-  items: Item[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Item {
-  id: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unitCost: number;
-  extendedCost: number;
-  source: string | null;
-  sectionId: string;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Option {
-  id: string;
-  tier: "good" | "better" | "best";
-  total: number;
-  multiplier: number;
-  projectId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Pagination
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  };
-}
-
-// Auth setup
-export interface AuthSetupPayload {
-  user: { firstName: string; lastName: string; email: string };
-  organization: { name: string; zipCode: string };
-}
-
-export interface AuthSetupResponse {
-  user: User;
-  organization: Organization;
-}
-
-// Pipeline / Jobs
-export interface PipelineJob {
-  jobId: string;
-}
-
-export interface JobProgressEvent {
-  step: string;
-  status: "pending" | "running" | "completed" | "error";
-  message: string;
-  total?: number;
-}
-
-// Request DTOs
-export interface CreateProjectPayload {
-  description: string;
-  address: string;
-  zipCode: string;
-  category?: string;
-  clientName?: string;
-}
-
-export interface UpdateProjectPayload {
-  description?: string;
-  address?: string;
-  zipCode?: string;
-  category?: string;
-  clientName?: string;
-  status?: ProjectStatus;
-}
-
-export interface CreateItemPayload {
-  sectionId: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unitCost: number;
-}
-
-export interface UpdateItemPayload {
-  description?: string;
-  quantity?: number;
-  unit?: string;
-  unitCost?: number;
-  sectionId?: string;
-}
-
-export interface ReorderItemsPayload {
-  sectionId: string;
-  itemIds: string[];
-}
-
-// Error shapes
+// ValidationError kept for backward compat — mirrors the shape used in
+// api/client.ts (fields array from ValidationErrorDetail).
 export interface ValidationError {
   message: { field: string; message: string }[];
-}
-
-export interface ApiError {
-  statusCode: number;
-  error: string;
-  message: string;
 }
