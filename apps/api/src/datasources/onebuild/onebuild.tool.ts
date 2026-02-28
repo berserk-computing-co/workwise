@@ -37,11 +37,12 @@ export function createSearch1BuildTool(service: OneBuildService): AgentTool {
         additionalProperties: false,
       },
     },
-    execute: async (input) => {
+    execute: async (input, signal) => {
       const results = await service.fetchSourceItems(
         input.search_term as string,
         input.zip_code as string,
         input.source_type as string | undefined,
+        signal,
       );
       return {
         query: input.search_term,

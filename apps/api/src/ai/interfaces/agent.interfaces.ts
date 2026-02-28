@@ -16,7 +16,7 @@ import type {
  */
 export interface AgentTool {
   definition: ToolDefinition;
-  execute: (input: Record<string, unknown>) => Promise<unknown>;
+  execute: (input: Record<string, unknown>, signal: AbortSignal) => Promise<unknown>;
 }
 
 /** Configuration for a single agent run. Immutable for the duration of the run. */

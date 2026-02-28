@@ -17,6 +17,7 @@ const config: Config = {
   testEnvironment: "node",
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^@workwise/shared-types$": "<rootDir>/../../../libs/shared-types/src/index.ts",
   },
 };
 

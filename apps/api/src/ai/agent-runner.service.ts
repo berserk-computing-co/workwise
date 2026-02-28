@@ -26,7 +26,11 @@ export class AgentRunner {
 
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
-  async run(config: AgentConfig, initialPrompt: string): Promise<AgentResult> {
+  async run(
+    config: AgentConfig,
+    initialPrompt: string,
+    signal: AbortSignal,
+  ): Promise<AgentResult> {
     const { maxTokens, model, systemPrompt, tools, serverTools, outputFormat } =
       config;
     const messages: ChatMessage[] = [{ role: "user", content: initialPrompt }];
@@ -68,6 +72,7 @@ export class AgentRunner {
             outputFormat: twoPhase ? undefined : outputFormat,
           },
           config.name,
+          signal,
         );
       } catch (apiError) {
         const msg =
@@ -138,6 +143,7 @@ export class AgentRunner {
           response.toolCalls,
           toolMap,
           config.name,
+          signal,
         );
 
         toolCallCount += callCount;
@@ -165,7 +171,7 @@ export class AgentRunner {
       return this.runFormattingPhase(config, messages, steps, {
         iterations,
         toolCallCount,
-      });
+      }, signal);
     }
 
     // Non-two-phase: exhausted maxIterations — return whatever we have
@@ -202,6 +208,7 @@ export class AgentRunner {
     toolCalls: ChatResponse["toolCalls"],
     toolMap: Map<string, AgentTool>,
     agentName: string,
+    signal: AbortSignal,
   ): Promise<{
     blocks: ChatContentBlock[];
     callCount: number;
@@ -230,7 +237,7 @@ export class AgentRunner {
           `[${agentName}] tool=${call.name} input=${JSON.stringify(call.input)}`,
         );
 
-        const result = await tool.execute(call.input);
+        const result = await tool.execute(call.input, signal);
         const serialized =
           typeof result === "string" ? result : JSON.stringify(result);
 
@@ -291,6 +298,7 @@ export class AgentRunner {
     messages: ChatMessage[],
     steps: AgentStep[],
     counters: { iterations: number; toolCallCount: number },
+    signal: AbortSignal,
   ): Promise<AgentResult> {
     const { model, systemPrompt, maxTokens, outputFormat } = config;
 
@@ -333,6 +341,7 @@ export class AgentRunner {
           outputFormat,
         },
         config.name,
+        signal,
       );
     } catch (apiError) {
       const msg =
@@ -385,10 +394,11 @@ export class AgentRunner {
   private async chatWithRetry(
     params: Parameters<AiProvider["chat"]>[0],
     agentName: string,
+    signal: AbortSignal,
   ): ReturnType<AiProvider["chat"]> {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        return await this.provider.chat(params);
+        return await this.provider.chat(params, signal);
       } catch (err) {
         if (!isRateLimitError(err) || attempt === MAX_RETRIES) throw err;
 
