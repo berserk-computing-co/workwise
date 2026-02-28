@@ -8,6 +8,7 @@ export interface ScopeItem {
   pricing_hint?: string;
   labor_hours?: number;
   notes?: string;
+  confidence?: "high" | "medium" | "low";
 }
 
 export interface ScopeSection {
@@ -47,6 +48,7 @@ export interface BidEngineContext {
   category: string;
 
   // Populated by pipeline steps
+  projectType?: string;
   sections?: ScopeSection[];
   oneBuildResults?: PricedItem[];
   webResults?: PricedItem[];

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Anthropic from "@anthropic-ai/sdk";
 import type {
@@ -23,6 +23,7 @@ import type {
  */
 @Injectable()
 export class AnthropicProvider implements AiProvider {
+  private readonly logger = new Logger(AnthropicProvider.name);
   private readonly client: Anthropic;
 
   constructor(config: ConfigService) {
@@ -32,39 +33,56 @@ export class AnthropicProvider implements AiProvider {
   }
 
   /** Single Anthropic Messages API call → normalized ChatResponse. */
-  async chat(params: ChatParams): Promise<ChatResponse> {
-    const response = await this.client.messages.create({
-      model: params.model,
-      max_tokens: params.maxTokens ?? 8192,
-      system: [
-        {
-          type: "text",
-          text: params.system,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: this.toAnthropicMessages(params.messages),
-      cache_control: { type: "ephemeral" },
-      ...((params.tools?.length || params.serverTools?.length) && {
-        tools: [
-          ...(params.tools?.map((t) => ({
-            name: t.name,
-            description: t.description,
-            input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
-            strict: true,
-          })) ?? []),
-          ...(params.serverTools ?? []),
-        ] as Anthropic.Messages.ToolUnion[],
-      }),
-      ...(params.outputFormat && {
-        output_config: {
-          format: {
-            type: "json_schema" as const,
-            schema: params.outputFormat.schema,
+  async chat(params: ChatParams, signal: AbortSignal): Promise<ChatResponse> {
+    if (params.thinking && params.temperature !== undefined && params.temperature !== 1) {
+      this.logger.warn('thinking enabled — overriding temperature to 1 (Anthropic constraint)');
+    }
+
+    const response = await this.client.messages.create(
+      {
+        model: params.model,
+        max_tokens: params.maxTokens ?? 8192,
+        system: [
+          {
+            type: "text",
+            text: params.system,
+            cache_control: { type: "ephemeral" },
           },
-        },
-      }),
-    });
+        ],
+        messages: this.toAnthropicMessages(params.messages),
+        cache_control: { type: "ephemeral" },
+        ...((params.tools?.length || params.serverTools?.length) && {
+          tools: [
+            ...(params.tools?.map((t) => ({
+              name: t.name,
+              description: t.description,
+              input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
+              strict: true,
+            })) ?? []),
+            ...(params.serverTools ?? []),
+          ] as Anthropic.Messages.ToolUnion[],
+        }),
+        ...(params.outputFormat && {
+          output_config: {
+            format: {
+              type: "json_schema" as const,
+              schema: params.outputFormat.schema,
+            },
+          },
+        }),
+        ...(params.thinking && {
+          thinking: {
+            type: "enabled" as const,
+            budget_tokens: params.thinking.budgetTokens,
+          },
+          temperature: 1,
+        }),
+        ...(!params.thinking && params.temperature !== undefined && {
+          temperature: params.temperature,
+        }),
+      },
+      { signal },
+    );
 
     const text = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")

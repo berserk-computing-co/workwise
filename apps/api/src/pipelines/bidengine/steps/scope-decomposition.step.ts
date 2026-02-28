@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
@@ -12,6 +12,8 @@ import {
 } from "../prompts/scope-decomposition.prompt.js";
 
 const scopeDecompositionSchema = z.object({
+  project_type: z.enum(["construction", "service", "maintenance", "mixed"]),
+  classification_reasoning: z.string(),
   sections: z.array(
     z.object({
       name: z.string(),
@@ -23,8 +25,9 @@ const scopeDecompositionSchema = z.object({
           unit: z.string(),
           category: z.nativeEnum(ItemCategory),
           pricing_hint: z
-            .enum(["material", "assembly", "labor_rate", "skip"])
+            .enum(["material", "assembly", "labor_rate", "service", "skip"])
             .optional(),
+          confidence: z.enum(["high", "medium", "low"]),
         }),
       ),
     }),
@@ -37,6 +40,7 @@ const scopeOutputFormat = zodOutputFormat(scopeDecompositionSchema);
 @Injectable()
 export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
   readonly name = "scope_decomposition";
+  private readonly logger = new Logger(ScopeDecompositionStep.name);
 
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
@@ -47,8 +51,9 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
       model: "claude-haiku-4-5-20251001",
       system: getScopePrompt(context.category),
       messages: [{ role: "user", content: buildUserPrompt(context) }],
-      maxTokens: 8192,
+      maxTokens: 16384,
       outputFormat: scopeOutputFormat,
+      thinking: { type: "enabled", budgetTokens: 8000 },
     }, signal);
 
     if (response.stopReason !== "end_turn") {
@@ -59,6 +64,15 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
 
     const result = scopeOutputFormat.parse(response.text);
 
+    const itemCount = result.sections.reduce((sum, s) => sum + s.items.length, 0);
+    this.logger.log(
+      `project=${context.projectId} type=${result.project_type} overall_confidence=${result.confidence} items=${itemCount}`,
+    );
+    this.logger.debug(
+      `classification_reasoning: ${result.classification_reasoning}`,
+    );
+
+    context.projectType = result.project_type;
     context.sections = result.sections.map((s) => ({
       name: s.name,
       labor_hours: s.labor_hours,
@@ -68,6 +82,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
         unit: i.unit,
         category: i.category,
         pricing_hint: i.pricing_hint,
+        confidence: i.confidence,
       })),
     }));
   }

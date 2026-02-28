@@ -11,6 +11,8 @@ import {
 import { webSearchServerTool } from "./scope-agent.tool.js";
 
 const scopeDecompositionSchema = z.object({
+  project_type: z.enum(["construction", "service", "maintenance", "mixed"]),
+  classification_reasoning: z.string(),
   sections: z.array(
     z.object({
       name: z.string(),
@@ -22,8 +24,9 @@ const scopeDecompositionSchema = z.object({
           unit: z.string(),
           category: z.nativeEnum(ItemCategory),
           pricing_hint: z
-            .enum(["material", "assembly", "labor_rate", "skip"])
+            .enum(["material", "assembly", "labor_rate", "service", "skip"])
             .optional(),
+          confidence: z.enum(["high", "medium", "low"]),
         }),
       ),
     }),

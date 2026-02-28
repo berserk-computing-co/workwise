@@ -74,6 +74,8 @@ export interface ChatParams {
   serverTools?: ServerToolDeclaration[];
   maxTokens?: number;
   outputFormat?: OutputFormat;
+  temperature?: number;
+  thinking?: { type: "enabled"; budgetTokens: number };
 }
 
 /** A normalized tool call extracted from the model's response. */
@@ -103,7 +105,7 @@ export interface ChatResponse {
 
 /** The contract every LLM provider must implement. */
 export interface AiProvider {
-  chat(params: ChatParams): Promise<ChatResponse>;
+  chat(params: ChatParams, signal: AbortSignal): Promise<ChatResponse>;
 }
 
 /** NestJS injection token for the active AiProvider implementation. */
