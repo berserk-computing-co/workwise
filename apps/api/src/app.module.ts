@@ -11,6 +11,7 @@ import { BidEngineModule } from "./pipelines/bidengine/bidengine.module.js";
 import { OneBuildModule } from "./datasources/onebuild/onebuild.module.js";
 import { AiModule } from "./ai/ai.module.js";
 import { PipelineModule } from "./pipeline/pipeline.module.js";
+import { RedisModule } from "./config/redis.module.js";
 import { typeOrmConfigFactory } from "./config/database.config.js";
 import { Auth0AuthGuard } from "./auth/auth0-auth.guard.js";
 
@@ -35,6 +36,7 @@ import { Auth0AuthGuard } from "./auth/auth0-auth.guard.js";
         },
       }),
     }),
+    RedisModule,
     AuthModule,
     UsersModule,
     ProjectsModule,
