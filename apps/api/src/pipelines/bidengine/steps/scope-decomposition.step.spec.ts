@@ -61,13 +61,13 @@ describe("ScopeDecompositionStep", () => {
     expect(step.name).toBe("scope_decomposition");
   });
 
-  it('execute() calls provider.chat with model "claude-haiku-4-5-20251001" and maxTokens 8192', async () => {
+  it('execute() calls provider.chat with model "claude-haiku-4-5-20251001" and maxTokens 16384', async () => {
     await step.execute(context, signal);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     const callArgs = mockProvider.chat.mock.calls[0][0];
     expect(callArgs.model).toBe("claude-haiku-4-5-20251001");
-    expect(callArgs.maxTokens).toBe(8192);
+    expect(callArgs.maxTokens).toBe(16384);
     expect(callArgs.thinking).toEqual({ type: "enabled", budgetTokens: 8000 });
   });
 

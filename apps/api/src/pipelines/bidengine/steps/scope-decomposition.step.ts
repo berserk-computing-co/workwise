@@ -51,7 +51,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
       model: "claude-haiku-4-5-20251001",
       system: getScopePrompt(context.category),
       messages: [{ role: "user", content: buildUserPrompt(context) }],
-      maxTokens: 8192,
+      maxTokens: 16384,
       outputFormat: scopeOutputFormat,
       thinking: { type: "enabled", budgetTokens: 8000 },
     }, signal);
@@ -66,7 +66,7 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
 
     const itemCount = result.sections.reduce((sum, s) => sum + s.items.length, 0);
     this.logger.log(
-      `project=${context.projectId} type=${result.project_type} confidence=${result.confidence} items=${itemCount}`,
+      `project=${context.projectId} type=${result.project_type} overall_confidence=${result.confidence} items=${itemCount}`,
     );
     this.logger.debug(
       `classification_reasoning: ${result.classification_reasoning}`,
