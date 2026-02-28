@@ -28,7 +28,10 @@ describe("WebPriceResolutionStep", () => {
   let step: WebPriceResolutionStep;
   let context: BidEngineContext;
 
+  let signal: AbortSignal;
+
   beforeEach(() => {
+    signal = new AbortController().signal;
     mockWebPricingAgent = {
       priceItems: jest.fn().mockResolvedValue(mockWebPricingResults),
     };
@@ -70,7 +73,7 @@ describe("WebPriceResolutionStep", () => {
   });
 
   it("matched items get WebPriced source", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.webResults).toBeDefined();
     const matched = context.webResults![0];
@@ -86,7 +89,7 @@ describe("WebPriceResolutionStep", () => {
   });
 
   it("unmatched items get AiUnmatched source", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.webResults).toBeDefined();
     const unmatched = context.webResults![1];
@@ -104,12 +107,12 @@ describe("WebPriceResolutionStep", () => {
       new Error("network timeout"),
     );
 
-    await expect(step.execute(context)).resolves.toBeUndefined();
+    await expect(step.execute(context, signal)).resolves.toBeUndefined();
     expect(context.webResults).toEqual([]);
   });
 
   it("flattens sections and passes to agent", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockWebPricingAgent.priceItems).toHaveBeenCalledTimes(1);
     const [flatItems, zipCode] = mockWebPricingAgent.priceItems.mock.calls[0];

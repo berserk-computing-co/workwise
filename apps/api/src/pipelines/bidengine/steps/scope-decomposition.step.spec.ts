@@ -34,7 +34,10 @@ describe("ScopeDecompositionStep", () => {
   let step: ScopeDecompositionStep;
   let context: BidEngineContext;
 
+  let signal: AbortSignal;
+
   beforeEach(() => {
+    signal = new AbortController().signal;
     mockProvider = { chat: jest.fn().mockResolvedValue(mockChatResponse) };
     step = new ScopeDecompositionStep(mockProvider as any);
     context = {
@@ -55,7 +58,7 @@ describe("ScopeDecompositionStep", () => {
   });
 
   it('execute() calls provider.chat with model "claude-haiku-4-5-20251001" and maxTokens 8192', async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     const callArgs = mockProvider.chat.mock.calls[0][0];
@@ -64,7 +67,7 @@ describe("ScopeDecompositionStep", () => {
   });
 
   it("execute() populates context.sections with parsed items and pricing_hint", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.sections).toBeDefined();
     expect(context.sections).toHaveLength(1);
@@ -88,7 +91,7 @@ describe("ScopeDecompositionStep", () => {
       stopReason: "max_tokens",
     });
 
-    await expect(step.execute(context)).rejects.toThrow(
+    await expect(step.execute(context, signal)).rejects.toThrow(
       'ScopeDecompositionStep: unexpected stop_reason "max_tokens"',
     );
   });

@@ -14,6 +14,7 @@ import { PriceMergeStep } from "./steps/price-merge.step.js";
 import { OptionGenerationStep } from "./steps/option-generation.step.js";
 import { CalculationStep } from "./steps/calculation.step.js";
 import type { BidEngineContext } from "./bidengine-context.js";
+import { CancellationService } from "../../pipeline/services/cancellation.service.js";
 
 @Injectable()
 @Processor("project-generation")
@@ -31,6 +32,7 @@ export class BidEngineProcessor extends WorkerHost {
     private readonly calcStep: CalculationStep,
     private readonly webPriceStep: WebPriceResolutionStep,
     private readonly mergeStep: PriceMergeStep,
+    private readonly cancellationService: CancellationService,
   ) {
     super();
   }
@@ -39,6 +41,8 @@ export class BidEngineProcessor extends WorkerHost {
     job: Job<{ projectId: string; organizationId: string }>,
   ): Promise<void> {
     const { projectId } = job.data;
+
+    const { controller, cleanup } = this.cancellationService.watch(job.id!);
 
     this.logger.log(`Processing job ${job.id} for project ${projectId}`);
 
@@ -80,6 +84,7 @@ export class BidEngineProcessor extends WorkerHost {
           this.calcStep,
         ],
         onProgress,
+        controller,
       );
 
       await this.pipelineJobs.complete(job.id!, {
@@ -93,17 +98,33 @@ export class BidEngineProcessor extends WorkerHost {
         `Job ${job.id} completed — total: ${context.totals!.total}`,
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      this.logger.error(
-        `Job ${job.id} failed: ${message}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      await this.pipelineJobs.fail(job.id!, message);
-      await this.projectRepo.update(projectId, {
-        status: "draft",
-        currentJobId: null,
-      });
-      throw error;
+      const isCancelled =
+        error instanceof Error && error.message === "Job cancelled by user";
+
+      if (isCancelled) {
+        this.logger.log(`Job ${job.id} cancelled by user`);
+        await this.pipelineJobs.cancel(job.id!);
+        await this.projectRepo.update(projectId, {
+          status: "cancelled",
+          currentJobId: null,
+        });
+      } else {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        this.logger.error(
+          `Job ${job.id} failed: ${message}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+        await this.pipelineJobs.fail(job.id!, message);
+        await this.projectRepo.update(projectId, {
+          status: "draft",
+          currentJobId: null,
+        });
+      }
+
+      if (!isCancelled) throw error;
+    } finally {
+      cleanup();
     }
   }
 }

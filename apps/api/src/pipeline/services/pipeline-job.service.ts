@@ -79,6 +79,21 @@ export class PipelineJobService {
     this.progress.complete(jobId);
   }
 
+  /** Mark the job as cancelled — persists to DB and closes SSE stream. */
+  async cancel(jobId: string): Promise<void> {
+    await this.repo.update(jobId, {
+      status: JobStatus.Cancelled,
+      completedAt: new Date(),
+      currentStep: null,
+    });
+    this.progress.emit(jobId, {
+      step: "pipeline",
+      status: StepStatus.Error,
+      message: "Generation cancelled",
+    });
+    this.progress.complete(jobId);
+  }
+
   /** Mark the job as failed — persists error to DB and closes SSE stream. */
   async fail(jobId: string, error: string): Promise<void> {
     await this.repo.update(jobId, {

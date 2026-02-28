@@ -44,6 +44,7 @@ export class WebPricingAgentService {
       sectionName: string;
     }>,
     zipCode: string,
+    signal: AbortSignal,
   ): Promise<WebPricingResult[]> {
     this.logger.log(
       `Starting web pricing: ${items.length} items, ZIP=${zipCode}`,
@@ -73,7 +74,7 @@ export class WebPricingAgentService {
       `Web pricing prompt length: ${initialPrompt.length} chars`,
     );
 
-    const result = await this.agentRunner.run(config, initialPrompt);
+    const result = await this.agentRunner.run(config, initialPrompt, signal);
 
     this.logger.log(
       `Web pricing agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,

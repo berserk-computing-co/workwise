@@ -15,9 +15,9 @@ npm run build:api               # NestJS compile to dist/
 
 # Quality
 npm run lint                    # ESLint both apps
-npm run test                    # Jest (API only, no web tests yet)
-nx check-types web              # Frontend type check
-nx check-types api              # Backend type check
+npx nx test api                 # Jest (API only, no web tests yet)
+npx nx check-types web          # Frontend type check
+npx nx check-types api          # Backend type check
 
 # Database (TypeORM)
 nx migration:run api                              # Run pending migrations
@@ -72,7 +72,14 @@ The frontend proxies all API calls through `app/api/proxy/[...path]/route.ts` to
 - **Agent two-phase pattern** — When an agent has both tools and `outputFormat`, Phase 1 runs tools freely (no schema), Phase 2 formats output (no tools). Prevents the model from skipping tool use.
 - **Frontend state** — React Context + hooks only, no external state library. `useReducer` for multi-step flows.
 - **API proxy** — Client components call `/api/proxy/...`, never the NestJS API directly.
-- **Project statuses** — `draft` → `generating` → `generated` → `review`. Generation sets status via the pipeline, not PATCH.
+- **Project statuses** — `draft` → `generating` → `cancelled` → `review`. Generation sets status via the pipeline, not PATCH. Cancel sets `cancelled` via `POST projects/:id/cancel`.
+- **Job cancellation** — `CancellationService` sets a Redis flag, `BidEngineProcessor.watch()` polls it and aborts the `AbortController`. Signal propagates through PipelineRunner → steps → agent services → AgentRunner → LLM/fetch calls.
+
+## Gotchas
+
+- **Always run commands via Nx from the monorepo root** — never `cd apps/api && npx jest`. The API jest config uses `ts-jest` for TypeScript transforms; running `npx jest` from the wrong directory falls back to `babel-jest` which can't parse `import type` syntax. Use `npx nx test api` instead.
+- **Relative imports only** — don't use `src/` prefix paths (e.g. `import { Foo } from "src/bar.js"`). They resolve via tsconfig paths for type-checking but break Jest at runtime. Always use relative paths (`../../bar.js`).
+- **Fake timers in tests** — `JobProgressService.complete()` uses `setTimeout(500ms)`. Tests that check observable completion must call `jest.advanceTimersByTime()` after `complete()`/`error()`.
 
 ## Environment Variables
 

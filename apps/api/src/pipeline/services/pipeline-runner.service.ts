@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PipelineStep, PipelineStepInput } from "../pipeline-step.interface.js";
 import { StepStatus } from "../pipeline.enums.js";
+import { CancellationService } from "./cancellation.service.js";
 
 @Injectable()
 export class PipelineRunner {
@@ -11,20 +12,24 @@ export class PipelineRunner {
     context: TContext,
     steps: PipelineStepInput<TContext>[],
     onProgress: (step: string, status: StepStatus, message: string) => void,
+    controller: AbortController,
   ): Promise<void> {
     const totalCount = steps.reduce(
       (acc, entry) => acc + (Array.isArray(entry) ? entry.length : 1),
       0,
     );
+
     this.logger.log(`Pipeline started (${totalCount} steps) for job ${jobId}`);
 
     for (const entry of steps) {
+      controller.signal.throwIfAborted();
+
       if (!Array.isArray(entry)) {
         // Sequential step — errors throw and abort the pipeline
         const step = entry as PipelineStep<TContext>;
         this.logger.log(`[${jobId}] Running step: ${step.name}`);
         onProgress(step.name, StepStatus.Running, `Starting ${step.name}...`);
-        await step.execute(context);
+        await step.execute(context, controller.signal);
         this.logger.log(`[${jobId}] Step complete: ${step.name}`);
         onProgress(step.name, StepStatus.Complete, `${step.name} complete`);
       } else {
@@ -38,7 +43,7 @@ export class PipelineRunner {
         }
 
         const results = await Promise.allSettled(
-          group.map((step) => step.execute(context)),
+          group.map((step) => step.execute(context, controller.signal)),
         );
 
         const succeeded: string[] = [];

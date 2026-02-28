@@ -10,11 +10,19 @@ const mockProject = {
 
 const mockProjectRepo = {
   findOneOrFail: jest.fn().mockResolvedValue(mockProject),
+  update: jest.fn(),
 };
 
 const mockPipelineRunner = {
   run: jest.fn().mockImplementation(async (_jobId: string, context: any) => {
     context.totals = { total: 5000 };
+  }),
+};
+
+const mockCancellationService = {
+  watch: jest.fn().mockReturnValue({
+    controller: new AbortController(),
+    cleanup: jest.fn(),
   }),
 };
 
@@ -48,6 +56,7 @@ function makeProcessor() {
     mockCalcStep as any,
     mockWebPriceStep as any,
     mockMergeStep as any,
+    mockCancellationService as any,
   );
 }
 
@@ -58,6 +67,10 @@ describe("BidEngineProcessor", () => {
     processor = makeProcessor();
     jest.clearAllMocks();
     mockProjectRepo.findOneOrFail.mockResolvedValue(mockProject);
+    mockCancellationService.watch.mockReturnValue({
+      controller: new AbortController(),
+      cleanup: jest.fn(),
+    });
     mockPipelineRunner.run.mockImplementation(
       async (_jobId: string, context: any) => {
         context.totals = { total: 5000 };

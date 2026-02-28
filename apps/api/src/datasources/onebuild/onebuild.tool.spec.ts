@@ -18,19 +18,20 @@ const makeSourceItem = (
       calculatedUnitRateUsdCents: 300,
     },
   ],
-  imagesUrls: [],
   ...overrides,
 });
 
 describe("createSearch1BuildTool", () => {
   let mockService: jest.Mocked<Pick<OneBuildService, "fetchSourceItems">>;
   let tool: ReturnType<typeof createSearch1BuildTool>;
+  let signal: AbortSignal;
 
   beforeEach(() => {
     mockService = {
       fetchSourceItems: jest.fn(),
     };
     tool = createSearch1BuildTool(mockService as any);
+    signal = new AbortController().signal;
   });
 
   afterEach(() => {
@@ -44,38 +45,46 @@ describe("createSearch1BuildTool", () => {
   it("execute() calls service.fetchSourceItems with search_term, zip_code, and source_type", async () => {
     mockService.fetchSourceItems.mockResolvedValue([]);
 
-    await tool.execute({ search_term: "lumber", zip_code: "90210" });
+    await tool.execute({ search_term: "lumber", zip_code: "90210" }, signal);
 
     expect(mockService.fetchSourceItems).toHaveBeenCalledWith(
       "lumber",
       "90210",
       undefined,
+      signal,
     );
   });
 
   it("execute() passes source_type filter when provided", async () => {
     mockService.fetchSourceItems.mockResolvedValue([]);
 
-    await tool.execute({
-      search_term: "install toilet",
-      zip_code: "90210",
-      source_type: "ASSEMBLY",
-    });
+    await tool.execute(
+      {
+        search_term: "install toilet",
+        zip_code: "90210",
+        source_type: "ASSEMBLY",
+      },
+      signal,
+    );
 
     expect(mockService.fetchSourceItems).toHaveBeenCalledWith(
       "install toilet",
       "90210",
       "ASSEMBLY",
+      signal,
     );
   });
 
   it("execute() converts cents to dollars in results", async () => {
     mockService.fetchSourceItems.mockResolvedValue([makeSourceItem("item-1")]);
 
-    const result = (await tool.execute({
-      search_term: "lumber",
-      zip_code: "90210",
-    })) as any;
+    const result = (await tool.execute(
+      {
+        search_term: "lumber",
+        zip_code: "90210",
+      },
+      signal,
+    )) as any;
 
     expect(result.results[0].material_rate).toBe(2); // 200 cents / 100
     expect(result.results[0].labor_rate).toBe(1); // 100 cents / 100
@@ -88,10 +97,13 @@ describe("createSearch1BuildTool", () => {
     );
     mockService.fetchSourceItems.mockResolvedValue(items);
 
-    const result = (await tool.execute({
-      search_term: "lumber",
-      zip_code: "90210",
-    })) as any;
+    const result = (await tool.execute(
+      {
+        search_term: "lumber",
+        zip_code: "90210",
+      },
+      signal,
+    )) as any;
 
     expect(result.results).toHaveLength(5);
   });
@@ -99,10 +111,13 @@ describe("createSearch1BuildTool", () => {
   it("execute() handles an empty results array", async () => {
     mockService.fetchSourceItems.mockResolvedValue([]);
 
-    const result = (await tool.execute({
-      search_term: "nothing",
-      zip_code: "90210",
-    })) as any;
+    const result = (await tool.execute(
+      {
+        search_term: "nothing",
+        zip_code: "90210",
+      },
+      signal,
+    )) as any;
 
     expect(result.result_count).toBe(0);
     expect(result.results).toEqual([]);

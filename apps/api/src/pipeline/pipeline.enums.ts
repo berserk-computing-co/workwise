@@ -4,6 +4,7 @@ export enum JobStatus {
   Running = "running",
   Completed = "completed",
   Failed = "failed",
+  Cancelled = "cancelled",
 }
 
 /** Status emitted via SSE for individual step progress. */

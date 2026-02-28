@@ -7,6 +7,7 @@ import type { ProgressStep } from "../hooks/use-job-progress";
 
 interface ProgressOverlayProps {
   jobId: string | null;
+  projectId: string | null;
   onComplete: () => void;
   onClose: () => void;
 }
@@ -155,6 +156,7 @@ function formatElapsed(seconds: number): string {
 
 export function ProgressOverlay({
   jobId,
+  projectId,
   onComplete,
   onClose,
 }: ProgressOverlayProps) {
@@ -164,6 +166,7 @@ export function ProgressOverlay({
 
   const [elapsed, setElapsed] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Elapsed timer
   useEffect(() => {
@@ -189,6 +192,20 @@ export function ProgressOverlay({
     const timer = setTimeout(() => onCompleteRef.current(), 2000);
     return () => clearTimeout(timer);
   }, [isComplete]);
+
+  const handleCancel = async () => {
+    if (!projectId || cancelling) return;
+    setCancelling(true);
+    try {
+      await fetch(`/api/proxy/projects/${projectId}/cancel`, {
+        method: "POST",
+      });
+    } catch {
+      // If the cancel request itself fails, still close the overlay
+    }
+    setCancelling(false);
+    onClose();
+  };
 
   const isOpen = jobId !== null;
   if (!isOpen) return null;
@@ -342,10 +359,11 @@ export function ProgressOverlay({
                     </button>
                   ) : (
                     <button
-                      onClick={onClose}
-                      className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                      className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
                     >
-                      Cancel
+                      {cancelling ? "Cancelling..." : "Cancel"}
                     </button>
                   )}
                 </div>

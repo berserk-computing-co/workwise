@@ -58,11 +58,13 @@ npm run build:api        # NestJS compile to dist/
 ## Test & Lint
 
 ```bash
-npm run test             # Jest (API tests)
+npx nx test api          # Jest (API tests) — always run via Nx, not bare jest
 npm run lint             # ESLint both apps
-nx check-types web       # Frontend type check
-nx check-types api       # Backend type check
+npx nx check-types web   # Frontend type check
+npx nx check-types api   # Backend type check
 ```
+
+> **Important:** Always run test/check-types via `npx nx` from the monorepo root. Running `npx jest` directly from `apps/api/` bypasses the ts-jest config and breaks on TypeScript syntax like `import type`.
 
 ## Database (TypeORM)
 

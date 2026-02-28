@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   ForbiddenException,
   Get,
@@ -16,6 +17,7 @@ import type { Repository } from "typeorm";
 import type { Request, Response } from "express";
 import type { Subscription } from "rxjs";
 import { PipelineJobService } from "../../pipeline/services/pipeline-job.service.js";
+import { CancellationService } from "../../pipeline/services/cancellation.service.js";
 import {
   StepStatus,
   TargetType,
@@ -31,6 +33,7 @@ import type { JwtPayload } from "../../common/decorators/current-user.decorator.
 export class BidEngineController {
   constructor(
     private readonly pipelineJobs: PipelineJobService,
+    private readonly cancellationService: CancellationService,
     @InjectQueue("project-generation") private readonly generationQueue: Queue,
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
@@ -67,6 +70,25 @@ export class BidEngineController {
     );
 
     return { jobId: job.id };
+  }
+
+  @Post("projects/:id/cancel")
+  @HttpCode(200)
+  async cancel(@CurrentUser() payload: JwtPayload, @Param("id") id: string) {
+    const user = await this.usersService.findByAuthIdOrFail(payload.sub);
+    const project = await this.projectRepo.findOne({ where: { id } });
+
+    if (!project) throw new NotFoundException("Project not found");
+
+    if (project.organizationId !== user.organizationId)
+      throw new ForbiddenException("Access denied");
+
+    if (project.status !== "generating" || !project.currentJobId)
+      throw new BadRequestException("Project is not currently generating");
+
+    await this.cancellationService.requestCancellation(project.currentJobId);
+
+    return { cancelled: true };
   }
 
   @Public()

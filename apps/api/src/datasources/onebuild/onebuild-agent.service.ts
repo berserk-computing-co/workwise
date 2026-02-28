@@ -52,6 +52,7 @@ export class OneBuildAgentService {
       pricingHint?: string;
     }>,
     zipCode: string,
+    signal: AbortSignal,
   ): Promise<PricingResult[]> {
     this.logger.log(
       `Starting OneBuild pricing: ${items.length} items, ZIP=${zipCode}`,
@@ -88,7 +89,7 @@ export class OneBuildAgentService {
       `OneBuild prompt length: ${initialPrompt.length} chars`,
     );
 
-    const result = await this.agentRunner.run(config, initialPrompt);
+    const result = await this.agentRunner.run(config, initialPrompt, signal);
 
     this.logger.log(
       `OneBuild agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,

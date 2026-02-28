@@ -31,9 +31,11 @@ const baseResponse = {
 
 describe("AnthropicProvider", () => {
   let provider: AnthropicProvider;
+  let signal: AbortSignal;
 
   beforeEach(() => {
     provider = new AnthropicProvider(mockConfig as any);
+    signal = new AbortController().signal;
     jest.clearAllMocks();
   });
 
@@ -44,20 +46,21 @@ describe("AnthropicProvider", () => {
   it("calls Anthropic messages.create with correct parameters", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat(baseParams);
+    await provider.chat(baseParams, signal);
 
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
       }),
+      { signal },
     );
   });
 
   it("includes cache_control ephemeral on system message", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat(baseParams);
+    await provider.chat(baseParams, signal);
 
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.system).toEqual([
@@ -72,16 +75,19 @@ describe("AnthropicProvider", () => {
   it("adds strict: true to tool definitions", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat({
-      ...baseParams,
-      tools: [
-        {
-          name: "my_tool",
-          description: "does stuff",
-          inputSchema: { type: "object" },
-        },
-      ],
-    });
+    await provider.chat(
+      {
+        ...baseParams,
+        tools: [
+          {
+            name: "my_tool",
+            description: "does stuff",
+            inputSchema: { type: "object" },
+          },
+        ],
+      },
+      signal,
+    );
 
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.tools).toEqual(
@@ -97,10 +103,13 @@ describe("AnthropicProvider", () => {
   it("includes output_config.format when outputFormat provided", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat({
-      ...baseParams,
-      outputFormat: { type: "json_schema", schema: { type: "object" } },
-    });
+    await provider.chat(
+      {
+        ...baseParams,
+        outputFormat: { type: "json_schema", schema: { type: "object" } },
+      },
+      signal,
+    );
 
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.output_config).toEqual({
@@ -114,11 +123,14 @@ describe("AnthropicProvider", () => {
   it("omits tools when no tools and no serverTools", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat({
-      ...baseParams,
-      tools: undefined,
-      serverTools: undefined,
-    });
+    await provider.chat(
+      {
+        ...baseParams,
+        tools: undefined,
+        serverTools: undefined,
+      },
+      signal,
+    );
 
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.tools).toBeUndefined();
@@ -127,7 +139,7 @@ describe("AnthropicProvider", () => {
   it("omits tools when tools is empty and serverTools is empty", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat({ ...baseParams, tools: [], serverTools: [] });
+    await provider.chat({ ...baseParams, tools: [], serverTools: [] }, signal);
 
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.tools).toBeUndefined();
@@ -142,7 +154,7 @@ describe("AnthropicProvider", () => {
       ],
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.text).toBe("Hello world");
   });
@@ -161,7 +173,7 @@ describe("AnthropicProvider", () => {
       usage: { input_tokens: 10, output_tokens: 5 },
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.toolCalls).toHaveLength(1);
     expect(result.toolCalls[0]).toEqual({
@@ -184,7 +196,7 @@ describe("AnthropicProvider", () => {
       stop_reason: sdkReason,
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.stopReason).toBe(expected);
   });
@@ -200,7 +212,7 @@ describe("AnthropicProvider", () => {
       usage: { input_tokens: 10, output_tokens: 5 },
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.rawAssistantContent).toHaveLength(1);
     expect(result.rawAssistantContent[0]).toEqual({
@@ -223,7 +235,7 @@ describe("AnthropicProvider", () => {
       usage: { input_tokens: 10, output_tokens: 5 },
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.rawAssistantContent).toHaveLength(1);
     expect(result.rawAssistantContent[0]).toMatchObject({
@@ -253,7 +265,7 @@ describe("AnthropicProvider", () => {
       usage: { input_tokens: 10, output_tokens: 5 },
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.rawAssistantContent).toHaveLength(1);
     expect(result.rawAssistantContent[0]).toMatchObject({
@@ -269,7 +281,7 @@ describe("AnthropicProvider", () => {
       usage: { input_tokens: 100, output_tokens: 50 },
     });
 
-    const result = await provider.chat(baseParams);
+    const result = await provider.chat(baseParams, signal);
 
     expect(result.usage).toEqual({ inputTokens: 100, outputTokens: 50 });
   });
@@ -277,10 +289,13 @@ describe("AnthropicProvider", () => {
   it("passes string message content through to SDK", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat({
-      ...baseParams,
-      messages: [{ role: "user", content: "plain text message" }],
-    });
+    await provider.chat(
+      {
+        ...baseParams,
+        messages: [{ role: "user", content: "plain text message" }],
+      },
+      signal,
+    );
 
     const callArgs = mockCreate.mock.calls[0][0];
     expect(callArgs.messages[0]).toEqual({
@@ -292,22 +307,25 @@ describe("AnthropicProvider", () => {
   it("converts block array message content to Anthropic format", async () => {
     mockCreate.mockResolvedValueOnce(baseResponse);
 
-    await provider.chat({
-      ...baseParams,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "tool_result",
-              toolResultId: "call_1",
-              toolResultContent: "result text",
-              isError: false,
-            },
-          ],
-        },
-      ],
-    });
+    await provider.chat(
+      {
+        ...baseParams,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                toolResultId: "call_1",
+                toolResultContent: "result text",
+                isError: false,
+              },
+            ],
+          },
+        ],
+      },
+      signal,
+    );
 
     const callArgs = mockCreate.mock.calls[0][0];
     const userMessage = callArgs.messages[0];

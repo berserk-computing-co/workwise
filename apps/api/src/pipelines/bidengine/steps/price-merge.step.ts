@@ -9,7 +9,7 @@ export class PriceMergeStep implements PipelineStep<BidEngineContext> {
 
   private readonly logger = new Logger(PriceMergeStep.name);
 
-  async execute(context: BidEngineContext): Promise<void> {
+  async execute(context: BidEngineContext, _signal: AbortSignal): Promise<void> {
     const oneBuild = context.oneBuildResults;
     const web = context.webResults;
 

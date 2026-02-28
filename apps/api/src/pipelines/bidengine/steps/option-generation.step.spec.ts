@@ -44,7 +44,10 @@ describe("OptionGenerationStep", () => {
   let step: OptionGenerationStep;
   let context: BidEngineContext;
 
+  let signal: AbortSignal;
+
   beforeEach(() => {
+    signal = new AbortController().signal;
     mockProvider = { chat: jest.fn().mockResolvedValue(mockChatResponse) };
     step = new OptionGenerationStep(mockProvider as any);
     context = {
@@ -88,7 +91,7 @@ describe("OptionGenerationStep", () => {
   });
 
   it('execute() calls provider.chat with model "claude-haiku-4-5-20251001" and maxTokens 4096', async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(mockProvider.chat).toHaveBeenCalledTimes(1);
     const callArgs = mockProvider.chat.mock.calls[0][0];
@@ -97,7 +100,7 @@ describe("OptionGenerationStep", () => {
   });
 
   it("execute() populates context.options with is_recommended → isRecommended mapping", async () => {
-    await step.execute(context);
+    await step.execute(context, signal);
 
     expect(context.options).toBeDefined();
     expect(context.options).toHaveLength(3);
@@ -124,7 +127,7 @@ describe("OptionGenerationStep", () => {
       stopReason: "max_tokens",
     });
 
-    await expect(step.execute(context)).rejects.toThrow(
+    await expect(step.execute(context, signal)).rejects.toThrow(
       'OptionGenerationStep: unexpected stop_reason "max_tokens"',
     );
   });

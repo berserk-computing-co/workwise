@@ -55,9 +55,11 @@ const mockItems = [
 
 describe("WebPricingAgentService", () => {
   let service: WebPricingAgentService;
+  let signal: AbortSignal;
 
   beforeEach(() => {
     service = makeService();
+    signal = new AbortController().signal;
     jest.clearAllMocks();
     mockAgentRunner.run.mockResolvedValue(mockAgentResult);
   });
@@ -68,7 +70,7 @@ describe("WebPricingAgentService", () => {
 
   describe("priceItems()", () => {
     it("calls agentRunner.run with web_pricing config", async () => {
-      await service.priceItems(mockItems, "90210");
+      await service.priceItems(mockItems, "90210", signal);
 
       expect(mockAgentRunner.run).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -78,11 +80,12 @@ describe("WebPricingAgentService", () => {
           maxTokens: 8192,
         }),
         expect.any(String),
+        signal,
       );
     });
 
     it("passes server tool with max_uses: 20", async () => {
-      await service.priceItems(mockItems, "90210");
+      await service.priceItems(mockItems, "90210", signal);
 
       const [config] = mockAgentRunner.run.mock.calls[0];
       expect(config.serverTools).toHaveLength(1);
@@ -94,14 +97,14 @@ describe("WebPricingAgentService", () => {
     });
 
     it("passes empty tools array", async () => {
-      await service.priceItems(mockItems, "90210");
+      await service.priceItems(mockItems, "90210", signal);
 
       const [config] = mockAgentRunner.run.mock.calls[0];
       expect(config.tools).toEqual([]);
     });
 
     it("builds initial prompt with item count and ZIP code", async () => {
-      await service.priceItems(mockItems, "90210");
+      await service.priceItems(mockItems, "90210", signal);
 
       const [, initialPrompt] = mockAgentRunner.run.mock.calls[0];
       expect(initialPrompt).toContain("Price the following 2 items");
@@ -109,7 +112,7 @@ describe("WebPricingAgentService", () => {
     });
 
     it("includes item descriptions in the prompt", async () => {
-      await service.priceItems(mockItems, "90210");
+      await service.priceItems(mockItems, "90210", signal);
 
       const [, initialPrompt] = mockAgentRunner.run.mock.calls[0];
       expect(initialPrompt).toContain("2x4x8 lumber stud");
@@ -117,7 +120,7 @@ describe("WebPricingAgentService", () => {
     });
 
     it("returns parsed results array", async () => {
-      const results = await service.priceItems(mockItems, "90210");
+      const results = await service.priceItems(mockItems, "90210", signal);
 
       expect(results).toHaveLength(2);
       expect(results[0]).toMatchObject({
@@ -131,7 +134,7 @@ describe("WebPricingAgentService", () => {
     });
 
     it("returns unmatched items with skipReason", async () => {
-      const results = await service.priceItems(mockItems, "90210");
+      const results = await service.priceItems(mockItems, "90210", signal);
 
       expect(results[1]).toMatchObject({
         index: 1,
@@ -149,7 +152,7 @@ describe("WebPricingAgentService", () => {
         truncated: false,
       });
 
-      const results = await service.priceItems([], "90210");
+      const results = await service.priceItems([], "90210", signal);
 
       expect(results).toEqual([]);
     });
@@ -166,7 +169,7 @@ describe("WebPricingAgentService", () => {
         truncated: false,
       });
 
-      const results = await service.priceItems(mockItems, "90210");
+      const results = await service.priceItems(mockItems, "90210", signal);
 
       expect(results).toHaveLength(2);
       expect(results[0]).toMatchObject({
@@ -190,7 +193,7 @@ describe("WebPricingAgentService", () => {
         truncated: true,
       });
 
-      const results = await service.priceItems(mockItems, "90210");
+      const results = await service.priceItems(mockItems, "90210", signal);
 
       // Should salvage the first complete result
       expect(results).toHaveLength(1);
@@ -205,9 +208,9 @@ describe("WebPricingAgentService", () => {
     it("propagates agentRunner errors", async () => {
       mockAgentRunner.run.mockRejectedValueOnce(new Error("API timeout"));
 
-      await expect(service.priceItems(mockItems, "90210")).rejects.toThrow(
-        "API timeout",
-      );
+      await expect(
+        service.priceItems(mockItems, "90210", signal),
+      ).rejects.toThrow("API timeout");
     });
   });
 });

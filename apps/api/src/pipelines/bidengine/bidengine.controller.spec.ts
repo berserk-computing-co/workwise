@@ -13,12 +13,16 @@ const mockPipelineJob = { id: "job-1" };
 
 const mockPipelineJobs = {
   create: jest.fn().mockResolvedValue(mockPipelineJob),
-  has: jest.fn().mockReturnValue(true),
   subscribe: jest.fn(),
+  findOrFail: jest.fn(),
+};
+
+const mockCancellationService = {
+  requestCancellation: jest.fn(),
 };
 
 const mockQueue = { add: jest.fn() };
-const mockProjectRepo = { findOne: jest.fn() };
+const mockProjectRepo = { findOne: jest.fn(), update: jest.fn() };
 const mockUsersService = {
   findByAuthIdOrFail: jest.fn().mockResolvedValue(mockUser),
 };
@@ -26,6 +30,7 @@ const mockUsersService = {
 function makeController() {
   return new BidEngineController(
     mockPipelineJobs as any,
+    mockCancellationService as any,
     mockQueue as any,
     mockProjectRepo as any,
     mockUsersService as any,
@@ -43,7 +48,6 @@ describe("BidEngineController", () => {
     mockUsersService.findByAuthIdOrFail.mockResolvedValue(mockUser);
     mockProjectRepo.findOne.mockResolvedValue(mockProject);
     mockPipelineJobs.create.mockResolvedValue(mockPipelineJob);
-    mockPipelineJobs.has.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -121,27 +125,15 @@ describe("BidEngineController", () => {
       return req;
     }
 
-    it("returns 404 JSON when pipelineJobs.has() returns false", () => {
-      mockPipelineJobs.has.mockReturnValueOnce(false);
-      const res = makeResMock();
-      const req = makeReqMock();
-
-      controller.streamProgress("job-1", req as any, res as any);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        statusCode: 404,
-        error: "Not Found",
-        message: "Job not found",
-      });
-    });
-
-    it("returns 404 JSON when subscribe returns null", () => {
+    it("returns 404 JSON when subscribe returns null and job not in DB", async () => {
       mockPipelineJobs.subscribe.mockReturnValueOnce(null);
+      mockPipelineJobs.findOrFail.mockRejectedValueOnce(
+        new NotFoundException("Pipeline job not found"),
+      );
       const res = makeResMock();
       const req = makeReqMock();
 
-      controller.streamProgress("job-1", req as any, res as any);
+      await controller.streamProgress("job-1", req as any, res as any);
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
