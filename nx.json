@@ -7,7 +7,9 @@
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).ts",
-      "!{projectRoot}/jest.config.ts"
+      "!{projectRoot}/jest.config.ts",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs"
     ]
   },
   "plugins": [
@@ -51,7 +53,16 @@
       "inputs": ["default"],
       "cache": true
     },
-    "dev": { "cache": false },
-    "serve": { "cache": false }
+    "dev": {
+      "cache": false
+    },
+    "serve": {
+      "cache": false
+    },
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    }
   }
 }

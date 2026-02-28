@@ -5,7 +5,11 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "incremental": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@workwise/shared-types": ["libs/shared-types/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "dist", ".next"]
 }
