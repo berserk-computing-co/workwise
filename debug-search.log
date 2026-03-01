@@ -1,0 +1,182 @@
+[2026-02-27T02:54:25.710Z] Server starting
+{
+  "pid": 57183,
+  "startTime": "2026-02-27T02:54:25.706Z"
+}
+---
+[2026-02-27T02:54:25.720Z] Tools registered
+{
+  "toolCount": 15
+}
+---
+[2026-02-27T02:54:25.722Z] Creating stdio transport
+{}
+---
+[2026-02-27T02:54:28.935Z] Service initialization error
+{}
+---
+[2026-02-27T02:54:28.937Z] Connecting transport
+{}
+---
+[2026-02-27T02:54:28.938Z] Server connected and ready
+{
+  "pid": 57183
+}
+---
+[2026-02-27T02:54:28.943Z] Server stats [server-ready]
+{
+  "uptime": "3s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "48MB",
+    "heapTotal": "74MB",
+    "rss": "32MB"
+  },
+  "pid": 57183
+}
+---
+[2026-02-27T02:56:58.991Z] SIGINT received but ignored - lifecycle managed by Claude Code
+{}
+---
+[2026-02-27T02:56:59.098Z] Server stats [sigint-ignored]
+{
+  "uptime": "81062s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "44MB",
+    "heapTotal": "47MB",
+    "rss": "13MB"
+  },
+  "pid": 8741
+}
+---
+[2026-02-27T02:56:59.146Z] Server stats [shutdown-SIGTERM]
+{
+  "uptime": "81062s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "44MB",
+    "heapTotal": "47MB",
+    "rss": "16MB"
+  },
+  "pid": 8741
+}
+---
+[2026-02-27T02:56:59.150Z] Shutdown complete
+{
+  "signal": "SIGTERM"
+}
+---
+[2026-03-01T03:07:59.649Z] Server starting
+{
+  "pid": 18090,
+  "startTime": "2026-03-01T03:07:59.648Z"
+}
+---
+[2026-03-01T03:07:59.658Z] Tools registered
+{
+  "toolCount": 15
+}
+---
+[2026-03-01T03:07:59.658Z] Creating stdio transport
+{}
+---
+[2026-03-01T03:08:08.857Z] Service initialization error
+{}
+---
+[2026-03-01T03:08:08.863Z] Connecting transport
+{}
+---
+[2026-03-01T03:08:08.868Z] Server connected and ready
+{
+  "pid": 18090
+}
+---
+[2026-03-01T03:08:08.891Z] Server stats [server-ready]
+{
+  "uptime": "9s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "48MB",
+    "heapTotal": "75MB",
+    "rss": "31MB"
+  },
+  "pid": 18090
+}
+---
+[2026-03-01T03:29:07.114Z] SIGINT received but ignored - lifecycle managed by Claude Code
+{}
+---
+[2026-03-01T03:29:07.232Z] Server stats [shutdown-SIGTERM]
+{
+  "uptime": "174882s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "44MB",
+    "heapTotal": "47MB",
+    "rss": "14MB"
+  },
+  "pid": 57183
+}
+---
+[2026-03-01T03:29:07.242Z] Server stats [sigint-ignored]
+{
+  "uptime": "174882s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "44MB",
+    "heapTotal": "47MB",
+    "rss": "15MB"
+  },
+  "pid": 57183
+}
+---
+[2026-03-01T03:29:07.256Z] Shutdown complete
+{
+  "signal": "SIGTERM"
+}
+---
+[2026-03-01T03:29:41.470Z] Server starting
+{
+  "pid": 27653,
+  "startTime": "2026-03-01T03:29:41.469Z"
+}
+---
+[2026-03-01T03:29:41.475Z] Tools registered
+{
+  "toolCount": 15
+}
+---
+[2026-03-01T03:29:41.475Z] Creating stdio transport
+{}
+---
+[2026-03-01T03:29:42.919Z] Service initialization error
+{}
+---
+[2026-03-01T03:29:42.920Z] Connecting transport
+{}
+---
+[2026-03-01T03:29:42.921Z] Server connected and ready
+{
+  "pid": 27653
+}
+---
+[2026-03-01T03:29:42.924Z] Server stats [server-ready]
+{
+  "uptime": "1s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "48MB",
+    "heapTotal": "74MB",
+    "rss": "65MB"
+  },
+  "pid": 27653
+}
+---
