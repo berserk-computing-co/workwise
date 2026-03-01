@@ -877,9 +877,8 @@ function OptionCard({
 
   return (
     <div
-      className={`bg-gray-50 dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-xl p-5 flex flex-col gap-2 ${
-        recommended ? "ring-2 ring-gray-900 dark:ring-white" : ""
-      }`}
+      className={`bg-gray-50 dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800 rounded-xl p-5 flex flex-col gap-2 ${recommended ? "ring-2 ring-gray-900 dark:ring-white" : ""
+        }`}
     >
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">
@@ -1031,7 +1030,7 @@ export default function ProjectDetailPage() {
         const err = await res.json().catch(() => ({}));
         throw new Error(
           (err as { message?: string }).message ??
-            "Failed to duplicate project",
+          "Failed to duplicate project",
         );
       }
       const data = await res.json();
@@ -1189,7 +1188,7 @@ export default function ProjectDetailPage() {
               onClick={() => void handleGenerate()}
               className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-40"
             >
-              {generating ? "Generating…" : "Generate Estimate"}
+              {generating ? "Generating…" : "Regenerate"}
             </button>
           )}
           <button
@@ -1198,6 +1197,11 @@ export default function ProjectDetailPage() {
             className="rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
           >
             {duplicating ? "Duplicating…" : "Duplicate"}
+          </button>
+          <button
+            className="rounded-full border border-gray-200 dark:border-green-700 text-green-700 dark:text-green-300 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-40"
+          >
+            Share
           </button>
           <button
             onClick={() => setShowDeleteModal(true)}

@@ -8,14 +8,10 @@ import React, {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
-import GooglePlacesAutocomplete, {
-  geocodeByPlaceId,
-} from "react-google-places-autocomplete";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { useToast } from "@/app/components/toast";
-import { useTheme } from "@/app/lib/theme/context";
 import { ProgressOverlay } from "@/app/components/progress-overlay";
+import { AddressAutocomplete } from "@/app/components/address-autocomplete";
 import { CreateProjectPayload } from "@/app/types/project-api";
 
 // ---------------------------------------------------------------------------
@@ -179,126 +175,15 @@ function Step1Address({
     zipCode: string;
   }) => void;
 }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-  const [mapsLoaded, setMapsLoaded] = useState(false);
-  const [value, setValue] = useState<{
-    label: string;
-    value: { place_id: string };
-  } | null>(null);
-  const [picking, setPicking] = useState(false);
-
-  const handleSelect = useCallback(
-    async (
-      selected: { label: string; value: { place_id: string } } | null,
-    ) => {
-      if (!selected) return;
-      setValue(selected);
-      setPicking(true);
-      try {
-        const results = await geocodeByPlaceId(selected.value.place_id);
-        const result = results[0];
-        const formattedAddress = result.formatted_address;
-
-        let zipCode = "";
-        for (const component of result.address_components) {
-          if (component.types.includes("postal_code")) {
-            zipCode = component.long_name;
-            break;
-          }
-        }
-
-        onNext({
-          address: selected.label,
-          formattedAddress,
-          zipCode,
-        });
-      } catch {
-        // stay on step
-      } finally {
-        setPicking(false);
-      }
-    },
-    [onNext],
-  );
-
   return (
     <div className="space-y-3">
       <BotCard
-        title="Where's the project?"
-        subtitle="Enter the project address to get started."
+        title="Where's the job site?"
+        subtitle="We use the location to pull accurate local material and labor rates."
       />
       <div className="bg-white dark:bg-[#0f0f12] border border-gray-100 dark:border-gray-800 rounded-xl p-4">
-        {mapsLoaded ? (
-          <GooglePlacesAutocomplete
-            apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
-            selectProps={{
-              value,
-              onChange: handleSelect,
-              placeholder: "Start typing an address...",
-              isClearable: true,
-              isDisabled: picking,
-              classNamePrefix: "gpa",
-              styles: {
-                control: (base) => ({
-                  ...base,
-                  border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
-                  borderRadius: "0.75rem",
-                  boxShadow: "none",
-                  padding: "2px 4px",
-                  backgroundColor: "transparent",
-                  "&:hover": { borderColor: isDark ? "#6b7280" : "#9ca3af" },
-                }),
-                input: (base) => ({ ...base, color: "inherit" }),
-                singleValue: (base) => ({ ...base, color: "inherit" }),
-                placeholder: (base) => ({
-                  ...base,
-                  color: isDark ? "#6b7280" : "#9ca3af",
-                }),
-                menu: (base) => ({
-                  ...base,
-                  zIndex: 50,
-                  borderRadius: "0.75rem",
-                  border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
-                  backgroundColor: isDark ? "#1a1a1e" : "white",
-                  boxShadow: isDark
-                    ? "0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3)"
-                    : "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
-                }),
-                option: (base, state) => ({
-                  ...base,
-                  backgroundColor: state.isFocused
-                    ? isDark
-                      ? "#374151"
-                      : "#f9fafb"
-                    : isDark
-                      ? "#1a1a1e"
-                      : "white",
-                  color: isDark ? "#f3f4f6" : "#111827",
-                  cursor: "pointer",
-                }),
-              },
-            }}
-          />
-        ) : (
-          <input
-            type="text"
-            disabled
-            placeholder="Loading address search..."
-            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm text-gray-400 dark:text-gray-500 bg-transparent"
-          />
-        )}
-        {picking && (
-          <p className="mt-2 text-xs text-gray-400">
-            Fetching address details...
-          </p>
-        )}
+        <AddressAutocomplete onSelect={onNext} />
       </div>
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-        strategy="afterInteractive"
-        onLoad={() => setMapsLoaded(true)}
-      />
     </div>
   );
 }
@@ -347,8 +232,8 @@ function Step2Description({
   return (
     <div className="space-y-3">
       <BotCard
-        title="What work needs to be done?"
-        subtitle="Be as detailed as you can — it helps us generate a more accurate estimate."
+        title="Describe the scope of work."
+        subtitle="Mention what's being replaced, rough sizes, and materials if you know them — more detail means tighter line items."
       />
       <div className="space-y-3">
         <textarea
@@ -359,7 +244,7 @@ function Step2Description({
           placeholder={
             category
               ? `Describe the ${category.toLowerCase()} work — what specifically needs to be done...`
-              : "Describe the project — what rooms, what kind of work, any specific materials or requirements..."
+              : "Describe the scope — what's being replaced, room sizes, materials, any known constraints..."
           }
           rows={3}
           className="w-full bg-white dark:bg-[#0f0f12] border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10 overflow-hidden transition-all"
@@ -429,8 +314,8 @@ function Step3Client({
   return (
     <div className="space-y-3">
       <BotCard
-        title="Who's the client?"
-        subtitle="Optional — you can add this later."
+        title="Who's this estimate for?"
+        subtitle="Adding a client name makes the estimate look polished when you share it. Easy to add later too."
       />
       <div className="space-y-3">
         <input
@@ -481,11 +366,11 @@ function Step4Summary({
   return (
     <div className="space-y-3">
       <BotCard
-        title={isLoggedIn ? "Ready to go!" : "Looking good!"}
+        title={isLoggedIn ? "Ready to build your estimate." : "Almost there."}
         subtitle={
           isLoggedIn
-            ? "Review your project details below."
-            : "Sign up to generate your estimate."
+            ? "We'll break this into scoped sections, pull local pricing, and generate itemized line items with options to review. Takes about 30 seconds."
+            : "Create a free account to generate your estimate — takes 10 seconds."
         }
       />
       <div className="bg-gray-50 dark:bg-[#1a1a1e] rounded-xl p-6 border border-gray-100 dark:border-gray-800 space-y-4">
@@ -543,7 +428,7 @@ function Step4Summary({
                 disabled={submitting}
                 className="flex-1 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2.5 text-sm font-medium hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
               >
-                {submitting ? "Creating..." : "Generate Estimate"}
+                {submitting ? "Creating..." : "Build My Estimate"}
               </button>
             </>
           ) : (
@@ -703,11 +588,11 @@ export function BidGenerator() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            Generate an Estimate
+            Your next bid, in minutes.
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            Describe your project and we&apos;ll generate an AI-powered estimate
-            with real material and labor pricing.
+            Answer 3 quick questions and get a fully itemized estimate — with
+            local material costs and labor pricing — ready to send.
           </p>
         </div>
 
@@ -718,8 +603,8 @@ export function BidGenerator() {
           ) : (
             <div className="space-y-3">
               <BotCard
-                title="Where's the project?"
-                subtitle="Enter the project address to get started."
+                title="Where's the job site?"
+                subtitle="We use the location to pull accurate local material and labor rates."
               />
               <LockedAnswerCard
                 label="Address"
@@ -762,10 +647,7 @@ export function BidGenerator() {
         {state.step >= 3 && (
           <div ref={step3Ref}>
             {state.step === 3 ? (
-              <Step3Client
-                onNext={handleSetClient}
-                onSkip={handleSkipClient}
-              />
+              <Step3Client onNext={handleSetClient} onSkip={handleSkipClient} />
             ) : (
               <div className="space-y-3">
                 <BotCard

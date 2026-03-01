@@ -26,6 +26,7 @@ export class AnthropicProvider implements AiProvider {
   private readonly client: Anthropic;
 
   constructor(config: ConfigService) {
+    console.log(config.getOrThrow<string>("ANTHROPIC_API_KEY"));
     this.client = new Anthropic({
       apiKey: config.getOrThrow<string>("ANTHROPIC_API_KEY"),
     });

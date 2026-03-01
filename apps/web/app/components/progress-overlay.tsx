@@ -19,14 +19,19 @@ const PHASES: { steps: string[]; label: string; description: string }[] = [
     description: "Breaking down the project into sections and line items",
   },
   {
-    steps: ["price_resolution", "web_price_resolution"],
+    steps: ["price_resolution"],
     label: "Resolving prices",
-    description: "Searching database and web for material and labor costs",
+    description: "Searching our database for material and labor costs",
+  },
+  {
+    steps: ["web_price_resolution"],
+    label: "Checking the web",
+    description: "Checking the web for material and labor costs"
   },
   {
     steps: ["price_merge"],
-    label: "Merging price data",
-    description: "Combining sources for best accuracy",
+    label: "Double checking prices",
+    description: "Combining price sources for best accuracy",
   },
   {
     steps: ["option_generation"],
@@ -325,7 +330,7 @@ export function ProgressOverlay({
                     <div className="flex items-center gap-3 py-4">
                       <Spinner />
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Starting pipeline...
+                        Setting everything up...
                       </span>
                     </div>
                   ) : null}
@@ -341,12 +346,14 @@ export function ProgressOverlay({
                       Close
                     </button>
                   ) : (
-                    <button
-                      onClick={onClose}
-                      className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                    >
-                      Cancel
-                    </button>
+                    <>
+                      <button
+                        onClick={onClose}
+                        className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      >
+                        Minimize
+                      </button>
+                    </>
                   )}
                 </div>
               </>
