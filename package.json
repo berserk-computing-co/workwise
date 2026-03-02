@@ -9,7 +9,13 @@
     "build:api": "nx build api",
     "build": "nx run-many -t build --projects=web,api",
     "lint": "nx run-many -t lint --projects=web,api",
-    "test": "nx run-many -t test --projects=web,api"
+    "test": "nx run-many -t test --projects=web,api",
+    "storybook": "nx run storybook:storybook",
+    "build-storybook": "nx run storybook:build-storybook",
+    "test-storybook": "nx run storybook:test-storybook"
+  },
+  "msw": {
+    "workerDirectory": ["apps/web/public"]
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -49,6 +55,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "^10.2.13",
+    "@storybook/nextjs-vite": "^10.2.13",
+    "@storybook/react": "^10.2.13",
+    "@storybook/test-runner": "^0.24.2",
+    "msw": "^2.7.3",
+    "msw-storybook-addon": "^2.0.6",
+    "storybook": "^10.2.13",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
