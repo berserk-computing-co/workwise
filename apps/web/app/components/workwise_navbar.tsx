@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useUser } from "@auth0/nextjs-auth0/client";
+import { useAppUser } from "../hooks/use-app-user";
 import { ThemeToggle } from "./theme_toggle";
 
 const NavbarProfile = () => {
   const [open, setOpen] = useState(false);
-  const { user, isLoading } = useUser();
+  const { user, isLoading } = useAppUser();
 
   if (isLoading) return null;
 
@@ -28,7 +28,7 @@ const NavbarProfile = () => {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        {user.picture ? (
+        {'picture' in user && user.picture ? (
           <img
             src={user.picture}
             alt={user.name || "User"}

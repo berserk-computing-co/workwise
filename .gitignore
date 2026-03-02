@@ -21,3 +21,7 @@ apps/web/.env
 
 # OS
 .DS_Store
+.worktrees/
+
+# Logs
+debug-search.log
