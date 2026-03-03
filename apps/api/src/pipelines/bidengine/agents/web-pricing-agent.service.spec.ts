@@ -76,15 +76,15 @@ describe("WebPricingAgentService", () => {
         expect.objectContaining({
           name: "web_pricing",
           model: "claude-haiku-4-5-20251001",
-          maxIterations: 20,
-          maxTokens: 8192,
+          maxIterations: 40,
+          maxTokens: 16384,
         }),
         expect.any(String),
         signal,
       );
     });
 
-    it("passes server tool with max_uses: 20", async () => {
+    it("passes server tool with max_uses: 25", async () => {
       await service.priceItems(mockItems, "90210", signal);
 
       const [config] = mockAgentRunner.run.mock.calls[0];
@@ -92,7 +92,7 @@ describe("WebPricingAgentService", () => {
       expect(config.serverTools[0]).toMatchObject({
         type: "web_search_20250305",
         name: "web_search",
-        max_uses: 20,
+        max_uses: 25,
       });
     });
 

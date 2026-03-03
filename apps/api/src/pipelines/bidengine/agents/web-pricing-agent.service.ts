@@ -56,8 +56,8 @@ export class WebPricingAgentService {
       systemPrompt: getWebPricingPrompt(),
       tools: [],
       serverTools: [webSearchServerTool],
-      maxIterations: 20,
-      maxTokens: 8192,
+      maxIterations: 40,
+      maxTokens: 16384,
       outputFormat: webPricingOutputFormat,
     };
 
