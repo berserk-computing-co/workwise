@@ -1,0 +1,18 @@
+{
+  "name": "workwise",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "commands": [
+          { "command": "docker compose up db redis -d || true", "prefix": "infra", "color": "blue" },
+          { "command": "nx dev web", "prefix": "web", "color": "cyan" },
+          { "command": "nx serve api", "prefix": "api", "color": "green" }
+        ],
+        "parallel": true
+      }
+    }
+  }
+}

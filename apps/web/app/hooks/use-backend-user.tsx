@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useUser } from "@auth0/nextjs-auth0/client";
+import { useAppUser } from "./use-app-user";
 import type { User, Organization } from "@/app/types/project-api";
 
 interface UserState {
@@ -31,7 +31,7 @@ export function useUserContext() {
 }
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const { user: auth0User, isLoading: authLoading } = useUser();
+  const { user: auth0User, isLoading: authLoading } = useAppUser();
   const [user, setUser] = useState<User | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useUser } from "@auth0/nextjs-auth0/client";
+import { useAppUser } from "../hooks/use-app-user";
 import { ThemeToggle } from "./theme_toggle";
 
 const NavbarProfile = () => {
   const [open, setOpen] = useState(false);
-  const { user, isLoading } = useUser();
+  const { user, isLoading } = useAppUser();
 
   if (isLoading) return null;
 
@@ -28,7 +28,7 @@ const NavbarProfile = () => {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        {user.picture ? (
+        {'picture' in user && user.picture ? (
           <img
             src={user.picture}
             alt={user.name || "User"}
@@ -78,7 +78,7 @@ export const WorkWiseNavbar = () => {
     <nav className="sticky top-0 z-30 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-[#0f0f12]/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/hardhat-logo.png" className="h-8" alt="WorkWise" />
+          <img src="/favicon.ico" className="h-5" alt="WorkWise" />
           <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
             WorkWise
           </span>

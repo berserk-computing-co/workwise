@@ -1,6 +1,13 @@
 import { withMiddlewareAuthRequired } from "@auth0/nextjs-auth0/edge";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default withMiddlewareAuthRequired();
+const authMiddleware = withMiddlewareAuthRequired();
+
+export default function middleware(req: NextRequest, event: unknown) {
+  if (process.env.DEV_SKIP_AUTH === "true") return NextResponse.next();
+  return authMiddleware(req, event as Parameters<typeof authMiddleware>[1]);
+}
 
 export const config = {
   matcher: [

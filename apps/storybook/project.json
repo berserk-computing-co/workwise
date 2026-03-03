@@ -1,0 +1,29 @@
+{
+  "name": "storybook",
+  "projectType": "application",
+  "tags": ["type:app", "scope:storybook"],
+  "targets": {
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "storybook dev --port 6006 --config-dir apps/storybook/.storybook",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/storybook"],
+      "options": {
+        "command": "storybook build --output-dir dist/storybook --config-dir apps/storybook/.storybook",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test-storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "test-storybook --url http://localhost:6006",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

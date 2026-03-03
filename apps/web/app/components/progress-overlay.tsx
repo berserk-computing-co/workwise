@@ -7,7 +7,6 @@ import type { ProgressStep } from "../hooks/use-job-progress";
 
 interface ProgressOverlayProps {
   jobId: string | null;
-  projectId: string | null;
   onComplete: () => void;
   onClose: () => void;
 }
@@ -20,14 +19,19 @@ const PHASES: { steps: string[]; label: string; description: string }[] = [
     description: "Breaking down the project into sections and line items",
   },
   {
-    steps: ["price_resolution", "web_price_resolution"],
+    steps: ["price_resolution"],
     label: "Resolving prices",
-    description: "Searching database and web for material and labor costs",
+    description: "Searching our database for material and labor costs",
+  },
+  {
+    steps: ["web_price_resolution"],
+    label: "Checking the web",
+    description: "Checking the web for material and labor costs"
   },
   {
     steps: ["price_merge"],
-    label: "Merging price data",
-    description: "Combining sources for best accuracy",
+    label: "Double checking prices",
+    description: "Combining price sources for best accuracy",
   },
   {
     steps: ["option_generation"],
@@ -156,7 +160,6 @@ function formatElapsed(seconds: number): string {
 
 export function ProgressOverlay({
   jobId,
-  projectId,
   onComplete,
   onClose,
 }: ProgressOverlayProps) {
@@ -166,7 +169,6 @@ export function ProgressOverlay({
 
   const [elapsed, setElapsed] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
 
   // Elapsed timer
   useEffect(() => {
@@ -192,20 +194,6 @@ export function ProgressOverlay({
     const timer = setTimeout(() => onCompleteRef.current(), 2000);
     return () => clearTimeout(timer);
   }, [isComplete]);
-
-  const handleCancel = async () => {
-    if (!projectId || cancelling) return;
-    setCancelling(true);
-    try {
-      await fetch(`/api/proxy/projects/${projectId}/cancel`, {
-        method: "POST",
-      });
-    } catch {
-      // If the cancel request itself fails, still close the overlay
-    }
-    setCancelling(false);
-    onClose();
-  };
 
   const isOpen = jobId !== null;
   if (!isOpen) return null;
@@ -342,7 +330,7 @@ export function ProgressOverlay({
                     <div className="flex items-center gap-3 py-4">
                       <Spinner />
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Starting pipeline...
+                        Setting everything up...
                       </span>
                     </div>
                   ) : null}
@@ -358,13 +346,14 @@ export function ProgressOverlay({
                       Close
                     </button>
                   ) : (
-                    <button
-                      onClick={handleCancel}
-                      disabled={cancelling}
-                      className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
-                    >
-                      {cancelling ? "Cancelling..." : "Cancel"}
-                    </button>
+                    <>
+                      <button
+                        onClick={onClose}
+                        className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      >
+                        Minimize
+                      </button>
+                    </>
                   )}
                 </div>
               </>

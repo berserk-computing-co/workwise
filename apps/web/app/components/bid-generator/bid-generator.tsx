@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useUser } from "@auth0/nextjs-auth0/client";
-import { useToast } from "@/app/components/toast";
-import { ProgressOverlay } from "@/app/components/progress-overlay";
-import { CreateProjectPayload } from "@/app/types/project-api";
-import { flowReducer, initialState } from "./types";
-import { BotCard } from "./bot-card";
-import { LockedAnswerCard } from "./locked-answer-card";
-import { Step1Address } from "./step-address";
-import { Step2Description } from "./step-description";
-import { Step3Client } from "./step-client";
-import { Step4Summary } from "./step-summary";
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { useToast } from '@/app/components/toast';
+import { ProgressOverlay } from '@/app/components/progress-overlay';
+import { CreateProjectPayload } from '@/app/types/project-api';
+import { flowReducer, initialState } from './types';
+import { BotCard } from './bot-card';
+import { LockedAnswerCard } from './locked-answer-card';
+import { Step1Address } from './step-address';
+import { Step2Description } from './step-description';
+import { Step3Client } from './step-client';
+import { Step4Summary } from './step-summary';
 
 export function BidGenerator() {
   const router = useRouter();
@@ -32,7 +32,7 @@ export function BidGenerator() {
 
   useEffect(() => {
     const ref = stepRefs[state.step - 1];
-    ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    ref?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [state.step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSetAddress = useCallback(
@@ -41,24 +41,24 @@ export function BidGenerator() {
       formattedAddress: string;
       zipCode: string;
     }) => {
-      dispatch({ type: "SET_ADDRESS", payload });
+      dispatch({ type: 'SET_ADDRESS', payload });
     },
     [],
   );
 
   const handleSetDescription = useCallback(
     (payload: { description: string; category: string | null }) => {
-      dispatch({ type: "SET_DESCRIPTION", payload });
+      dispatch({ type: 'SET_DESCRIPTION', payload });
     },
     [],
   );
 
   const handleSetClient = useCallback((payload: { clientName: string }) => {
-    dispatch({ type: "SET_CLIENT", payload });
+    dispatch({ type: 'SET_CLIENT', payload });
   }, []);
 
   const handleSkipClient = useCallback(() => {
-    dispatch({ type: "SKIP_CLIENT" });
+    dispatch({ type: 'SKIP_CLIENT' });
   }, []);
 
   const createProject = async (): Promise<{ id: string } | null> => {
@@ -70,16 +70,16 @@ export function BidGenerator() {
       clientName: state.clientName || undefined,
     };
 
-    const res = await fetch("/api/proxy/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/proxy/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(
-        (err as { message?: string }).message || "Failed to create project",
+        (err as { message?: string }).message || 'Failed to create project',
       );
     }
 
@@ -95,8 +95,8 @@ export function BidGenerator() {
       }
     } catch (err) {
       addToast(
-        "error",
-        err instanceof Error ? err.message : "Failed to save project",
+        'error',
+        err instanceof Error ? err.message : 'Failed to save project',
       );
     } finally {
       setSubmitting(false);
@@ -112,19 +112,19 @@ export function BidGenerator() {
       setProjectId(project.id);
 
       const genRes = await fetch(`/api/proxy/projects/${project.id}/generate`, {
-        method: "POST",
+        method: 'POST',
       });
 
       if (!genRes.ok) {
-        throw new Error("Failed to start generation");
+        throw new Error('Failed to start generation');
       }
 
       const { jobId } = await genRes.json();
       setGeneratingJobId(jobId);
     } catch (err) {
       addToast(
-        "error",
-        err instanceof Error ? err.message : "Failed to generate estimate",
+        'error',
+        err instanceof Error ? err.message : 'Failed to generate estimate',
       );
     } finally {
       setSubmitting(false);
@@ -174,7 +174,7 @@ export function BidGenerator() {
               <LockedAnswerCard
                 label="Address"
                 value={state.formattedAddress}
-                onEdit={() => dispatch({ type: "GO_BACK" })}
+                onEdit={() => dispatch({ type: 'GO_BACK' })}
               />
             </div>
           )}
@@ -195,12 +195,12 @@ export function BidGenerator() {
                   label={
                     state.category
                       ? `${state.category} — Description`
-                      : "Description"
+                      : 'Description'
                   }
                   value={state.description}
                   onEdit={() => {
-                    dispatch({ type: "GO_BACK" });
-                    if (state.step > 3) dispatch({ type: "GO_BACK" });
+                    dispatch({ type: 'GO_BACK' });
+                    if (state.step > 3) dispatch({ type: 'GO_BACK' });
                   }}
                 />
               </div>
@@ -212,10 +212,7 @@ export function BidGenerator() {
         {state.step >= 3 && (
           <div ref={step3Ref}>
             {state.step === 3 ? (
-              <Step3Client
-                onNext={handleSetClient}
-                onSkip={handleSkipClient}
-              />
+              <Step3Client onNext={handleSetClient} onSkip={handleSkipClient} />
             ) : (
               <div className="space-y-3">
                 <BotCard
@@ -224,8 +221,8 @@ export function BidGenerator() {
                 />
                 <LockedAnswerCard
                   label="Client"
-                  value={state.clientName || "Skipped"}
-                  onEdit={() => dispatch({ type: "GO_BACK" })}
+                  value={state.clientName || 'Skipped'}
+                  onEdit={() => dispatch({ type: 'GO_BACK' })}
                 />
               </div>
             )}
@@ -248,7 +245,6 @@ export function BidGenerator() {
 
       <ProgressOverlay
         jobId={generatingJobId}
-        projectId={projectId}
         onComplete={handleGenerateComplete}
         onClose={handleProgressClose}
       />

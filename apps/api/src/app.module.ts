@@ -1,8 +1,9 @@
-import { Module } from "@nestjs/common";
+import { Module, OnApplicationBootstrap, Logger } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { TypeOrmModule, InjectDataSource } from "@nestjs/typeorm";
 import { BullModule } from "@nestjs/bullmq";
 import { APP_GUARD } from "@nestjs/core";
+import { DataSource } from "typeorm";
 import { AuthModule } from "./auth/auth.module.js";
 import { StytchAuthGuard } from "./auth/stytch-auth.guard.js";
 import { UsersModule } from "./users/users.module.js";
@@ -14,6 +15,8 @@ import { PipelineModule } from "./pipeline/pipeline.module.js";
 import { RedisModule } from "./config/redis.module.js";
 import { typeOrmConfigFactory } from "./config/database.config.js";
 import { Auth0AuthGuard } from "./auth/auth0-auth.guard.js";
+import { User } from "./users/entities/user.entity.js";
+import { Organization } from "./users/entities/organization.entity.js";
 
 @Module({
   imports: [
@@ -53,4 +56,43 @@ import { Auth0AuthGuard } from "./auth/auth0-auth.guard.js";
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements OnApplicationBootstrap {
+  private readonly logger = new Logger(AppModule.name);
+
+  constructor(
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+  ) {}
+
+  async onApplicationBootstrap() {
+    if (process.env.DEV_SKIP_AUTH !== "true") return;
+
+    const orgRepo = this.dataSource.getRepository(Organization);
+    const userRepo = this.dataSource.getRepository(User);
+
+    let org = await orgRepo.findOne({ where: { name: "Dev Organization" } });
+    if (!org) {
+      org = await orgRepo.save(
+        orgRepo.create({
+          name: "Dev Organization",
+          zipCode: "00000",
+          settings: {},
+        }),
+      );
+    }
+
+    const existing = await userRepo.findOne({ where: { authId: "dev|local" } });
+    if (!existing) {
+      await userRepo.save(
+        userRepo.create({
+          authId: "dev|local",
+          email: "dev@local.test",
+          firstName: "Dev",
+          lastName: "User",
+          organizationId: org.id,
+        }),
+      );
+      this.logger.log("[DEV] Seeded dev user: dev@local.test");
+    }
+  }
+}

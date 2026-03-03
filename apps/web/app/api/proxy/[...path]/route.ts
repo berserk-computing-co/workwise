@@ -3,11 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+async function getBearerToken(): Promise<string> {
+  if (process.env.DEV_SKIP_AUTH === "true") {
+    return process.env.DEV_JWT_TOKEN!;
+  }
+  const { accessToken } = await getAccessToken();
+  return accessToken!;
+}
+
 async function handler(
   req: NextRequest,
   { params }: { params: { path: string[] } },
 ) {
-  const { accessToken } = await getAccessToken();
+  const accessToken = await getBearerToken();
   const path = "/" + params.path.join("/");
   const url = new URL(path, API_BASE);
 

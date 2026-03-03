@@ -1,46 +1,62 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { DocumentPlusIcon } from "@heroicons/react/24/outline";
-import type {
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { PlusCircleIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import {
   Project,
   ProjectStatus,
   PaginatedResponse,
-} from "@/app/types/project-api";
-import { ProjectsListSkeleton } from "@/app/components/skeletons";
-import { STATUS_STYLES, formatCurrency } from "./_components/constants";
+} from '@/app/types/project-api';
+import { ProjectsListSkeleton } from '@/app/components/skeletons';
 
-const STATUS_TABS: { label: string; value: ProjectStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Draft", value: "draft" },
-  { label: "Generating", value: "generating" },
-  { label: "Review", value: "review" },
-  { label: "Sent", value: "sent" },
-  { label: "Accepted", value: "accepted" },
-  { label: "Rejected", value: "rejected" },
+const STATUS_STYLES: Record<ProjectStatus, string> = {
+  draft: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  generating:
+    'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse',
+  review: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+  sent: 'bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400',
+  accepted:
+    'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
+  rejected: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
+  cancelled: 'bg-gray-50 text-gray-400 dark:bg-gray-900 dark:text-gray-500',
+};
+
+const STATUS_TABS: { label: string; value: ProjectStatus | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Generating', value: 'generating' },
+  { label: 'Review', value: 'review' },
+  { label: 'Sent', value: 'sent' },
+  { label: 'Accepted', value: 'accepted' },
+  { label: 'Rejected', value: 'rejected' },
 ];
 
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+    amount,
+  );
+
 const formatDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+  new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [filter, setFilter] = useState<ProjectStatus | "all">("all");
+  const [filter, setFilter] = useState<ProjectStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<PaginatedResponse<Project> | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: "20" });
-    if (filter !== "all") {
-      params.set("status", filter);
+    const params = new URLSearchParams({ page: String(page), limit: '20' });
+    if (filter !== 'all') {
+      params.set('status', filter);
     }
     fetch(`/api/proxy/projects?${params.toString()}`)
       .then((res) => res.json())
@@ -50,7 +66,7 @@ export default function ProjectsPage() {
       .finally(() => setLoading(false));
   }, [filter, page]);
 
-  const handleTabClick = (value: ProjectStatus | "all") => {
+  const handleTabClick = (value: ProjectStatus | 'all') => {
     setFilter(value);
     setPage(1);
   };
@@ -64,13 +80,13 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-          Projects
+          My projects & estimates
         </h1>
         <Link
           href="/projects/new"
           className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity"
         >
-          New Project
+          + New Estimate
         </Link>
       </div>
 
@@ -83,8 +99,8 @@ export default function ProjectsPage() {
               onClick={() => handleTabClick(tab.value)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
                 filter === tab.value
-                  ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                  : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               {tab.label}
@@ -97,25 +113,37 @@ export default function ProjectsPage() {
       {loading ? (
         <ProjectsListSkeleton />
       ) : projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <DocumentPlusIcon className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-4" />
-          <h2 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-1">
-            No projects yet
+        <div className="flex flex-col items-center justify-center py-24 text-center max-w-md mx-auto">
+          <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+            <SparklesIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Generate your first estimate
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Create your first project to get started
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+            Describe a job and our AI will build a detailed estimate with real
+            material and labor pricing — in minutes.
           </p>
           <Link
             href="/projects/new"
-            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity"
+            className="rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-7 py-3 text-sm font-medium hover:opacity-80 transition-opacity"
           >
-            New Project
+            Start an Estimate →
           </Link>
         </div>
       ) : (
         <>
           {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <Link
+              href="/projects/new"
+              className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-5 hover:border-gray-400 dark:hover:border-gray-500 transition-colors flex flex-col items-center justify-center gap-2 text-center min-h-[140px]"
+            >
+              <PlusCircleIcon className="h-7 w-7 text-gray-400" />
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                New Estimate
+              </span>
+            </Link>
             {projects.map((project) => (
               <div
                 key={project.id}
@@ -163,8 +191,8 @@ export default function ProjectsPage() {
                     onClick={() => setPage(pageNum)}
                     className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                       page === pageNum
-                        ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                        : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
                     {pageNum}
