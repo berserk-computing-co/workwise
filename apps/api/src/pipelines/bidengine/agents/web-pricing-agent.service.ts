@@ -55,7 +55,7 @@ export class WebPricingAgentService {
       model: "claude-haiku-4-5-20251001",
       systemPrompt: getWebPricingPrompt(),
       tools: [],
-      serverTools: [{ ...webSearchServerTool, max_uses: 20 }],
+      serverTools: [webSearchServerTool],
       maxIterations: 20,
       maxTokens: 8192,
       outputFormat: webPricingOutputFormat,
