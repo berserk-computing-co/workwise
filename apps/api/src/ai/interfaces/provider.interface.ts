@@ -8,13 +8,14 @@
 
 /** A single message in a multi-turn conversation. */
 export interface ChatMessage {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string | ChatContentBlock[];
 }
 
 /**
  * Discriminated union on `type`. Only fields relevant to each type are populated.
  * - `'text'`               — uses `text`
+ * - `'image'`              — uses `imageData`, `mediaType`
  * - `'tool_use'`           — uses `toolCallId`, `toolName`, `toolInput`
  * - `'tool_result'`        — uses `toolResultId`, `toolResultContent`, `isError`
  * - `'server_tool_use'`    — uses `toolCallId`, `toolName`, `toolInput` (executed by API, not locally)
@@ -22,12 +23,17 @@ export interface ChatMessage {
  */
 export interface ChatContentBlock {
   type:
-    | "text"
-    | "tool_use"
-    | "tool_result"
-    | "server_tool_use"
-    | "server_tool_result";
+    | 'text'
+    | 'image'
+    | 'tool_use'
+    | 'tool_result'
+    | 'server_tool_use'
+    | 'server_tool_result';
   text?: string;
+  /** Base64-encoded image data (no data-URI prefix). */
+  imageData?: string;
+  /** MIME type for image blocks (e.g. "image/jpeg", "image/png", "image/webp"). */
+  mediaType?: string;
   toolCallId?: string;
   toolName?: string;
   toolInput?: Record<string, unknown>;
@@ -51,7 +57,7 @@ export interface ToolDefinition {
  * but stored here as a plain shape so the interface stays SDK-agnostic.
  */
 export interface OutputFormat {
-  type: "json_schema";
+  type: 'json_schema';
   schema: Record<string, unknown>;
 }
 
@@ -65,6 +71,18 @@ export interface ServerToolDeclaration {
   [key: string]: unknown;
 }
 
+/**
+ * Approximate user location for server tools like web_search.
+ * Passed as `user_location` in ServerToolDeclaration.
+ */
+export interface UserLocation {
+  type: 'approximate';
+  city?: string;
+  region?: string;
+  country?: string;
+  timezone?: string;
+}
+
 /** Parameters for a single LLM call (one round-trip, not the full agent loop). */
 export interface ChatParams {
   model: string;
@@ -75,7 +93,7 @@ export interface ChatParams {
   maxTokens?: number;
   outputFormat?: OutputFormat;
   temperature?: number;
-  thinking?: { type: "enabled"; budgetTokens: number };
+  thinking?: { type: 'enabled'; budgetTokens: number };
 }
 
 /** A normalized tool call extracted from the model's response. */
@@ -97,7 +115,7 @@ export interface ToolCallData {
 export interface ChatResponse {
   text: string;
   toolCalls: ToolCallData[];
-  stopReason: "end_turn" | "tool_use" | "pause_turn" | "max_tokens" | "refusal";
+  stopReason: 'end_turn' | 'tool_use' | 'pause_turn' | 'max_tokens' | 'refusal';
   usage: { inputTokens: number; outputTokens: number };
   /** Full assistant content blocks — echoed back into message history between iterations. */
   rawAssistantContent: ChatContentBlock[];
@@ -109,4 +127,4 @@ export interface AiProvider {
 }
 
 /** NestJS injection token for the active AiProvider implementation. */
-export const AI_PROVIDER = Symbol("AI_PROVIDER");
+export const AI_PROVIDER = Symbol('AI_PROVIDER');

@@ -4,7 +4,7 @@ import type {
   TargetType,
   PipelineType,
   OptionTier,
-} from "./enums.js";
+} from './enums.js';
 
 export interface Organization {
   id: string;
@@ -70,6 +70,7 @@ export interface Item {
   sortOrder: number;
   source: string;
   sourceData: Record<string, unknown>;
+  sourceUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

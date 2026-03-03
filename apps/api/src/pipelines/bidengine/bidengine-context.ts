@@ -1,4 +1,4 @@
-import { ItemCategory, ItemSource, OptionTier } from "./bidengine.enums.js";
+import { ItemCategory, ItemSource, OptionTier } from './bidengine.enums.js';
 
 export interface ScopeItem {
   description: string;
@@ -8,7 +8,7 @@ export interface ScopeItem {
   pricing_hint?: string;
   labor_hours?: number;
   notes?: string;
-  confidence?: "high" | "medium" | "low";
+  confidence?: 'high' | 'medium' | 'low';
 }
 
 export interface ScopeSection {
@@ -25,6 +25,7 @@ export interface PricedItem {
   source: ItemSource;
   sourceData?: Record<string, unknown>;
   sectionName: string;
+  sourceUrl?: string;
 }
 
 export interface OptionData {

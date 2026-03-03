@@ -28,10 +28,22 @@ export class Item {
   @Column({ type: 'text', default: 'each' })
   unit: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, name: 'unit_cost' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'unit_cost',
+  })
   unitCost: number;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'extended_cost' })
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    name: 'extended_cost',
+  })
   extendedCost: number;
 
   @Column({ type: 'int', default: 0, name: 'sort_order' })
@@ -42,6 +54,9 @@ export class Item {
 
   @Column({ type: 'jsonb', default: '{}', name: 'source_data' })
   sourceData: Record<string, unknown>;
+
+  @Column({ type: 'text', nullable: true, name: 'source_url' })
+  sourceUrl: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
