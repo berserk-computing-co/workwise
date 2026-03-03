@@ -2,7 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
-    "paths": {},
+    "paths": {
+      "@workwise/shared-types": ["../../libs/shared-types/dist/src/index.d.ts"]
+    },
     "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo"
   },
   "include": ["src"],

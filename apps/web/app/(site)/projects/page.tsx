@@ -1,61 +1,62 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { PlusCircleIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { PlusCircleIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import {
   Project,
   ProjectStatus,
   PaginatedResponse,
-} from "@/app/types/project-api";
-import { ProjectsListSkeleton } from "@/app/components/skeletons";
+} from '@/app/types/project-api';
+import { ProjectsListSkeleton } from '@/app/components/skeletons';
 
 const STATUS_STYLES: Record<ProjectStatus, string> = {
-  draft: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  draft: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
   generating:
-    "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse",
-  review: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-  sent: "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
+    'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 animate-pulse',
+  review: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+  sent: 'bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400',
   accepted:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
-  rejected: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
+    'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
+  rejected: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
+  cancelled: 'bg-gray-50 text-gray-400 dark:bg-gray-900 dark:text-gray-500',
 };
 
-const STATUS_TABS: { label: string; value: ProjectStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Draft", value: "draft" },
-  { label: "Generating", value: "generating" },
-  { label: "Review", value: "review" },
-  { label: "Sent", value: "sent" },
-  { label: "Accepted", value: "accepted" },
-  { label: "Rejected", value: "rejected" },
+const STATUS_TABS: { label: string; value: ProjectStatus | 'all' }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Draft', value: 'draft' },
+  { label: 'Generating', value: 'generating' },
+  { label: 'Review', value: 'review' },
+  { label: 'Sent', value: 'sent' },
+  { label: 'Accepted', value: 'accepted' },
+  { label: 'Rejected', value: 'rejected' },
 ];
 
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
     amount,
   );
 
 const formatDate = (dateStr: string) =>
-  new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+  new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [filter, setFilter] = useState<ProjectStatus | "all">("all");
+  const [filter, setFilter] = useState<ProjectStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<PaginatedResponse<Project> | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), limit: "20" });
-    if (filter !== "all") {
-      params.set("status", filter);
+    const params = new URLSearchParams({ page: String(page), limit: '20' });
+    if (filter !== 'all') {
+      params.set('status', filter);
     }
     fetch(`/api/proxy/projects?${params.toString()}`)
       .then((res) => res.json())
@@ -65,7 +66,7 @@ export default function ProjectsPage() {
       .finally(() => setLoading(false));
   }, [filter, page]);
 
-  const handleTabClick = (value: ProjectStatus | "all") => {
+  const handleTabClick = (value: ProjectStatus | 'all') => {
     setFilter(value);
     setPage(1);
   };
@@ -96,10 +97,11 @@ export default function ProjectsPage() {
             <button
               key={tab.value}
               onClick={() => handleTabClick(tab.value)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${filter === tab.value
-                ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-100"
-                }`}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
+                filter === tab.value
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100'
+              }`}
             >
               {tab.label}
             </button>
@@ -187,10 +189,11 @@ export default function ProjectsPage() {
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${page === pageNum
-                      ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                      : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                      page === pageNum
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    }`}
                   >
                     {pageNum}
                   </button>
