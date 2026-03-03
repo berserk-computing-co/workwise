@@ -1,41 +1,47 @@
 import { WebPriceResolutionStep } from "./web-price-resolution.step.js";
+import type { BidEngineContext, PricedItem } from "../bidengine-context.js";
 import { ItemCategory, ItemSource } from "../bidengine.enums.js";
-import type { BidEngineContext } from "../bidengine-context.js";
 
-const mockWebPricingResults = [
+const mockPricedItems: PricedItem[] = [
   {
-    index: 0,
-    matched: true,
-    retailer: "Home Depot",
-    productUrl: "https://homedepot.com/p/12345",
+    description: "cedar decking boards",
+    quantity: 200,
+    unit: "SF",
     unitCost: 4.25,
-    confidence: 0.85,
-    category: "material",
-    notes: "matched cedar decking",
+    source: ItemSource.WebPriced,
+    sectionName: "Decking",
+    sourceUrl: "https://homedepot.com/p/12345",
+    sourceData: {
+      retailer: "Home Depot",
+      confidence: 0.85,
+    },
   },
   {
-    index: 1,
-    matched: false,
+    description: "Decking labor",
+    quantity: 20,
+    unit: "HR",
     unitCost: 30.0,
-    confidence: 0,
-    category: "labor",
-    skipReason: "no web match found",
+    source: ItemSource.AiUnmatched,
+    sectionName: "Decking",
+    sourceData: {
+      skipReason: "no web match found",
+      category: "labor",
+    },
   },
 ];
 
 describe("WebPriceResolutionStep", () => {
-  let mockWebPricingAgent: { priceItems: jest.Mock };
+  let mockPricingFanOut: { priceAll: jest.Mock };
   let step: WebPriceResolutionStep;
   let context: BidEngineContext;
-
   let signal: AbortSignal;
 
   beforeEach(() => {
     signal = new AbortController().signal;
-    mockWebPricingAgent = {
-      priceItems: jest.fn().mockResolvedValue(mockWebPricingResults),
+    mockPricingFanOut = {
+      priceAll: jest.fn().mockResolvedValue(mockPricedItems),
     };
-    step = new WebPriceResolutionStep(mockWebPricingAgent as any);
+    step = new WebPriceResolutionStep(mockPricingFanOut as any);
     context = {
       projectId: "proj-1",
       description: "test",
@@ -72,59 +78,40 @@ describe("WebPriceResolutionStep", () => {
     expect(step.name).toBe("web_price_resolution");
   });
 
-  it("matched items get WebPriced source", async () => {
+  it("passes sections and zipCode to pricingFanOut.priceAll", async () => {
     await step.execute(context, signal);
 
-    expect(context.webResults).toBeDefined();
-    const matched = context.webResults![0];
-    expect(matched.source).toBe(ItemSource.WebPriced);
-    expect(matched.description).toBe("cedar decking boards");
-    expect(matched.unitCost).toBe(4.25);
-    expect(matched.sectionName).toBe("Decking");
-    expect(matched.sourceData).toMatchObject({
-      retailer: "Home Depot",
-      productUrl: "https://homedepot.com/p/12345",
-      confidence: 0.85,
+    expect(mockPricingFanOut.priceAll).toHaveBeenCalledTimes(1);
+    const [sections, zipCode, city, state, sig] =
+      mockPricingFanOut.priceAll.mock.calls[0];
+    expect(sections).toHaveLength(1);
+    expect(sections[0].name).toBe("Decking");
+    expect(zipCode).toBe("90210");
+    expect(city).toBeNull();
+    expect(state).toBeNull();
+    expect(sig).toBe(signal);
+  });
+
+  it("writes priced items to context.pricedItems", async () => {
+    await step.execute(context, signal);
+
+    expect(context.pricedItems).toBeDefined();
+    expect(context.pricedItems).toHaveLength(2);
+    expect(context.pricedItems![0]).toMatchObject({
+      description: "cedar decking boards",
+      unitCost: 4.25,
+      source: ItemSource.WebPriced,
+      sectionName: "Decking",
     });
   });
 
-  it("unmatched items get AiUnmatched source", async () => {
-    await step.execute(context, signal);
-
-    expect(context.webResults).toBeDefined();
-    const unmatched = context.webResults![1];
-    expect(unmatched.source).toBe(ItemSource.AiUnmatched);
-    expect(unmatched.description).toBe("Decking labor");
-    expect(unmatched.sectionName).toBe("Decking");
-    expect(unmatched.sourceData).toMatchObject({
-      skipReason: "no web match found",
-      category: "labor",
-    });
-  });
-
-  it("graceful degradation — sets empty array on agent failure", async () => {
-    mockWebPricingAgent.priceItems.mockRejectedValue(
-      new Error("network timeout"),
+  it("propagates errors from fan-out service", async () => {
+    mockPricingFanOut.priceAll.mockRejectedValue(
+      new Error("all batches failed"),
     );
 
-    await expect(step.execute(context, signal)).resolves.toBeUndefined();
-    expect(context.webResults).toEqual([]);
-  });
-
-  it("flattens sections and passes to agent", async () => {
-    await step.execute(context, signal);
-
-    expect(mockWebPricingAgent.priceItems).toHaveBeenCalledTimes(1);
-    const [flatItems, zipCode] = mockWebPricingAgent.priceItems.mock.calls[0];
-    expect(flatItems).toHaveLength(2);
-    expect(flatItems[0]).toMatchObject({
-      description: "cedar decking boards",
-      sectionName: "Decking",
-    });
-    expect(flatItems[1]).toMatchObject({
-      description: "Decking labor",
-      sectionName: "Decking",
-    });
-    expect(zipCode).toBe("90210");
+    await expect(step.execute(context, signal)).rejects.toThrow(
+      "all batches failed",
+    );
   });
 });

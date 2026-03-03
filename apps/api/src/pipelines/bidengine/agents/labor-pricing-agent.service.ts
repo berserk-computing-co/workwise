@@ -1,6 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { z } from 'zod';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { AgentRunner } from '../../../ai/agent-runner.service.js';
 import type { AgentConfig } from '../../../ai/interfaces/agent.interfaces.js';
 import { repairTruncatedResultsJson } from '../../../ai/utils/json-repair.util.js';
@@ -8,34 +6,15 @@ import {
   webSearchServerTool,
   webFetchServerTool,
 } from './scope-agent.tool.js';
-import { getMaterialPricingPrompt } from '../prompts/web-pricing.prompt.js';
-
-/** Shared schema — both MaterialPricingAgent and LaborPricingAgent output this shape. */
-export const pricingResultSchema = z.object({
-  results: z.array(
-    z.object({
-      index: z.number(),
-      matched: z.boolean(),
-      retailer: z.string().optional(),
-      sourceUrl: z.string().optional(),
-      unitCost: z.number(),
-      confidence: z.number().min(0).max(1),
-      notes: z.string().optional(),
-      category: z.string(),
-      skipReason: z.string().optional(),
-    }),
-  ),
-});
-
-export const pricingOutputFormat = zodOutputFormat(pricingResultSchema);
-
-export type PricingResult = z.infer<
-  typeof pricingResultSchema
->['results'][number];
+import {
+  pricingOutputFormat,
+  type PricingResult,
+} from './web-pricing-agent.service.js';
+import { getLaborPricingPrompt } from '../prompts/labor-pricing.prompt.js';
 
 @Injectable()
-export class MaterialPricingAgentService {
-  private readonly logger = new Logger(MaterialPricingAgentService.name);
+export class LaborPricingAgentService {
+  private readonly logger = new Logger(LaborPricingAgentService.name);
 
   constructor(private readonly agentRunner: AgentRunner) {}
 
@@ -53,14 +32,14 @@ export class MaterialPricingAgentService {
     signal: AbortSignal,
   ): Promise<PricingResult[]> {
     this.logger.log(
-      `Starting material pricing: ${items.length} items, section="${sectionName}", ZIP=${zipCode}`,
+      `Starting labor pricing: ${items.length} items, section="${sectionName}", ZIP=${zipCode}`,
     );
 
     // TODO: Build user_location from city/state/zipCode and add to webSearchServerTool spread
     const config: AgentConfig = {
-      name: 'material_pricing',
+      name: 'labor_pricing',
       model: 'claude-haiku-4-5-20251001',
-      systemPrompt: getMaterialPricingPrompt(sectionName),
+      systemPrompt: getLaborPricingPrompt(sectionName),
       tools: [],
       serverTools: [webSearchServerTool, webFetchServerTool],
       maxIterations: 40,
@@ -76,23 +55,21 @@ export class MaterialPricingAgentService {
       .join('\n');
 
     const location = [city, state].filter(Boolean).join(', ') || `ZIP ${zipCode}`;
-    const initialPrompt = `Price the following ${items.length} material items for the "${sectionName}" section near ${location} (ZIP ${zipCode}):\n\n${itemList}`;
+    const initialPrompt = `Price the following ${items.length} labor/permit/equipment items for the "${sectionName}" section near ${location} (ZIP ${zipCode}):\n\n${itemList}`;
 
     this.logger.debug(
-      `Material pricing prompt length: ${initialPrompt.length} chars`,
+      `Labor pricing prompt length: ${initialPrompt.length} chars`,
     );
 
     const result = await this.agentRunner.run(config, initialPrompt, signal);
 
     this.logger.log(
-      `Material pricing agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,
+      `Labor pricing agent completed: ${result.iterations} iterations, ${result.toolCallCount} tool calls, output=${result.text.length} chars`,
     );
 
-    // Safety check: if the agent produced results without any tool calls,
-    // it hallucinated prices instead of actually searching. Reject them.
     if (result.toolCallCount === 0) {
       this.logger.warn(
-        `Material pricing agent returned results with 0 tool calls — prices are hallucinated, marking all unmatched`,
+        `Labor pricing agent returned results with 0 tool calls — prices are hallucinated, marking all unmatched`,
       );
       return items.map((_, i) => ({
         index: i,
@@ -108,7 +85,7 @@ export class MaterialPricingAgentService {
 
     if (result.truncated) {
       this.logger.warn(
-        `Material pricing output was truncated (${text.length} chars), attempting JSON repair`,
+        `Labor pricing output was truncated (${text.length} chars), attempting JSON repair`,
       );
       const { repaired, success } = repairTruncatedResultsJson(text);
       if (success) {
@@ -124,12 +101,12 @@ export class MaterialPricingAgentService {
     try {
       const parsed = pricingOutputFormat.parse(text);
       this.logger.log(
-        `Material pricing parsed ${parsed.results.length} results (${parsed.results.filter((r) => r.matched).length} matched)${result.truncated ? ' (repaired from truncated output)' : ''}`,
+        `Labor pricing parsed ${parsed.results.length} results (${parsed.results.filter((r) => r.matched).length} matched)${result.truncated ? ' (repaired from truncated output)' : ''}`,
       );
       return parsed.results;
     } catch (parseErr) {
       this.logger.error(
-        `Material pricing output parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+        `Labor pricing output parse failed: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
       );
       this.logger.error(
         `Raw agent output (first 500 chars): ${result.text.slice(0, 500)}`,

@@ -21,7 +21,7 @@ export interface AgentTool {
 
 /** Configuration for a single agent run. Immutable for the duration of the run. */
 export interface AgentConfig {
-  /** For logging (e.g. `'onebuild_resolution'`). */
+  /** For logging (e.g. `'material_pricing'`). */
   name: string;
   /** Provider-specific model ID. */
   model: string;

@@ -1,4 +1,4 @@
-import { WebPricingAgentService } from "./web-pricing-agent.service.js";
+import { MaterialPricingAgentService } from "./web-pricing-agent.service.js";
 
 const mockAgentResult = {
   text: JSON.stringify({
@@ -7,7 +7,7 @@ const mockAgentResult = {
         index: 0,
         matched: true,
         retailer: "Home Depot",
-        productUrl: "https://www.homedepot.com/p/example",
+        sourceUrl: "https://www.homedepot.com/p/example",
         unitCost: 3.47,
         confidence: 0.85,
         notes: "Matched to 2x4x8 stud",
@@ -18,8 +18,8 @@ const mockAgentResult = {
         matched: false,
         unitCost: 0,
         confidence: 0,
-        category: "labor",
-        skipReason: "labor_only",
+        category: "material",
+        skipReason: "no_match",
       },
     ],
   }),
@@ -33,7 +33,7 @@ const mockAgentRunner = {
 };
 
 function makeService() {
-  return new WebPricingAgentService(mockAgentRunner as any);
+  return new MaterialPricingAgentService(mockAgentRunner as any);
 }
 
 const mockItems = [
@@ -42,19 +42,17 @@ const mockItems = [
     quantity: 50,
     unit: "each",
     category: "material",
-    sectionName: "Framing",
   },
   {
-    description: "Install framing",
-    quantity: 8,
-    unit: "hours",
-    category: "labor",
-    sectionName: "Framing",
+    description: "Drywall screws 1-5/8in",
+    quantity: 10,
+    unit: "box",
+    category: "material",
   },
 ];
 
-describe("WebPricingAgentService", () => {
-  let service: WebPricingAgentService;
+describe("MaterialPricingAgentService", () => {
+  let service: MaterialPricingAgentService;
   let signal: AbortSignal;
 
   beforeEach(() => {
@@ -69,12 +67,12 @@ describe("WebPricingAgentService", () => {
   });
 
   describe("priceItems()", () => {
-    it("calls agentRunner.run with web_pricing config", async () => {
-      await service.priceItems(mockItems, "90210", signal);
+    it("calls agentRunner.run with material_pricing config", async () => {
+      await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       expect(mockAgentRunner.run).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: "web_pricing",
+          name: "material_pricing",
           model: "claude-haiku-4-5-20251001",
           maxIterations: 40,
           maxTokens: 16384,
@@ -84,43 +82,57 @@ describe("WebPricingAgentService", () => {
       );
     });
 
-    it("passes server tool with max_uses: 25", async () => {
-      await service.priceItems(mockItems, "90210", signal);
+    it("passes server tools with web_search and web_fetch", async () => {
+      await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       const [config] = mockAgentRunner.run.mock.calls[0];
-      expect(config.serverTools).toHaveLength(1);
+      expect(config.serverTools).toHaveLength(2);
       expect(config.serverTools[0]).toMatchObject({
         type: "web_search_20250305",
         name: "web_search",
         max_uses: 25,
       });
+      expect(config.serverTools[1]).toMatchObject({
+        type: "web_fetch_20250910",
+        name: "web_fetch",
+        max_uses: 10,
+      });
     });
 
     it("passes empty tools array", async () => {
-      await service.priceItems(mockItems, "90210", signal);
+      await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       const [config] = mockAgentRunner.run.mock.calls[0];
       expect(config.tools).toEqual([]);
     });
 
-    it("builds initial prompt with item count and ZIP code", async () => {
-      await service.priceItems(mockItems, "90210", signal);
+    it("builds initial prompt with item count, section name, and location", async () => {
+      await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       const [, initialPrompt] = mockAgentRunner.run.mock.calls[0];
-      expect(initialPrompt).toContain("Price the following 2 items");
-      expect(initialPrompt).toContain("ZIP code 90210");
+      expect(initialPrompt).toContain("2 material items");
+      expect(initialPrompt).toContain('"Framing"');
+      expect(initialPrompt).toContain("Los Angeles, CA");
+      expect(initialPrompt).toContain("ZIP 90210");
+    });
+
+    it("falls back to ZIP when city/state are null", async () => {
+      await service.priceItems(mockItems, "90210", null, null, "Framing", signal);
+
+      const [, initialPrompt] = mockAgentRunner.run.mock.calls[0];
+      expect(initialPrompt).toContain("near ZIP 90210");
     });
 
     it("includes item descriptions in the prompt", async () => {
-      await service.priceItems(mockItems, "90210", signal);
+      await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       const [, initialPrompt] = mockAgentRunner.run.mock.calls[0];
       expect(initialPrompt).toContain("2x4x8 lumber stud");
-      expect(initialPrompt).toContain("Install framing");
+      expect(initialPrompt).toContain("Drywall screws 1-5/8in");
     });
 
     it("returns parsed results array", async () => {
-      const results = await service.priceItems(mockItems, "90210", signal);
+      const results = await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       expect(results).toHaveLength(2);
       expect(results[0]).toMatchObject({
@@ -134,13 +146,13 @@ describe("WebPricingAgentService", () => {
     });
 
     it("returns unmatched items with skipReason", async () => {
-      const results = await service.priceItems(mockItems, "90210", signal);
+      const results = await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       expect(results[1]).toMatchObject({
         index: 1,
         matched: false,
-        category: "labor",
-        skipReason: "labor_only",
+        category: "material",
+        skipReason: "no_match",
       });
     });
 
@@ -152,7 +164,7 @@ describe("WebPricingAgentService", () => {
         truncated: false,
       });
 
-      const results = await service.priceItems([], "90210", signal);
+      const results = await service.priceItems([], "90210", null, null, "Framing", signal);
 
       expect(results).toEqual([]);
     });
@@ -169,7 +181,7 @@ describe("WebPricingAgentService", () => {
         truncated: false,
       });
 
-      const results = await service.priceItems(mockItems, "90210", signal);
+      const results = await service.priceItems(mockItems, "90210", null, null, "Framing", signal);
 
       expect(results).toHaveLength(2);
       expect(results[0]).toMatchObject({
@@ -193,7 +205,7 @@ describe("WebPricingAgentService", () => {
         truncated: true,
       });
 
-      const results = await service.priceItems(mockItems, "90210", signal);
+      const results = await service.priceItems(mockItems, "90210", null, null, "Framing", signal);
 
       // Should salvage the first complete result
       expect(results).toHaveLength(1);
@@ -209,7 +221,7 @@ describe("WebPricingAgentService", () => {
       mockAgentRunner.run.mockRejectedValueOnce(new Error("API timeout"));
 
       await expect(
-        service.priceItems(mockItems, "90210", signal),
+        service.priceItems(mockItems, "90210", null, null, "Framing", signal),
       ).rejects.toThrow("API timeout");
     });
   });

@@ -1,103 +1,37 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
-import { WebPricingAgentService } from "../agents/web-pricing-agent.service.js";
-import type { BidEngineContext, PricedItem } from "../bidengine-context.js";
-import { ItemSource } from "../bidengine.enums.js";
+import { Injectable, Logger } from '@nestjs/common';
+import { PipelineStep } from '../../../pipeline/pipeline-step.interface.js';
+import { PricingFanOutService } from '../agents/pricing-fan-out.service.js';
+import type { BidEngineContext } from '../bidengine-context.js';
 
 @Injectable()
 export class WebPriceResolutionStep implements PipelineStep<BidEngineContext> {
-  readonly name = "web_price_resolution";
+  readonly name = 'web_price_resolution';
 
   private readonly logger = new Logger(WebPriceResolutionStep.name);
 
-  constructor(private readonly webPricingAgent: WebPricingAgentService) {}
+  constructor(private readonly pricingFanOut: PricingFanOutService) {}
 
   async execute(context: BidEngineContext, signal: AbortSignal): Promise<void> {
-    const flatItems: {
-      description: string;
-      quantity: number;
-      unit: string;
-      category: string;
-      sectionName: string;
-    }[] = [];
-    for (const section of context.sections!) {
-      for (const item of section.items) {
-        flatItems.push({
-          description: item.description,
-          quantity: item.quantity,
-          unit: item.unit,
-          category: item.category,
-          sectionName: section.name,
-        });
-      }
-    }
-
     this.logger.log(
-      `Starting web price resolution: ${flatItems.length} items from ${context.sections!.length} sections, ZIP=${context.zipCode}`,
+      `Starting web price resolution: ${context.sections!.length} sections, ZIP=${context.zipCode}`,
     );
 
-    try {
-      const results = await this.webPricingAgent.priceItems(
-        flatItems,
-        context.zipCode,
-        signal,
-      );
+    // TODO: Pass city/state from the project. The context currently only has zipCode.
+    // Either add city/state to BidEngineContext, or load the project entity here.
+    // For now, passing null — the fan-out service handles null gracefully.
+    const pricedItems = await this.pricingFanOut.priceAll(
+      context.sections!,
+      context.zipCode,
+      null, // city — TODO: populate from project
+      null, // state — TODO: populate from project
+      signal,
+    );
 
-      const matched = results.filter((r) => r.matched).length;
-      const skipped = results.filter((r) => !r.matched).length;
-      this.logger.log(
-        `Web pricing results: ${matched} matched, ${skipped} skipped out of ${results.length} total`,
-      );
+    const matched = pricedItems.filter((p) => p.sourceUrl).length;
+    this.logger.log(
+      `Web price resolution complete: ${pricedItems.length} items, ${matched} with source URLs`,
+    );
 
-      context.webResults = flatItems.map((item, i) => {
-        const result = results[i];
-        if (!result) {
-          return {
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitCost: 0,
-            source: ItemSource.AiUnmatched,
-            sourceData: { skipReason: "no result returned by agent" },
-            sectionName: item.sectionName,
-          };
-        }
-        if (result.matched) {
-          return {
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitCost: result.unitCost,
-            source: ItemSource.WebPriced,
-            sourceData: {
-              retailer: result.retailer,
-              productUrl: result.productUrl,
-              confidence: result.confidence,
-              category: result.category,
-              notes: result.notes,
-            },
-            sectionName: item.sectionName,
-          };
-        }
-        return {
-          description: item.description,
-          quantity: item.quantity,
-          unit: item.unit,
-          unitCost: result.unitCost,
-          source: ItemSource.AiUnmatched,
-          sourceData: {
-            skipReason: result.skipReason,
-            category: result.category,
-          },
-          sectionName: item.sectionName,
-        };
-      }) satisfies PricedItem[];
-    } catch (error) {
-      this.logger.error(
-        `Web pricing failed: ${error instanceof Error ? error.message : error}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      context.webResults = [];
-    }
+    context.pricedItems = pricedItems;
   }
 }

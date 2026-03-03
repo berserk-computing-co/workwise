@@ -1,23 +1,21 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import type { Job } from "bullmq";
-import { Project } from "../../projects/entities/project.entity.js";
-import { PipelineRunner } from "../../pipeline/services/pipeline-runner.service.js";
-import { PipelineJobService } from "../../pipeline/services/pipeline-job.service.js";
-import type { StepStatus } from "../../pipeline/pipeline.enums.js";
-import { ScopeDecompositionStep } from "./steps/scope-decomposition.step.js";
-import { PriceResolutionStep } from "./steps/price-resolution.step.js";
-import { WebPriceResolutionStep } from "./steps/web-price-resolution.step.js";
-import { PriceMergeStep } from "./steps/price-merge.step.js";
-import { OptionGenerationStep } from "./steps/option-generation.step.js";
-import { CalculationStep } from "./steps/calculation.step.js";
-import type { BidEngineContext } from "./bidengine-context.js";
-import { CancellationService } from "../../pipeline/services/cancellation.service.js";
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import type { Job } from 'bullmq';
+import { Project } from '../../projects/entities/project.entity.js';
+import { PipelineRunner } from '../../pipeline/services/pipeline-runner.service.js';
+import { PipelineJobService } from '../../pipeline/services/pipeline-job.service.js';
+import type { StepStatus } from '../../pipeline/pipeline.enums.js';
+import { ScopeDecompositionStep } from './steps/scope-decomposition.step.js';
+import { WebPriceResolutionStep } from './steps/web-price-resolution.step.js';
+import { OptionGenerationStep } from './steps/option-generation.step.js';
+import { CalculationStep } from './steps/calculation.step.js';
+import type { BidEngineContext } from './bidengine-context.js';
+import { CancellationService } from '../../pipeline/services/cancellation.service.js';
 
 @Injectable()
-@Processor("project-generation")
+@Processor('project-generation')
 export class BidEngineProcessor extends WorkerHost {
   private readonly logger = new Logger(BidEngineProcessor.name);
 
@@ -27,11 +25,9 @@ export class BidEngineProcessor extends WorkerHost {
     private readonly pipelineRunner: PipelineRunner,
     private readonly pipelineJobs: PipelineJobService,
     private readonly scopeStep: ScopeDecompositionStep,
-    private readonly priceStep: PriceResolutionStep,
     private readonly optionStep: OptionGenerationStep,
     private readonly calcStep: CalculationStep,
     private readonly webPriceStep: WebPriceResolutionStep,
-    private readonly mergeStep: PriceMergeStep,
     private readonly cancellationService: CancellationService,
   ) {
     super();
@@ -78,8 +74,7 @@ export class BidEngineProcessor extends WorkerHost {
         context,
         [
           this.scopeStep,
-          [this.priceStep, this.webPriceStep],
-          this.mergeStep,
+          this.webPriceStep,
           this.optionStep,
           this.calcStep,
         ],
@@ -91,7 +86,7 @@ export class BidEngineProcessor extends WorkerHost {
         total: context.totals!.total,
       });
       await this.projectRepo.update(projectId, {
-        status: "review",
+        status: 'review',
         currentJobId: null,
       });
       this.logger.log(
@@ -99,25 +94,25 @@ export class BidEngineProcessor extends WorkerHost {
       );
     } catch (error) {
       const isCancelled =
-        error instanceof Error && error.message === "Job cancelled by user";
+        error instanceof Error && error.message === 'Job cancelled by user';
 
       if (isCancelled) {
         this.logger.log(`Job ${job.id} cancelled by user`);
         await this.pipelineJobs.cancel(job.id!);
         await this.projectRepo.update(projectId, {
-          status: "cancelled",
+          status: 'cancelled',
           currentJobId: null,
         });
       } else {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error ? error.message : 'Unknown error';
         this.logger.error(
           `Job ${job.id} failed: ${message}`,
           error instanceof Error ? error.stack : undefined,
         );
         await this.pipelineJobs.fail(job.id!, message);
         await this.projectRepo.update(projectId, {
-          status: "draft",
+          status: 'draft',
           currentJobId: null,
         });
       }

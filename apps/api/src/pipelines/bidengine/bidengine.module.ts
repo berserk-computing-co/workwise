@@ -4,16 +4,15 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { BidEngineController } from "./bidengine.controller.js";
 import { BidEngineProcessor } from "./bidengine.processor.js";
 import { ScopeAgentService } from "./agents/scope-agent.service.js";
-import { WebPricingAgentService } from "./agents/web-pricing-agent.service.js";
+import { MaterialPricingAgentService } from "./agents/web-pricing-agent.service.js";
+import { LaborPricingAgentService } from "./agents/labor-pricing-agent.service.js";
+import { PricingFanOutService } from "./agents/pricing-fan-out.service.js";
 import { ScopeDecompositionStep } from "./steps/scope-decomposition.step.js";
-import { PriceResolutionStep } from "./steps/price-resolution.step.js";
 import { WebPriceResolutionStep } from "./steps/web-price-resolution.step.js";
-import { PriceMergeStep } from "./steps/price-merge.step.js";
 import { OptionGenerationStep } from "./steps/option-generation.step.js";
 import { CalculationStep } from "./steps/calculation.step.js";
 import { Project } from "../../projects/entities/project.entity.js";
 import { ProjectsModule } from "../../projects/projects.module.js";
-import { OneBuildModule } from "../../datasources/onebuild/onebuild.module.js";
 import { PipelineModule } from "../../pipeline/pipeline.module.js";
 import { UsersModule } from "../../users/users.module.js";
 
@@ -22,7 +21,6 @@ import { UsersModule } from "../../users/users.module.js";
     BullModule.registerQueue({ name: "project-generation" }),
     TypeOrmModule.forFeature([Project]),
     ProjectsModule,
-    OneBuildModule,
     UsersModule,
     PipelineModule,
   ],
@@ -30,11 +28,11 @@ import { UsersModule } from "../../users/users.module.js";
   providers: [
     BidEngineProcessor,
     ScopeAgentService,
-    WebPricingAgentService,
+    MaterialPricingAgentService,
+    LaborPricingAgentService,
+    PricingFanOutService,
     ScopeDecompositionStep,
-    PriceResolutionStep,
     WebPriceResolutionStep,
-    PriceMergeStep,
     OptionGenerationStep,
     CalculationStep,
   ],

@@ -46,9 +46,8 @@ The frontend proxies all API calls through `app/api/proxy/[...path]/route.ts` to
 | `auth/` | Dual Auth0 + Stytch JWT strategies, global `Auth0AuthGuard` |
 | `users/` | User + Organization CRUD |
 | `projects/` | Projects, Sections, Items, Options CRUD (soft-delete) |
-| `pipelines/bidengine/` | AI bid generation — BullMQ processor, 6-step pipeline |
+| `pipelines/bidengine/` | AI bid generation — BullMQ processor, 4-step pipeline |
 | `ai/` | Provider-agnostic `AgentRunner` + `AnthropicProvider` |
-| `datasources/onebuild/` | 1Build material pricing GraphQL client |
 | `pipeline/` | Generic pipeline runner, job tracking, SSE progress |
 
 ### Web routes
@@ -62,7 +61,7 @@ The frontend proxies all API calls through `app/api/proxy/[...path]/route.ts` to
 
 ### BidEngine pipeline
 
-6 steps: scope decomposition → [1Build pricing + web pricing] (parallel) → price merge → option generation → calculation. Runs as a BullMQ job with SSE progress streaming via `/jobs/:jobId/progress`.
+4 steps: scope decomposition → web price resolution (section-aware fan-out via `MaterialPricingAgentService` + `LaborPricingAgentService`) → option generation → calculation. Runs as a BullMQ job with SSE progress streaming via `/jobs/:jobId/progress`.
 
 ## Code Conventions
 
@@ -87,7 +86,7 @@ The frontend proxies all API calls through `app/api/proxy/[...path]/route.ts` to
 
 ### API (`apps/api/.env.local`)
 
-`DB_USERNAME`, `DB_PASSWORD`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ONEBUILD_API_KEY`, `STYTCH_SECRET`
+`DB_USERNAME`, `DB_PASSWORD`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `STYTCH_SECRET`
 
 ### Web (`apps/web/.env.local`)
 

@@ -65,7 +65,7 @@ describe("CalculationStep", () => {
           unit: "LF",
           unitCost: 3.5,
           source: ItemSource.AiPriced,
-          sourceData: { onebuildId: "ob-1" },
+          sourceData: { retailer: "Home Depot", confidence: 0.85 },
           sectionName: "Framing",
         },
         {

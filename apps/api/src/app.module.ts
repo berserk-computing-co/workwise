@@ -9,11 +9,12 @@ import { StytchAuthGuard } from "./auth/stytch-auth.guard.js";
 import { UsersModule } from "./users/users.module.js";
 import { ProjectsModule } from "./projects/projects.module.js";
 import { BidEngineModule } from "./pipelines/bidengine/bidengine.module.js";
-import { OneBuildModule } from "./datasources/onebuild/onebuild.module.js";
 import { AiModule } from "./ai/ai.module.js";
 import { PipelineModule } from "./pipeline/pipeline.module.js";
 import { RedisModule } from "./config/redis.module.js";
 import { typeOrmConfigFactory } from "./config/database.config.js";
+import { StorageModule } from "./storage/storage.module.js";
+import { FilesModule } from "./files/files.module.js";
 import { Auth0AuthGuard } from "./auth/auth0-auth.guard.js";
 import { User } from "./users/entities/user.entity.js";
 import { Organization } from "./users/entities/organization.entity.js";
@@ -40,11 +41,12 @@ import { Organization } from "./users/entities/organization.entity.js";
       }),
     }),
     RedisModule,
+    StorageModule,
+    FilesModule,
     AuthModule,
     UsersModule,
     ProjectsModule,
     BidEngineModule,
-    OneBuildModule,
     AiModule,
     PipelineModule,
   ],
