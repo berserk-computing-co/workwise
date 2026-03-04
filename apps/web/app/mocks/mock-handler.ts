@@ -156,13 +156,17 @@ const routes: Route[] = [
     return json(result);
   }),
 
-  // Projects - cancel generation
-  route('POST', '/projects/:id/cancel', (_req, params) => {
-    const project = mockDb.updateProject(params.id, {
-      status: 'cancelled',
-    });
+  // Projects - duplicate
+  route('POST', '/projects/:id/duplicate', (_req, params) => {
+    const project = mockDb.duplicateProject(params.id);
     if (!project) return notFound('Project');
-    project.currentJobId = null;
+    return json(project, 201);
+  }),
+
+  // Projects - recalculate
+  route('POST', '/projects/:id/recalculate', (_req, params) => {
+    const project = mockDb.recalculate(params.id);
+    if (!project) return notFound('Project');
     return json(project);
   }),
 
@@ -175,7 +179,7 @@ const routes: Route[] = [
   }),
 
   // Sections - update
-  route('PATCH', '/sections/:id', async (req, params) => {
+  route('PATCH', '/projects/:projectId/sections/:id', async (req, params) => {
     const body = await parseBody(req);
     const section = mockDb.updateSection(params.id, body);
     if (!section) return notFound('Section');
@@ -183,7 +187,7 @@ const routes: Route[] = [
   }),
 
   // Sections - delete
-  route('DELETE', '/sections/:id', (_req, params) => {
+  route('DELETE', '/projects/:projectId/sections/:id', (_req, params) => {
     const deleted = mockDb.deleteSection(params.id);
     if (!deleted) return notFound('Section');
     return noContent();
@@ -224,7 +228,7 @@ const routes: Route[] = [
   }),
 
   // Options - update
-  route('PATCH', '/options/:id', async (req, params) => {
+  route('PATCH', '/projects/:projectId/options/:id', async (req, params) => {
     const body = await parseBody(req);
     const option = mockDb.updateOption(params.id, body);
     if (!option) return notFound('Option');

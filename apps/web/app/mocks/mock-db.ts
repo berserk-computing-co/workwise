@@ -215,6 +215,47 @@ export const mockDb = {
     return true;
   },
 
+  duplicateProject(id: string): Project | null {
+    const source = this.getProject(id);
+    if (!source) return null;
+
+    const store = getStore();
+    const clone = structuredClone(source);
+    clone.id = genId('project');
+    clone.status = 'draft' as ProjectStatus;
+    clone.description = `${source.description} (copy)`;
+    clone.currentJobId = null;
+    clone.createdAt = now();
+    clone.updatedAt = now();
+    clone.deletedAt = null;
+
+    // Re-key sections and their items
+    for (const section of clone.sections) {
+      section.id = genId('section');
+      section.projectId = clone.id;
+      for (const item of section.items) {
+        item.id = genId('item');
+        item.sectionId = section.id;
+      }
+    }
+    // Re-key options
+    for (const option of clone.options) {
+      option.id = genId('option');
+      option.projectId = clone.id;
+    }
+
+    store.projects.unshift(clone);
+    return clone;
+  },
+
+  recalculate(id: string): Project | null {
+    const project = this.getProject(id);
+    if (!project) return null;
+    recalculateProject(project);
+    project.updatedAt = now();
+    return project;
+  },
+
   // -- Generation -----------------------------------------------------------
 
   startGenerate(projectId: string): { jobId: string } | null {
