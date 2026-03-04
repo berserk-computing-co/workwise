@@ -1,10 +1,13 @@
-import { getAccessToken } from "@auth0/nextjs-auth0";
-import { NextRequest, NextResponse } from "next/server";
+import { getAccessToken } from '@auth0/nextjs-auth0';
+import { NextRequest, NextResponse } from 'next/server';
+import { handleMockRequest } from '@/app/mocks/mock-handler';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_API === 'true';
+const MOCK_LATENCY = parseInt(process.env.MOCK_API_LATENCY ?? '300', 10);
 
 async function getBearerToken(): Promise<string> {
-  if (process.env.DEV_SKIP_AUTH === "true") {
+  if (process.env.DEV_SKIP_AUTH === 'true') {
     return process.env.DEV_JWT_TOKEN!;
   }
   const { accessToken } = await getAccessToken();
@@ -15,8 +18,14 @@ async function handler(
   req: NextRequest,
   { params }: { params: { path: string[] } },
 ) {
+  if (MOCK_MODE) {
+    return handleMockRequest(req, params.path, {
+      defaultLatency: MOCK_LATENCY,
+    });
+  }
+
   const accessToken = await getBearerToken();
-  const path = "/" + params.path.join("/");
+  const path = '/' + params.path.join('/');
   const url = new URL(path, API_BASE);
 
   // Forward query params
@@ -28,9 +37,9 @@ async function handler(
     Authorization: `Bearer ${accessToken}`,
   };
 
-  if (req.method !== "GET") {
-    headers["Content-Type"] =
-      req.headers.get("content-type") || "application/json";
+  if (req.method !== 'GET') {
+    headers['Content-Type'] =
+      req.headers.get('content-type') || 'application/json';
   }
 
   const fetchOptions: RequestInit = {
@@ -38,7 +47,7 @@ async function handler(
     headers,
   };
 
-  if (req.method !== "GET" && req.method !== "HEAD") {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
     fetchOptions.body = await req.text();
   }
 
@@ -48,7 +57,7 @@ async function handler(
   return new NextResponse(responseBody, {
     status: res.status,
     headers: {
-      "Content-Type": res.headers.get("content-type") || "application/json",
+      'Content-Type': res.headers.get('content-type') || 'application/json',
     },
   });
 }
