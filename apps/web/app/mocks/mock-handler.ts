@@ -190,7 +190,7 @@ const routes: Route[] = [
   }),
 
   // Items - create
-  route('POST', '/items', async (req) => {
+  route('POST', '/projects/:projectId/items', async (req) => {
     const body = await parseBody(req);
     const item = mockDb.createItem(body);
     if (!item) return notFound('Section');
@@ -198,7 +198,7 @@ const routes: Route[] = [
   }),
 
   // Items - update
-  route('PATCH', '/items/:id', async (req, params) => {
+  route('PATCH', '/projects/:projectId/items/:id', async (req, params) => {
     const body = await parseBody(req);
     const item = mockDb.updateItem(params.id, body);
     if (!item) return notFound('Item');
@@ -206,16 +206,19 @@ const routes: Route[] = [
   }),
 
   // Items - delete
-  route('DELETE', '/items/:id', (_req, params) => {
+  route('DELETE', '/projects/:projectId/items/:id', (_req, params) => {
     const deleted = mockDb.deleteItem(params.id);
     if (!deleted) return notFound('Item');
     return noContent();
   }),
 
   // Items - reorder
-  route('PATCH', '/sections/:id/items/reorder', async (req, params) => {
+  route('POST', '/projects/:projectId/items/reorder', async (req) => {
     const body = await parseBody(req);
-    const items = mockDb.reorderItems(params.id, body.itemIds as string[]);
+    const items = mockDb.reorderItems(
+      body.sectionId as string,
+      body.itemIds as string[],
+    );
     if (!items) return notFound('Section');
     return json(items);
   }),
