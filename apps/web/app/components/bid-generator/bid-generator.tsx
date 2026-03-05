@@ -13,6 +13,7 @@ import { Step1Address } from './step-address';
 import { Step2Description } from './step-description';
 import { Step3Client } from './step-client';
 import { Step4Summary } from './step-summary';
+import { StepPhotos } from './step-photos';
 
 export function BidGenerator() {
   const router = useRouter();
@@ -27,13 +28,37 @@ export function BidGenerator() {
   const step2Ref = useRef<HTMLDivElement>(null);
   const step3Ref = useRef<HTMLDivElement>(null);
   const step4Ref = useRef<HTMLDivElement>(null);
+  const step5Ref = useRef<HTMLDivElement>(null);
 
-  const stepRefs = [step1Ref, step2Ref, step3Ref, step4Ref];
+  const stepRefs = [step1Ref, step2Ref, step3Ref, step4Ref, step5Ref];
 
   useEffect(() => {
     const ref = stepRefs[state.step - 1];
     ref?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [state.step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (state.step === 3 && !state.projectId) {
+      createProject()
+        .then((project) => {
+          if (project) {
+            dispatch({
+              type: 'SET_PROJECT_ID',
+              payload: { projectId: project.id },
+            });
+            setProjectId(project.id);
+          }
+        })
+        .catch((err) => {
+          addToast(
+            'error',
+            err instanceof Error
+              ? err.message
+              : 'Failed to create project draft',
+          );
+        });
+    }
+  }, [state.step, state.projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSetAddress = useCallback(
     (payload: {
@@ -59,6 +84,17 @@ export function BidGenerator() {
 
   const handleSkipClient = useCallback(() => {
     dispatch({ type: 'SKIP_CLIENT' });
+  }, []);
+
+  const handleSetFiles = useCallback(
+    (payload: { files: import('./types').UploadedFile[] }) => {
+      dispatch({ type: 'SET_FILES', payload });
+    },
+    [],
+  );
+
+  const handleSkipFiles = useCallback(() => {
+    dispatch({ type: 'SKIP_FILES' });
   }, []);
 
   const createProject = async (): Promise<{ id: string } | null> => {
@@ -89,9 +125,14 @@ export function BidGenerator() {
   const handleSaveDraft = async () => {
     setSubmitting(true);
     try {
-      const project = await createProject();
-      if (project) {
-        router.push(`/projects/${project.id}`);
+      const id = state.projectId || projectId;
+      if (id) {
+        router.push(`/projects/${id}`);
+      } else {
+        const project = await createProject();
+        if (project) {
+          router.push(`/projects/${project.id}`);
+        }
       }
     } catch (err) {
       addToast(
@@ -106,12 +147,15 @@ export function BidGenerator() {
   const handleGenerate = async () => {
     setSubmitting(true);
     try {
-      const project = await createProject();
-      if (!project) return;
+      let id = state.projectId || projectId;
+      if (!id) {
+        const project = await createProject();
+        if (!project) return;
+        id = project.id;
+      }
+      setProjectId(id);
 
-      setProjectId(project.id);
-
-      const genRes = await fetch(`/api/proxy/projects/${project.id}/generate`, {
+      const genRes = await fetch(`/api/proxy/projects/${id}/generate`, {
         method: 'POST',
       });
 
@@ -198,20 +242,53 @@ export function BidGenerator() {
                       : 'Description'
                   }
                   value={state.description}
-                  onEdit={() => {
-                    dispatch({ type: 'GO_BACK' });
-                    if (state.step > 3) dispatch({ type: 'GO_BACK' });
-                  }}
+                  onEdit={() => dispatch({ type: 'GO_BACK' })}
                 />
               </div>
             )}
           </div>
         )}
 
-        {/* Step 3 */}
+        {/* Step 3 — Photos */}
         {state.step >= 3 && (
           <div ref={step3Ref}>
             {state.step === 3 ? (
+              state.projectId ? (
+                <StepPhotos
+                  projectId={state.projectId}
+                  onNext={handleSetFiles}
+                  onSkip={handleSkipFiles}
+                />
+              ) : (
+                <BotCard
+                  title="Got photos of the project?"
+                  subtitle="Setting up your project..."
+                />
+              )
+            ) : (
+              <div className="space-y-3">
+                <BotCard
+                  title="Got photos of the project?"
+                  subtitle="Optional — photos help us generate more accurate estimates."
+                />
+                <LockedAnswerCard
+                  label="Photos"
+                  value={
+                    state.files.length > 0
+                      ? `${state.files.length} photo(s) uploaded`
+                      : 'Skipped'
+                  }
+                  onEdit={() => dispatch({ type: 'GO_BACK' })}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 4 — Client */}
+        {state.step >= 4 && (
+          <div ref={step4Ref}>
+            {state.step === 4 ? (
               <Step3Client onNext={handleSetClient} onSkip={handleSkipClient} />
             ) : (
               <div className="space-y-3">
@@ -229,9 +306,9 @@ export function BidGenerator() {
           </div>
         )}
 
-        {/* Step 4 */}
-        {state.step >= 4 && (
-          <div ref={step4Ref}>
+        {/* Step 5 — Summary */}
+        {state.step >= 5 && (
+          <div ref={step5Ref}>
             <Step4Summary
               state={state}
               isLoggedIn={isLoggedIn}
@@ -245,6 +322,7 @@ export function BidGenerator() {
 
       <ProgressOverlay
         jobId={generatingJobId}
+        projectId={projectId}
         onComplete={handleGenerateComplete}
         onClose={handleProgressClose}
       />
