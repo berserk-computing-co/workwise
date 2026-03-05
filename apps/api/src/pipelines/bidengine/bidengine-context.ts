@@ -43,9 +43,12 @@ export interface ProjectTotals {
 
 export interface BidEngineContext {
   projectId: string;
+  jobId?: string;
   description: string;
   address: string;
   zipCode: string;
+  city: string | null;
+  state: string | null;
   category: string;
 
   // Populated by pipeline steps

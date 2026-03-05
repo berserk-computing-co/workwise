@@ -43,6 +43,7 @@ export class PricingFanOutService {
     city: string | null,
     state: string | null,
     signal: AbortSignal,
+    onBatchProgress?: (completed: number, total: number) => void,
   ): Promise<PricedItem[]> {
     const startMs = Date.now();
 
@@ -148,6 +149,8 @@ export class PricingFanOutService {
     // 3. Reconcile results into the flat output array.
     let fulfilledCount = 0;
     let rejectedCount = 0;
+    const totalBatches = batches.length;
+    let completedBatches = 0;
 
     for (let batchIdx = 0; batchIdx < settled.length; batchIdx++) {
       const result = settled[batchIdx];
@@ -227,6 +230,9 @@ export class PricingFanOutService {
           };
         }
       }
+
+      completedBatches++;
+      onBatchProgress?.(completedBatches, totalBatches);
     }
 
     const elapsedMs = Date.now() - startMs;

@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PipelineStep } from '../../../pipeline/pipeline-step.interface.js';
 import { PricingFanOutService } from '../agents/pricing-fan-out.service.js';
+import { JobProgressService } from '../../../pipeline/services/job-progress.service.js';
+import { StepStatus } from '../../../pipeline/pipeline.enums.js';
 import type { BidEngineContext } from '../bidengine-context.js';
 
 @Injectable()
@@ -9,22 +11,33 @@ export class WebPriceResolutionStep implements PipelineStep<BidEngineContext> {
 
   private readonly logger = new Logger(WebPriceResolutionStep.name);
 
-  constructor(private readonly pricingFanOut: PricingFanOutService) {}
+  constructor(
+    private readonly pricingFanOut: PricingFanOutService,
+    private readonly jobProgress: JobProgressService,
+  ) {}
 
   async execute(context: BidEngineContext, signal: AbortSignal): Promise<void> {
     this.logger.log(
       `Starting web price resolution: ${context.sections!.length} sections, ZIP=${context.zipCode}`,
     );
 
-    // TODO: Pass city/state from the project. The context currently only has zipCode.
-    // Either add city/state to BidEngineContext, or load the project entity here.
-    // For now, passing null — the fan-out service handles null gracefully.
+    const onBatchProgress = context.jobId
+      ? (completed: number, total: number) => {
+          this.jobProgress.emit(context.jobId!, {
+            step: 'web_price_resolution',
+            status: StepStatus.Running,
+            message: `Pricing batch ${completed}/${total}...`,
+          });
+        }
+      : undefined;
+
     const pricedItems = await this.pricingFanOut.priceAll(
       context.sections!,
       context.zipCode,
-      null, // city — TODO: populate from project
-      null, // state — TODO: populate from project
+      context.city,
+      context.state,
       signal,
+      onBatchProgress,
     );
 
     const matched = pricedItems.filter((p) => p.sourceUrl).length;

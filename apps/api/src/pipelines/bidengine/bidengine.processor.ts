@@ -51,9 +51,12 @@ export class BidEngineProcessor extends WorkerHost {
 
       const context: BidEngineContext = {
         projectId: project.id,
+        jobId: job.id,
         description: project.description,
         address: project.address,
         zipCode: project.zipCode,
+        city: project.city,
+        state: project.state,
         category: project.category,
       };
 
@@ -72,12 +75,7 @@ export class BidEngineProcessor extends WorkerHost {
       await this.pipelineRunner.run(
         job.id!,
         context,
-        [
-          this.scopeStep,
-          this.webPriceStep,
-          this.optionStep,
-          this.calcStep,
-        ],
+        [this.scopeStep, this.webPriceStep, this.optionStep, this.calcStep],
         onProgress,
         controller,
       );
