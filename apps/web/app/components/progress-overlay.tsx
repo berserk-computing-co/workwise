@@ -21,17 +21,7 @@ const PHASES: { steps: string[]; label: string; description: string }[] = [
   {
     steps: ["price_resolution"],
     label: "Resolving prices",
-    description: "Searching our database for material and labor costs",
-  },
-  {
-    steps: ["web_price_resolution"],
-    label: "Checking the web",
-    description: "Checking the web for material and labor costs"
-  },
-  {
-    steps: ["price_merge"],
-    label: "Double checking prices",
-    description: "Combining price sources for best accuracy",
+    description: "Searching for material and labor costs across the web",
   },
   {
     steps: ["option_generation"],
