@@ -12,7 +12,8 @@
     "test": "nx run-many -t test --projects=web,api",
     "storybook": "nx run storybook:storybook",
     "build-storybook": "nx run storybook:build-storybook",
-    "test-storybook": "nx run storybook:test-storybook"
+    "test-storybook": "nx run storybook:test-storybook",
+    "dev:web:mock": "set -a && . apps/web/.env.mock && set +a && nx dev web"
   },
   "msw": {
     "workerDirectory": [

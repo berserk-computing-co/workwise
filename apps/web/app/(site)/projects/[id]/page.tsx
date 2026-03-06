@@ -35,7 +35,7 @@ const STATUS_STYLES: Record<ProjectStatus, string> = {
   accepted:
     'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
   rejected: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
-  cancelled: 'bg-gray-50 text-gray-400 dark:bg-gray-900 dark:text-gray-500',
+  cancelled: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500',
 };
 
 const formatCurrency = (amount: number) =>
@@ -248,6 +248,337 @@ function EditableCell({
     >
       {typeof value === 'number' && type === 'number' ? value : String(value)}
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MobileItemRow — swipeable card row shown below md breakpoint
+// ---------------------------------------------------------------------------
+
+const SWIPE_DELETE_THRESHOLD = 60;
+const SWIPE_MAX = 80;
+
+interface MobileItemRowProps {
+  item: Item;
+  index: number;
+  total: number;
+  onEdit: () => void;
+  onDelete: () => void;
+  onReorderUp: () => void;
+  onReorderDown: () => void;
+}
+
+function MobileItemRow({
+  item,
+  index,
+  total,
+  onEdit,
+  onDelete,
+  onReorderUp,
+  onReorderDown,
+}: MobileItemRowProps) {
+  const touchStartX = useRef(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    setSwiping(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const delta = e.touches[0].clientX - touchStartX.current;
+    if (delta < 0) {
+      setSwipeOffset(Math.max(delta, -SWIPE_MAX));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setSwiping(false);
+    if (swipeOffset < -SWIPE_DELETE_THRESHOLD) {
+      setSwipeOffset(0);
+      onDelete();
+    } else {
+      setSwipeOffset(0);
+    }
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-gray-100 dark:border-gray-800">
+      {/* Delete zone underneath card */}
+      <div className="absolute inset-y-0 right-0 flex items-center justify-center w-20 bg-red-500 text-white">
+        <TrashIcon className="h-5 w-5" />
+      </div>
+      {/* Card content — translates left on swipe */}
+      <div
+        className="relative bg-white dark:bg-[#111113]"
+        style={{
+          transform: `translateX(${swipeOffset}px)`,
+          transition: swiping ? 'none' : 'transform 200ms ease',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="p-3">
+          <p className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1.5">
+            {item.description}
+          </p>
+          <div className="grid grid-cols-3 gap-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <span>
+              {item.quantity} {item.unit}
+            </span>
+            <span>@ {formatCurrency(item.unitCost)}</span>
+            <span className="text-right font-semibold text-gray-700 dark:text-gray-300">
+              {formatCurrency(item.extendedCost)}
+            </span>
+          </div>
+          {item.source && (
+            <span className="inline-flex rounded-full px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 mb-2">
+              {item.source}
+            </span>
+          )}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onReorderUp}
+              disabled={index === 0}
+              className="p-1.5 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
+              aria-label="Move up"
+            >
+              <ChevronUpIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={onReorderDown}
+              disabled={index === total - 1}
+              className="p-1.5 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
+              aria-label="Move down"
+            >
+              <ChevronDownIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={onEdit}
+              className="ml-auto flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 px-2.5 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 transition-colors"
+              aria-label="Edit item"
+            >
+              <PencilIcon className="h-3.5 w-3.5" />
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ItemEditBottomSheet — slide-up edit panel for mobile
+// ---------------------------------------------------------------------------
+
+interface ItemEditBottomSheetProps {
+  item: Item;
+  onClose: () => void;
+  onSave: (
+    itemId: string,
+    updates: Partial<
+      Pick<Item, 'description' | 'quantity' | 'unit' | 'unitCost'>
+    >,
+  ) => Promise<void>;
+}
+
+function ItemEditBottomSheet({
+  item,
+  onClose,
+  onSave,
+}: ItemEditBottomSheetProps) {
+  const [description, setDescription] = useState(item.description);
+  const [quantity, setQuantity] = useState(String(item.quantity));
+  const [unit, setUnit] = useState(item.unit);
+  const [unitCost, setUnitCost] = useState(String(item.unitCost));
+  const [saving, setSaving] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 10);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(item.id, {
+        description: description.trim(),
+        quantity: parseFloat(quantity),
+        unit: unit.trim(),
+        unitCost: parseFloat(unitCost),
+      });
+      handleClose();
+    } catch {
+      // parent handles error toast
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputCls =
+    'w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1e] px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/10';
+  const labelCls =
+    'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1';
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40 md:hidden"
+        onClick={handleClose}
+      />
+      {/* Sheet */}
+      <div
+        className={`fixed bottom-0 inset-x-0 z-50 md:hidden bg-white dark:bg-[#111113] rounded-t-2xl p-6 pb-8 transition-transform duration-300 ${
+          visible ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        {/* Drag handle */}
+        <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4" />
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Edit Item
+        </h3>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className={labelCls}>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className={inputCls}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelCls}>Qty</label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                step="any"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Unit</label>
+              <input
+                type="text"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Unit Cost</label>
+              <input
+                type="number"
+                value={unitCost}
+                onChange={(e) => setUnitCost(e.target.value)}
+                step="0.01"
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={saving}
+              className="flex-1 rounded-full border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="flex-1 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MobileSectionTabs — sticky horizontal pill tab bar shown below md breakpoint
+// ---------------------------------------------------------------------------
+
+interface MobileSectionTabsProps {
+  sections: Section[];
+  sectionRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+}
+
+function MobileSectionTabs({ sections, sectionRefs }: MobileSectionTabsProps) {
+  const [activeSection, setActiveSection] = useState<string | null>(
+    sections[0]?.id ?? null,
+  );
+
+  useEffect(() => {
+    if (sections.length === 0) return;
+
+    const observers: IntersectionObserver[] = [];
+
+    sections.forEach((section) => {
+      const el = sectionRefs.current[section.id];
+      if (!el) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) setActiveSection(section.id);
+          });
+        },
+        { threshold: 0.2, rootMargin: '-60px 0px -40% 0px' },
+      );
+
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, [sections, sectionRefs]);
+
+  const scrollToSection = (sectionId: string) => {
+    const el = sectionRefs.current[sectionId];
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 70;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    setActiveSection(sectionId);
+  };
+
+  if (sections.length === 0) return null;
+
+  return (
+    <div className="sticky top-0 z-20 md:hidden bg-white/90 dark:bg-[#0d0d10]/90 backdrop-blur border-b border-gray-100 dark:border-gray-800 -mx-6 px-6 mb-3">
+      <div className="flex gap-2 overflow-x-auto py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            onClick={() => scrollToSection(section.id)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+              activeSection === section.id
+                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            {section.name}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -509,317 +840,399 @@ interface EditingCell {
   field: 'description' | 'quantity' | 'unit' | 'unitCost';
 }
 
-function SectionPanel({
-  section,
-  projectId,
-  onRefetch,
-  addToast,
-  onDeleteRequest,
-  onAddItem,
-}: SectionPanelProps) {
-  const [open, setOpen] = useState(true);
-  const [localItems, setLocalItems] = useState<Item[]>(section.items);
-  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+const SectionPanel = React.forwardRef<HTMLDivElement, SectionPanelProps>(
+  function SectionPanel(
+    {
+      section,
+      projectId,
+      onRefetch,
+      addToast,
+      onDeleteRequest,
+      onAddItem,
+    }: SectionPanelProps,
+    ref,
+  ) {
+    const [open, setOpen] = useState(true);
+    const [localItems, setLocalItems] = useState<Item[]>(section.items);
+    const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+    const [editingItem, setEditingItem] = useState<Item | null>(null);
 
-  // Keep localItems in sync when section prop changes
-  useEffect(() => {
-    setLocalItems(section.items);
-  }, [section.items]);
+    // Keep localItems in sync when section prop changes
+    useEffect(() => {
+      setLocalItems(section.items);
+    }, [section.items]);
 
-  const handleSaveSectionName = async (newName: string) => {
-    const res = await fetch(
-      `/api/proxy/projects/${projectId}/sections/${section.id}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName }),
-      },
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      addToast(
-        'error',
-        (err as { message?: string }).message ?? 'Failed to save section name',
+    const handleSaveSectionName = async (newName: string) => {
+      const res = await fetch(
+        `/api/proxy/projects/${projectId}/sections/${section.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName }),
+        },
       );
-      throw new Error('save failed');
-    }
-    addToast('success', 'Section renamed');
-    await onRefetch();
-  };
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        addToast(
+          'error',
+          (err as { message?: string }).message ??
+            'Failed to save section name',
+        );
+        throw new Error('save failed');
+      }
+      addToast('success', 'Section renamed');
+      await onRefetch();
+    };
 
-  const handleSaveItemField = async (
-    itemId: string,
-    field: EditingCell['field'],
-    rawValue: string,
-  ) => {
-    const numericFields = ['quantity', 'unitCost'] as const;
-    const isNumeric = (numericFields as readonly string[]).includes(field);
-    const parsed = isNumeric ? parseFloat(rawValue) : rawValue;
+    const handleSaveItemField = async (
+      itemId: string,
+      field: EditingCell['field'],
+      rawValue: string,
+    ) => {
+      const numericFields = ['quantity', 'unitCost'] as const;
+      const isNumeric = (numericFields as readonly string[]).includes(field);
+      const parsed = isNumeric ? parseFloat(rawValue) : rawValue;
 
-    if (isNumeric && isNaN(parsed as number)) return;
+      if (isNumeric && isNaN(parsed as number)) return;
 
-    // Optimistic update
-    setLocalItems((prev) =>
-      prev.map((item) => {
-        if (item.id !== itemId) return item;
-        const updated = { ...item, [field]: parsed };
-        updated.extendedCost = updated.quantity * updated.unitCost;
-        return updated;
-      }),
-    );
-
-    const res = await fetch(
-      `/api/proxy/projects/${projectId}/items/${itemId}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: parsed }),
-      },
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      addToast(
-        'error',
-        (err as { message?: string }).message ?? 'Failed to save item',
+      // Optimistic update
+      setLocalItems((prev) =>
+        prev.map((item) => {
+          if (item.id !== itemId) return item;
+          const updated = { ...item, [field]: parsed };
+          updated.extendedCost = updated.quantity * updated.unitCost;
+          return updated;
+        }),
       );
-      // Revert optimistic update
-      setLocalItems(section.items);
-      throw new Error('save failed');
-    }
-    setEditingCell(null);
-    await onRefetch();
-  };
 
-  const handleDeleteItem = async (itemId: string) => {
-    // Optimistic remove
-    setLocalItems((prev) => prev.filter((i) => i.id !== itemId));
-    const res = await fetch(
-      `/api/proxy/projects/${projectId}/items/${itemId}`,
-      { method: 'DELETE' },
-    );
-    if (!res.ok) {
-      addToast('error', 'Failed to delete item');
-      setLocalItems(section.items);
-      return;
-    }
-    addToast('success', 'Item deleted');
-    await onRefetch();
-  };
+      const res = await fetch(
+        `/api/proxy/projects/${projectId}/items/${itemId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: parsed }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        addToast(
+          'error',
+          (err as { message?: string }).message ?? 'Failed to save item',
+        );
+        // Revert optimistic update
+        setLocalItems(section.items);
+        throw new Error('save failed');
+      }
+      setEditingCell(null);
+      await onRefetch();
+    };
 
-  const handleReorder = async (index: number, direction: 'up' | 'down') => {
-    const items = [...localItems];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const handleSaveItem = async (
+      itemId: string,
+      updates: Partial<
+        Pick<Item, 'description' | 'quantity' | 'unit' | 'unitCost'>
+      >,
+    ) => {
+      // Optimistic update
+      setLocalItems((prev) =>
+        prev.map((item) => {
+          if (item.id !== itemId) return item;
+          const updated = { ...item, ...updates };
+          updated.extendedCost =
+            (updates.quantity ?? item.quantity) *
+            (updates.unitCost ?? item.unitCost);
+          return updated;
+        }),
+      );
 
-    // Swap
-    [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
-    setLocalItems(items);
+      const res = await fetch(
+        `/api/proxy/projects/${projectId}/items/${itemId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        addToast(
+          'error',
+          (err as { message?: string }).message ?? 'Failed to save item',
+        );
+        setLocalItems(section.items);
+        throw new Error('save failed');
+      }
+      await onRefetch();
+    };
 
-    const res = await fetch(`/api/proxy/projects/${projectId}/items/reorder`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sectionId: section.id,
-        itemIds: items.map((i) => i.id),
-      }),
-    });
-    if (!res.ok) {
-      addToast('error', 'Failed to reorder items');
-      setLocalItems(section.items);
-    }
-  };
+    const handleDeleteItem = async (itemId: string) => {
+      // Optimistic remove
+      setLocalItems((prev) => prev.filter((i) => i.id !== itemId));
+      const res = await fetch(
+        `/api/proxy/projects/${projectId}/items/${itemId}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) {
+        addToast('error', 'Failed to delete item');
+        setLocalItems(section.items);
+        return;
+      }
+      addToast('success', 'Item deleted');
+      await onRefetch();
+    };
 
-  return (
-    <div className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden">
-      {/* Header */}
+    const handleReorder = async (index: number, direction: 'up' | 'down') => {
+      const items = [...localItems];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= items.length) return;
+
+      // Swap
+      [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
+      setLocalItems(items);
+
+      const res = await fetch(
+        `/api/proxy/projects/${projectId}/items/reorder`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sectionId: section.id,
+            itemIds: items.map((i) => i.id),
+          }),
+        },
+      );
+      if (!res.ok) {
+        addToast('error', 'Failed to reorder items');
+        setLocalItems(section.items);
+      }
+    };
+
+    return (
       <div
-        className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 dark:hover:bg-[#1a1a1e] transition-colors group cursor-pointer"
-        onClick={() => setOpen((o) => !o)}
+        ref={ref}
+        className="border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden"
       >
+        {/* Header */}
         <div
-          className="flex items-center gap-3 flex-1 min-w-0"
-          onClick={(e) => e.stopPropagation()}
+          className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 dark:hover:bg-[#1a1a1e] transition-colors group cursor-pointer"
+          onClick={() => setOpen((o) => !o)}
         >
-          <EditableField
-            value={section.name}
-            onSave={handleSaveSectionName}
-            className="min-w-0"
-            renderDisplay={(v) => (
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {v}
-              </span>
-            )}
-          />
-          <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">
-            {localItems.length} {localItems.length === 1 ? 'item' : 'items'}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {formatCurrency(section.subtotal)}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteRequest(section.id);
-            }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 focus:opacity-100"
-            aria-label="Delete section"
+          <div
+            className="flex items-center gap-3 flex-1 min-w-0"
+            onClick={(e) => e.stopPropagation()}
           >
-            <TrashIcon className="h-4 w-4" />
-          </button>
-          <ChevronDownIcon
-            className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`}
-          />
-        </div>
-      </div>
-
-      {open && (
-        <div className="border-t border-gray-100 dark:border-gray-800">
-          {localItems.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
-              No items in this section
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1e]/50">
-                    <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
-                      Description
-                    </th>
-                    <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                      Qty
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
-                      Unit
-                    </th>
-                    <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                      Unit Cost
-                    </th>
-                    <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                      Ext. Cost
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
-                      Source
-                    </th>
-                    <th className="px-2 py-2.5 w-20" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {localItems.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-[#1a1a1e]/50 transition-colors group/row"
-                    >
-                      {/* Description */}
-                      <td className="py-3 px-4 text-gray-900 dark:text-gray-100 min-w-[200px]">
-                        <EditableCell
-                          value={item.description}
-                          type="text"
-                          onSave={(v) =>
-                            handleSaveItemField(item.id, 'description', v)
-                          }
-                        />
-                      </td>
-                      {/* Qty */}
-                      <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-20">
-                        <EditableCell
-                          value={item.quantity}
-                          type="number"
-                          onSave={(v) =>
-                            handleSaveItemField(item.id, 'quantity', v)
-                          }
-                          className="text-right"
-                          step="any"
-                        />
-                      </td>
-                      {/* Unit */}
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300 w-20">
-                        <EditableCell
-                          value={item.unit}
-                          type="text"
-                          onSave={(v) =>
-                            handleSaveItemField(item.id, 'unit', v)
-                          }
-                        />
-                      </td>
-                      {/* Unit Cost */}
-                      <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-28">
-                        <EditableCell
-                          value={item.unitCost}
-                          type="number"
-                          onSave={(v) =>
-                            handleSaveItemField(item.id, 'unitCost', v)
-                          }
-                          className="text-right"
-                          step="0.01"
-                        />
-                      </td>
-                      {/* Ext Cost (optimistic) */}
-                      <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-28">
-                        {formatCurrency(item.extendedCost)}
-                      </td>
-                      {/* Source */}
-                      <td className="py-3 px-4">
-                        {item.source ? (
-                          <span className="inline-flex rounded-full px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                            {item.source}
-                          </span>
-                        ) : (
-                          <span className="text-gray-300 dark:text-gray-700">
-                            —
-                          </span>
-                        )}
-                      </td>
-                      {/* Actions */}
-                      <td className="py-3 px-2 w-20">
-                        <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => void handleReorder(index, 'up')}
-                            disabled={index === 0}
-                            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
-                            aria-label="Move up"
-                          >
-                            <ChevronUpIcon className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => void handleReorder(index, 'down')}
-                            disabled={index === localItems.length - 1}
-                            className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
-                            aria-label="Move down"
-                          >
-                            <ChevronDownIcon className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => void handleDeleteItem(item.id)}
-                            className="p-1 rounded text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
-                            aria-label="Delete item"
-                          >
-                            <TrashIcon className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {/* Add item button */}
-          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+            <EditableField
+              value={section.name}
+              onSave={handleSaveSectionName}
+              className="min-w-0"
+              renderDisplay={(v) => (
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {v}
+                </span>
+              )}
+            />
+            <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">
+              {localItems.length} {localItems.length === 1 ? 'item' : 'items'}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {formatCurrency(section.subtotal)}
+            </span>
             <button
-              onClick={() => onAddItem(section.id)}
-              className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors focus:outline-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteRequest(section.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 focus:opacity-100"
+              aria-label="Delete section"
             >
-              + Add Item
+              <TrashIcon className="h-4 w-4" />
             </button>
+            <ChevronDownIcon
+              className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`}
+            />
           </div>
         </div>
-      )}
-    </div>
-  );
-}
+
+        {open && (
+          <div className="border-t border-gray-100 dark:border-gray-800">
+            {localItems.length === 0 ? (
+              <p className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+                No items in this section
+              </p>
+            ) : (
+              <>
+                {/* Desktop table (>= md) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1a1a1e]/50">
+                        <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
+                          Description
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                          Qty
+                        </th>
+                        <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
+                          Unit
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                          Unit Cost
+                        </th>
+                        <th className="px-4 py-2.5 text-right text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                          Ext. Cost
+                        </th>
+                        <th className="px-4 py-2.5 text-left text-xs uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500">
+                          Source
+                        </th>
+                        <th className="px-2 py-2.5 w-20" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {localItems.map((item, index) => (
+                        <tr
+                          key={item.id}
+                          className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-[#1a1a1e]/50 transition-colors group/row"
+                        >
+                          {/* Description */}
+                          <td className="py-3 px-4 text-gray-900 dark:text-gray-100 min-w-[200px]">
+                            <EditableCell
+                              value={item.description}
+                              type="text"
+                              onSave={(v) =>
+                                handleSaveItemField(item.id, 'description', v)
+                              }
+                            />
+                          </td>
+                          {/* Qty */}
+                          <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-20">
+                            <EditableCell
+                              value={item.quantity}
+                              type="number"
+                              onSave={(v) =>
+                                handleSaveItemField(item.id, 'quantity', v)
+                              }
+                              className="text-right"
+                              step="any"
+                            />
+                          </td>
+                          {/* Unit */}
+                          <td className="py-3 px-4 text-gray-700 dark:text-gray-300 w-20">
+                            <EditableCell
+                              value={item.unit}
+                              type="text"
+                              onSave={(v) =>
+                                handleSaveItemField(item.id, 'unit', v)
+                              }
+                            />
+                          </td>
+                          {/* Unit Cost */}
+                          <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-28">
+                            <EditableCell
+                              value={item.unitCost}
+                              type="number"
+                              onSave={(v) =>
+                                handleSaveItemField(item.id, 'unitCost', v)
+                              }
+                              className="text-right"
+                              step="0.01"
+                            />
+                          </td>
+                          {/* Ext Cost (optimistic) */}
+                          <td className="py-3 px-4 text-right tabular-nums text-gray-700 dark:text-gray-300 w-28">
+                            {formatCurrency(item.extendedCost)}
+                          </td>
+                          {/* Source */}
+                          <td className="py-3 px-4">
+                            {item.source ? (
+                              <span className="inline-flex rounded-full px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                {item.source}
+                              </span>
+                            ) : (
+                              <span className="text-gray-300 dark:text-gray-700">
+                                —
+                              </span>
+                            )}
+                          </td>
+                          {/* Actions */}
+                          <td className="py-3 px-2 w-20">
+                            <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => void handleReorder(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
+                                aria-label="Move up"
+                              >
+                                <ChevronUpIcon className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() =>
+                                  void handleReorder(index, 'down')
+                                }
+                                disabled={index === localItems.length - 1}
+                                className="p-1 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 disabled:opacity-20"
+                                aria-label="Move down"
+                              >
+                                <ChevronDownIcon className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => void handleDeleteItem(item.id)}
+                                className="p-1 rounded text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400"
+                                aria-label="Delete item"
+                              >
+                                <TrashIcon className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile card list (< md) */}
+                <div className="md:hidden flex flex-col gap-2 p-3">
+                  {localItems.map((item, idx) => (
+                    <MobileItemRow
+                      key={item.id}
+                      item={item}
+                      index={idx}
+                      total={localItems.length}
+                      onEdit={() => setEditingItem(item)}
+                      onDelete={() => void handleDeleteItem(item.id)}
+                      onReorderUp={() => void handleReorder(idx, 'up')}
+                      onReorderDown={() => void handleReorder(idx, 'down')}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Bottom sheet for editing items on mobile */}
+            {editingItem && (
+              <ItemEditBottomSheet
+                item={editingItem}
+                onClose={() => setEditingItem(null)}
+                onSave={handleSaveItem}
+              />
+            )}
+
+            {/* Add item button */}
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={() => onAddItem(section.id)}
+                className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition-colors focus:outline-none"
+              >
+                + Add Item
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  },
+);
 
 // ---------------------------------------------------------------------------
 // OptionCard with editable multiplier
@@ -935,6 +1348,9 @@ export default function ProjectDetailPage() {
   const [showAddSection, setShowAddSection] = useState(false);
   const [deleteSectionId, setDeleteSectionId] = useState<string | null>(null);
   const [deletingSection, setDeletingSection] = useState(false);
+
+  // Section refs for MobileSectionTabs scroll tracking
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const fetchProject = async () => {
     try {
@@ -1214,6 +1630,14 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
+      {/* Mobile section tab bar */}
+      {project.sections.length > 0 && (
+        <MobileSectionTabs
+          sections={project.sections}
+          sectionRefs={sectionRefs}
+        />
+      )}
+
       {/* Sections */}
       <div className="flex flex-col gap-3 mb-4">
         {project.sections.length === 0 ? (
@@ -1226,6 +1650,9 @@ export default function ProjectDetailPage() {
           project.sections.map((section) => (
             <SectionPanel
               key={section.id}
+              ref={(el) => {
+                sectionRefs.current[section.id] = el;
+              }}
               section={section}
               projectId={id}
               onRefetch={fetchProject}

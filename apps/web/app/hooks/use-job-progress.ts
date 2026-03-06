@@ -1,8 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from 'react';
 
-export type StepStatus = "pending" | "running" | "complete" | "completed" | "error";
+export type StepStatus =
+  | 'pending'
+  | 'running'
+  | 'complete'
+  | 'completed'
+  | 'error';
 
 export interface ProgressStep {
   step: string;
@@ -19,7 +24,8 @@ export interface UseJobProgressReturn {
   disconnect: () => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_API === 'true';
 
 export function useJobProgress(): UseJobProgressReturn {
   const [steps, setSteps] = useState<ProgressStep[]>([]);
@@ -42,10 +48,13 @@ export function useJobProgress(): UseJobProgressReturn {
       setIsComplete(false);
       setError(null);
 
-      const es = new EventSource(`${API_URL}/jobs/${jobId}/progress`);
+      const sseUrl = MOCK_MODE
+        ? `/api/mock-sse/${jobId}`
+        : `${API_URL}/jobs/${jobId}/progress`;
+      const es = new EventSource(sseUrl);
       esRef.current = es;
 
-      es.addEventListener("progress", (event: MessageEvent) => {
+      es.addEventListener('progress', (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data) as {
             step: string;
@@ -67,20 +76,20 @@ export function useJobProgress(): UseJobProgressReturn {
         }
       });
 
-      es.addEventListener("error", (event: MessageEvent) => {
-        setError(event.data ?? "An error occurred");
+      es.addEventListener('error', (event: MessageEvent) => {
+        setError(event.data ?? 'An error occurred');
         es.close();
         esRef.current = null;
       });
 
-      es.addEventListener("complete", () => {
+      es.addEventListener('complete', () => {
         setIsComplete(true);
         es.close();
         esRef.current = null;
       });
 
       es.onerror = () => {
-        setError("Connection lost. Please try again.");
+        setError('Connection lost. Please try again.');
         es.close();
         esRef.current = null;
       };
