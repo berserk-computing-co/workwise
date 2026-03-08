@@ -1405,6 +1405,27 @@ export default function ProjectDetailPage() {
     await fetchProject();
   };
 
+  const handleSaveField = async (field: string, newValue: string) => {
+    const res = await fetch(`/api/proxy/projects/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: newValue }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      addToast(
+        'error',
+        (err as { message?: string }).message ?? `Failed to save ${field}`,
+      );
+      throw new Error('save failed');
+    }
+    addToast(
+      'success',
+      `${field === 'clientEmail' ? 'Client email' : 'Client phone'} updated`,
+    );
+    await fetchProject();
+  };
+
   const handleGenerate = async () => {
     setGenerating(true);
     try {
@@ -1573,10 +1594,30 @@ export default function ProjectDetailPage() {
               {project.address}, {project.zipCode}
             </p>
             {project.clientName && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
                 {project.clientName}
               </p>
             )}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
+              <EditableField
+                value={project.clientEmail ?? ''}
+                onSave={(v) => handleSaveField('clientEmail', v)}
+                renderDisplay={(v) => (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {v || 'Add email'}
+                  </span>
+                )}
+              />
+              <EditableField
+                value={project.clientPhone ?? ''}
+                onSave={(v) => handleSaveField('clientPhone', v)}
+                renderDisplay={(v) => (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {v || 'Add phone'}
+                  </span>
+                )}
+              />
+            </div>
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[project.status]}`}
             >

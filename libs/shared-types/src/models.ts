@@ -4,12 +4,20 @@ import type {
   TargetType,
   PipelineType,
   OptionTier,
-} from "./enums.js";
+} from './enums.js';
 
 export interface Organization {
   id: string;
   name: string;
   zipCode: string;
+  phone: string | null;
+  website: string | null;
+  licenseNumber: string | null;
+  logoUrl: string | null;
+  emailDomain: string | null;
+  emailFromAddress: string | null;
+  resendDomainId: string | null;
+  domainVerified: boolean;
   settings: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +46,8 @@ export interface Project {
   city: string | null;
   state: string | null;
   clientName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
   total: number;
   currentJobId: string | null;
   metadata: Record<string, unknown>;

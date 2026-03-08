@@ -20,4 +20,12 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsString()
+  clientEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  clientPhone?: string;
 }

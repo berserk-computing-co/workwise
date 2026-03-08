@@ -20,6 +20,30 @@ export class Organization {
   @Column({ type: 'text', name: 'zip_code' })
   zipCode: string;
 
+  @Column({ type: 'text', nullable: true })
+  phone: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  website: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'license_number' })
+  licenseNumber: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'logo_url' })
+  logoUrl: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'email_domain' })
+  emailDomain: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'email_from_address' })
+  emailFromAddress: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'resend_domain_id' })
+  resendDomainId: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'domain_verified' })
+  domainVerified: boolean;
+
   @Column({ type: 'jsonb', default: '{}' })
   settings: Record<string, unknown>;
 
