@@ -7,11 +7,9 @@ dist
 .nx/cache
 .nx/workspace-data
 
-# Environment (secrets)
+# Environment (secrets in .env.local only)
 .env.local
 apps/*/.env.local
-apps/api/.env
-apps/web/.env
 
 # IDE
 .idea

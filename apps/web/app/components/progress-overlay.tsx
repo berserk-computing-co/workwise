@@ -19,7 +19,7 @@ const PHASES: { steps: string[]; label: string; description: string }[] = [
     description: "Breaking down the project into sections and line items",
   },
   {
-    steps: ["price_resolution"],
+    steps: ["web_price_resolution"],
     label: "Resolving prices",
     description: "Searching for material and labor costs across the web",
   },
