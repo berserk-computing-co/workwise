@@ -18,7 +18,12 @@ COPY package.json ./
 
 # tsconfig.base.json is needed because apps/api/tsconfig.json extends it
 COPY tsconfig.base.json ./
+COPY libs/shared-types/ ./libs/shared-types/
 COPY apps/api/ ./apps/api/
+
+# Build shared-types first — the workspace symlink in node_modules points to
+# ../../libs/shared-types, so nest build needs the compiled dist/ to exist.
+RUN npx tsc -p libs/shared-types/tsconfig.lib.json
 
 # Compile TypeScript → dist/
 WORKDIR /app/apps/api

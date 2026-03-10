@@ -14,6 +14,7 @@ import { Project } from "../../projects/entities/project.entity.js";
 import { ProjectsModule } from "../../projects/projects.module.js";
 import { PipelineModule } from "../../pipeline/pipeline.module.js";
 import { UsersModule } from "../../users/users.module.js";
+import { FilesModule } from "../../files/files.module.js";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UsersModule } from "../../users/users.module.js";
     ProjectsModule,
     UsersModule,
     PipelineModule,
+    FilesModule,
   ],
   controllers: [BidEngineController],
   providers: [

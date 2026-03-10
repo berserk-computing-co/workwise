@@ -306,6 +306,18 @@ export class AgentRunner {
       `[${config.name}] Phase 2: formatting output (${counters.toolCallCount} tool calls gathered)`,
     );
 
+    // Strip server tool blocks (server_tool_use, server_tool_result) from the
+    // message history. Phase 2 is a fresh API call with no server tools declared,
+    // so the API rejects orphaned server_tool_use blocks. The text blocks already
+    // contain the model's summary of what the tools found.
+    for (const msg of messages) {
+      if (Array.isArray(msg.content)) {
+        msg.content = msg.content.filter(
+          (b) => b.type !== "server_tool_use" && b.type !== "server_tool_result",
+        );
+      }
+    }
+
     const formatInstruction =
       "Now produce your final structured JSON output based on all the data you gathered above. Include every item from the original list — use the search results where available and mark items as unmatched where no data was found.";
 

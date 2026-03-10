@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
@@ -23,7 +23,8 @@ const optionGenerationSchema = z.object({
         overrides: z.record(z.string(), z.unknown()).default({}),
       }),
     )
-    .min(1),
+    .min(3)
+    .max(3),
 });
 
 const optionOutputFormat = zodOutputFormat(optionGenerationSchema);
@@ -55,6 +56,7 @@ const DEFAULT_OPTIONS: Record<OptionTier, Omit<OptionData, "tier">> = {
 @Injectable()
 export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
   readonly name = "option_generation";
+  private readonly logger = new Logger(OptionGenerationStep.name);
 
   constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
 
@@ -75,27 +77,31 @@ export class OptionGenerationStep implements PipelineStep<BidEngineContext> {
       );
     }
 
-    const result = optionOutputFormat.parse(response.text);
+    let parsed: z.infer<typeof optionGenerationSchema> | null = null;
+    try {
+      parsed = optionOutputFormat.parse(response.text);
+    } catch (err) {
+      this.logger.warn(
+        `Structured output parse failed, falling back to defaults: ${(err as Error).message}`,
+      );
+    }
 
-    // Deduplicate by tier — keep the first entry for each of good/better/best
-    const seen = new Set<string>();
-    const deduped = result.options.filter((o) => {
-      if (seen.has(o.tier)) return false;
-      seen.add(o.tier);
-      return true;
-    });
-
-    // Build a map of AI-returned options by tier
+    // Build a map of AI-returned options by tier (skip invalid entries)
     const byTier = new Map<OptionTier, OptionData>();
-    for (const o of deduped) {
-      byTier.set(o.tier, {
-        tier: o.tier,
-        label: o.label,
-        description: o.description,
-        multiplier: o.multiplier,
-        isRecommended: o.is_recommended,
-        overrides: o.overrides as Record<string, unknown>,
-      });
+    if (parsed) {
+      const seen = new Set<string>();
+      for (const o of parsed.options) {
+        if (seen.has(o.tier)) continue;
+        seen.add(o.tier);
+        byTier.set(o.tier, {
+          tier: o.tier,
+          label: o.label,
+          description: o.description,
+          multiplier: o.multiplier,
+          isRecommended: o.is_recommended,
+          overrides: o.overrides as Record<string, unknown>,
+        });
+      }
     }
 
     // Guarantee all 3 tiers exist — fill missing with defaults
