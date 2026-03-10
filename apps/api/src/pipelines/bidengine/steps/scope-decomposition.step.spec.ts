@@ -35,6 +35,7 @@ const mockChatResponse = {
 
 describe("ScopeDecompositionStep", () => {
   let mockProvider: { chat: jest.Mock };
+  let mockFilesService: { findAllByProject: jest.Mock; getBase64: jest.Mock };
   let step: ScopeDecompositionStep;
   let context: BidEngineContext;
 
@@ -43,12 +44,18 @@ describe("ScopeDecompositionStep", () => {
   beforeEach(() => {
     signal = new AbortController().signal;
     mockProvider = { chat: jest.fn().mockResolvedValue(mockChatResponse) };
-    step = new ScopeDecompositionStep(mockProvider as any);
+    mockFilesService = {
+      findAllByProject: jest.fn().mockResolvedValue([]),
+      getBase64: jest.fn(),
+    };
+    step = new ScopeDecompositionStep(mockFilesService as any, mockProvider as any);
     context = {
       projectId: "proj-1",
       description: "Replace kitchen plumbing",
       address: "123 Main St",
       zipCode: "90210",
+      city: null,
+      state: null,
       category: "plumbing",
     };
   });

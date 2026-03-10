@@ -5,7 +5,7 @@ import { AgentRunner } from '../../../ai/agent-runner.service.js';
 import type { AgentConfig } from '../../../ai/interfaces/agent.interfaces.js';
 import { repairTruncatedResultsJson } from '../../../ai/utils/json-repair.util.js';
 import {
-  webSearchServerTool,
+  buildWebSearchTool,
   webFetchServerTool,
 } from './scope-agent.tool.js';
 import { getMaterialPricingPrompt } from '../prompts/web-pricing.prompt.js';
@@ -56,13 +56,12 @@ export class MaterialPricingAgentService {
       `Starting material pricing: ${items.length} items, section="${sectionName}", ZIP=${zipCode}`,
     );
 
-    // TODO: Build user_location from city/state/zipCode and add to webSearchServerTool spread
     const config: AgentConfig = {
       name: 'material_pricing',
       model: 'claude-haiku-4-5-20251001',
       systemPrompt: getMaterialPricingPrompt(sectionName),
       tools: [],
-      serverTools: [webSearchServerTool, webFetchServerTool],
+      serverTools: [buildWebSearchTool(city, state), webFetchServerTool],
       maxIterations: 40,
       maxTokens: 16384,
       outputFormat: pricingOutputFormat,

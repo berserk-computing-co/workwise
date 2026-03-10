@@ -1,18 +1,22 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import { z } from "zod";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { PipelineStep } from "../../../pipeline/pipeline-step.interface.js";
-import type { AiProvider } from "../../../ai/interfaces/provider.interface.js";
-import { AI_PROVIDER } from "../../../ai/interfaces/provider.interface.js";
-import type { BidEngineContext } from "../bidengine-context.js";
-import { ItemCategory } from "../bidengine.enums.js";
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { z } from 'zod';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import { PipelineStep } from '../../../pipeline/pipeline-step.interface.js';
+import type {
+  AiProvider,
+  ChatContentBlock,
+} from '../../../ai/interfaces/provider.interface.js';
+import { AI_PROVIDER } from '../../../ai/interfaces/provider.interface.js';
+import type { BidEngineContext } from '../bidengine-context.js';
+import { ItemCategory } from '../bidengine.enums.js';
 import {
   getScopePrompt,
   buildUserPrompt,
-} from "../prompts/scope-decomposition.prompt.js";
+} from '../prompts/scope-decomposition.prompt.js';
+import { FilesService } from '../../../files/files.service.js';
 
 const scopeDecompositionSchema = z.object({
-  project_type: z.enum(["construction", "service", "maintenance", "mixed"]),
+  project_type: z.enum(['construction', 'service', 'maintenance', 'mixed']),
   classification_reasoning: z.string(),
   sections: z.array(
     z.object({
@@ -25,9 +29,9 @@ const scopeDecompositionSchema = z.object({
           unit: z.string(),
           category: z.nativeEnum(ItemCategory),
           pricing_hint: z
-            .enum(["material", "assembly", "labor_rate", "service", "skip"])
+            .enum(['material', 'assembly', 'labor_rate', 'service', 'skip'])
             .optional(),
-          confidence: z.enum(["high", "medium", "low"]),
+          confidence: z.enum(['high', 'medium', 'low']),
         }),
       ),
     }),
@@ -39,24 +43,51 @@ const scopeOutputFormat = zodOutputFormat(scopeDecompositionSchema);
 
 @Injectable()
 export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
-  readonly name = "scope_decomposition";
+  readonly name = 'scope_decomposition';
   private readonly logger = new Logger(ScopeDecompositionStep.name);
 
-  constructor(@Inject(AI_PROVIDER) private readonly provider: AiProvider) {}
+  constructor(
+    private readonly filesService: FilesService,
+    @Inject(AI_PROVIDER) private readonly provider: AiProvider,
+  ) {}
 
   async execute(context: BidEngineContext, signal: AbortSignal): Promise<void> {
-    const response = await this.provider.chat({
-      // TODO: Using Haiku to reduce token costs while iterating on pipeline.
-      // Revisit upgrading to Sonnet once item count is optimized and prompt tokens are lower.
-      model: "claude-haiku-4-5-20251001",
-      system: getScopePrompt(context.category),
-      messages: [{ role: "user", content: buildUserPrompt(context) }],
-      maxTokens: 16384,
-      outputFormat: scopeOutputFormat,
-      thinking: { type: "enabled", budgetTokens: 8000 },
-    }, signal);
+    const files = await this.filesService.findAllByProject(context.projectId);
+    const imageFiles = files.filter((f) => f.contentType.startsWith('image/'));
 
-    if (response.stopReason !== "end_turn") {
+    const imageBlocks: ChatContentBlock[] = await Promise.all(
+      imageFiles.map(async (file) => {
+        const { base64, contentType } = await this.filesService.getBase64(file);
+        return { type: 'image' as const, imageData: base64, mediaType: contentType };
+      }),
+    );
+
+    if (imageBlocks.length > 0) {
+      this.logger.log(
+        `project=${context.projectId} attaching ${imageBlocks.length} image(s) to scope prompt`,
+      );
+    }
+
+    const content: ChatContentBlock[] = [
+      { type: 'text', text: buildUserPrompt(context) },
+      ...imageBlocks,
+    ];
+
+    const response = await this.provider.chat(
+      {
+        // TODO: Using Haiku to reduce token costs while iterating on pipeline.
+        // Revisit upgrading to Sonnet once item count is optimized and prompt tokens are lower.
+        model: 'claude-haiku-4-5-20251001',
+        system: getScopePrompt(context.category),
+        messages: [{ role: 'user', content }],
+        maxTokens: 16384,
+        outputFormat: scopeOutputFormat,
+        thinking: { type: 'enabled', budgetTokens: 8000 },
+      },
+      signal,
+    );
+
+    if (response.stopReason !== 'end_turn') {
       throw new Error(
         `ScopeDecompositionStep: unexpected stop_reason "${response.stopReason}"`,
       );
@@ -64,7 +95,10 @@ export class ScopeDecompositionStep implements PipelineStep<BidEngineContext> {
 
     const result = scopeOutputFormat.parse(response.text);
 
-    const itemCount = result.sections.reduce((sum, s) => sum + s.items.length, 0);
+    const itemCount = result.sections.reduce(
+      (sum, s) => sum + s.items.length,
+      0,
+    );
     this.logger.log(
       `project=${context.projectId} type=${result.project_type} overall_confidence=${result.confidence} items=${itemCount}`,
     );

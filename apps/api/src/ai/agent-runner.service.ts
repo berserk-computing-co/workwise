@@ -28,7 +28,7 @@ export class AgentRunner {
 
   async run(
     config: AgentConfig,
-    initialPrompt: string,
+    initialPrompt: string | ChatContentBlock[],
     signal: AbortSignal,
   ): Promise<AgentResult> {
     const { maxTokens, model, systemPrompt, tools, serverTools, outputFormat } =

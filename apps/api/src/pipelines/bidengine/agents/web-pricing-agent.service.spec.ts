@@ -82,7 +82,7 @@ describe("MaterialPricingAgentService", () => {
       );
     });
 
-    it("passes server tools with web_search and web_fetch", async () => {
+    it("passes server tools with web_search (with user_location) and web_fetch", async () => {
       await service.priceItems(mockItems, "90210", "Los Angeles", "CA", "Framing", signal);
 
       const [config] = mockAgentRunner.run.mock.calls[0];
@@ -91,12 +91,25 @@ describe("MaterialPricingAgentService", () => {
         type: "web_search_20250305",
         name: "web_search",
         max_uses: 25,
+        user_location: {
+          type: "approximate",
+          city: "Los Angeles",
+          region: "CA",
+          country: "US",
+        },
       });
       expect(config.serverTools[1]).toMatchObject({
         type: "web_fetch_20250910",
         name: "web_fetch",
         max_uses: 10,
       });
+    });
+
+    it("omits user_location when city/state are null", async () => {
+      await service.priceItems(mockItems, "90210", null, null, "Framing", signal);
+
+      const [config] = mockAgentRunner.run.mock.calls[0];
+      expect(config.serverTools[0]).not.toHaveProperty("user_location");
     });
 
     it("passes empty tools array", async () => {

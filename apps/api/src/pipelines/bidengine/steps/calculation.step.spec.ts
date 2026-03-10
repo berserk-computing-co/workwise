@@ -38,6 +38,8 @@ describe("CalculationStep", () => {
       description: "test project",
       address: "123 Main St",
       zipCode: "90210",
+      city: null,
+      state: null,
       category: "plumbing",
       sections: [
         {

@@ -181,6 +181,16 @@ export class AnthropicProvider implements AiProvider {
       case "text":
         return { type: "text", text: block.text! };
 
+      case "image":
+        return {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: block.mediaType!,
+            data: block.imageData!,
+          },
+        } as ContentBlockParam;
+
       case "tool_use":
         return {
           type: "tool_use",

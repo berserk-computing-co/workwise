@@ -5,6 +5,8 @@ const mockProject = {
   description: "Kitchen remodel",
   address: "123 Main St",
   zipCode: "90210",
+  city: "Los Angeles",
+  state: "CA",
   category: "kitchen",
 };
 
