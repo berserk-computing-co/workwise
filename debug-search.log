@@ -180,3 +180,217 @@
   "pid": 27653
 }
 ---
+[2026-03-07T03:41:22.464Z] SIGINT received but ignored - lifecycle managed by Claude Code
+{}
+---
+[2026-03-07T03:41:22.727Z] Server stats [sigint-ignored]
+{
+  "uptime": "345292s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "46MB",
+    "heapTotal": "49MB",
+    "rss": "13MB"
+  },
+  "pid": 51117
+}
+---
+[2026-03-07T03:41:22.976Z] Server stats [shutdown-SIGTERM]
+{
+  "uptime": "345292s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "46MB",
+    "heapTotal": "49MB",
+    "rss": "15MB"
+  },
+  "pid": 51117
+}
+---
+[2026-03-07T03:41:22.993Z] STDIN ended
+{}
+---
+[2026-03-07T03:41:23.000Z] STDIN closed - client disconnected
+{}
+---
+[2026-03-07T03:41:23.010Z] Shutdown complete
+{
+  "signal": "SIGTERM"
+}
+---
+[2026-03-07T03:42:38.351Z] Server starting
+{
+  "pid": 16241,
+  "startTime": "2026-03-07T03:42:38.344Z"
+}
+---
+[2026-03-07T03:42:38.357Z] Tools registered
+{
+  "toolCount": 15
+}
+---
+[2026-03-07T03:42:38.358Z] Creating stdio transport
+{}
+---
+[2026-03-07T03:42:39.669Z] Neo4j ready
+{
+  "success": true,
+  "action": "already-running"
+}
+---
+[2026-03-07T03:42:39.670Z] Connecting transport
+{}
+---
+[2026-03-07T03:42:39.679Z] Server connected and ready
+{
+  "pid": 16241
+}
+---
+[2026-03-07T03:42:39.681Z] Server stats [server-ready]
+{
+  "uptime": "1s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "48MB",
+    "heapTotal": "75MB",
+    "rss": "128MB"
+  },
+  "pid": 16241
+}
+---
+[2026-03-07T03:42:39.683Z] Failed to initialize Neo4j schema
+{
+  "gqlStatus": "50N42",
+  "gqlStatusDescription": "error: general processing exception - unexpected error. Failed to connect to server. Please ensure that your database is listening on the correct host and port and that you have compatible encryption settings both on Neo4j server and driver. Note that the default encryption setting has changed in Neo4j 4.0.",
+  "diagnosticRecord": {
+    "OPERATION": "",
+    "OPERATION_CODE": "0",
+    "CURRENT_SCHEMA": "/"
+  },
+  "classification": "UNKNOWN",
+  "name": "Neo4jError",
+  "code": "ServiceUnavailable",
+  "retriable": true
+}
+---
+[2026-03-07T03:42:39.708Z] Failed to initialize Natural Language to Cypher service
+{
+  "errno": -2,
+  "code": "ENOENT",
+  "syscall": "open",
+  "path": "/Users/jamesmcdougall/Code/workwise/workwise_monorepo/neo4j-apoc-schema.json"
+}
+---
+[2026-03-12T14:05:59.113Z] Server starting
+{
+  "pid": 3541,
+  "startTime": "2026-03-12T14:05:59.111Z"
+}
+---
+[2026-03-12T14:05:59.119Z] Tools registered
+{
+  "toolCount": 15
+}
+---
+[2026-03-12T14:05:59.119Z] Creating stdio transport
+{}
+---
+[2026-03-12T14:06:01.106Z] Service initialization error
+{}
+---
+[2026-03-12T14:06:01.106Z] Connecting transport
+{}
+---
+[2026-03-12T14:06:01.107Z] Server connected and ready
+{
+  "pid": 3541
+}
+---
+[2026-03-12T14:06:01.109Z] Server stats [server-ready]
+{
+  "uptime": "2s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "48MB",
+    "heapTotal": "75MB",
+    "rss": "136MB"
+  },
+  "pid": 3541
+}
+---
+[2026-03-12T16:17:14.267Z] SIGINT received but ignored - lifecycle managed by Claude Code
+{}
+---
+[2026-03-12T16:17:14.272Z] Server stats [sigint-ignored]
+{
+  "uptime": "7875s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "44MB",
+    "heapTotal": "47MB",
+    "rss": "15MB"
+  },
+  "pid": 3541
+}
+---
+[2026-03-12T16:17:14.367Z] Server stats [shutdown-SIGTERM]
+{
+  "uptime": "7875s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "44MB",
+    "heapTotal": "47MB",
+    "rss": "18MB"
+  },
+  "pid": 3541
+}
+---
+[2026-03-12T16:17:14.367Z] Shutdown complete
+{
+  "signal": "SIGTERM"
+}
+---
+[2026-03-12T16:21:53.799Z] Server starting
+{
+  "pid": 9048,
+  "startTime": "2026-03-12T16:21:53.793Z"
+}
+---
+[2026-03-12T16:21:53.803Z] Tools registered
+{
+  "toolCount": 15
+}
+---
+[2026-03-12T16:21:53.803Z] Creating stdio transport
+{}
+---
+[2026-03-12T16:21:55.715Z] Service initialization error
+{}
+---
+[2026-03-12T16:21:55.716Z] Connecting transport
+{}
+---
+[2026-03-12T16:21:55.716Z] Server connected and ready
+{
+  "pid": 9048
+}
+---
+[2026-03-12T16:21:55.718Z] Server stats [server-ready]
+{
+  "uptime": "2s",
+  "toolCallCount": 0,
+  "lastToolCall": null,
+  "memory": {
+    "heapUsed": "48MB",
+    "heapTotal": "75MB",
+    "rss": "159MB"
+  },
+  "pid": 9048
+}
+---
