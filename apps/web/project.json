@@ -8,6 +8,12 @@
     "scope:frontend"
   ],
   "targets": {
+    "dev": {
+      "command": "npx next dev -p 3000",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
     "check-types": {
       "executor": "nx:run-commands",
       "options": {
