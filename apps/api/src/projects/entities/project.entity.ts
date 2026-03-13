@@ -50,6 +50,12 @@ export class Project {
   @Column({ type: 'text', nullable: true, name: 'client_name' })
   clientName: string | null;
 
+  @Column({ type: 'text', nullable: true, name: 'client_email' })
+  clientEmail: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'client_phone' })
+  clientPhone: string | null;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   total: number;
 

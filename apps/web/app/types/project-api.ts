@@ -11,6 +11,7 @@ export type {
   JobProgressEvent,
   CreateProjectPayload,
   UpdateProjectPayload,
+  UpdateOrganizationPayload,
   CreateItemPayload,
   UpdateItemPayload,
   ReorderItemsPayload,
@@ -19,7 +20,7 @@ export type {
   ValidationErrorResponse,
   GenerateResponse,
   PaginationMeta,
-} from "@workwise/shared-types";
+} from '@workwise/shared-types';
 
 // Re-export enums that are safe to import as values
 export {
@@ -30,26 +31,26 @@ export {
   ItemCategory,
   ItemSource,
   OptionTier,
-} from "@workwise/shared-types";
+} from '@workwise/shared-types';
 
 // Re-export the ProjectStatus enum under a different name for consumers that
 // need enum values; the string union below preserves backward compat.
-export { ProjectStatus as ProjectStatusEnum } from "@workwise/shared-types";
+export { ProjectStatus as ProjectStatusEnum } from '@workwise/shared-types';
 
 // Re-export GenerateResponse as PipelineJob for backward compatibility
-export type { GenerateResponse as PipelineJob } from "@workwise/shared-types";
+export type { GenerateResponse as PipelineJob } from '@workwise/shared-types';
 
 // ProjectStatus kept as a string union so consumers can use string literals
 // and Record<ProjectStatus, string> with string keys (the enum would require
 // enum member keys and includes a Cancelled member consumers don't handle).
 export type ProjectStatus =
-  | "draft"
-  | "generating"
-  | "cancelled"
-  | "review"
-  | "sent"
-  | "accepted"
-  | "rejected";
+  | 'draft'
+  | 'generating'
+  | 'cancelled'
+  | 'review'
+  | 'sent'
+  | 'accepted'
+  | 'rejected';
 
 // Option with frontend-only fields not present in the shared entity.
 // multiplier is returned by the API but not in the shared model; tier is
@@ -58,7 +59,7 @@ export type ProjectStatus =
 export interface Option {
   id: string;
   projectId: string;
-  tier: "good" | "better" | "best";
+  tier: 'good' | 'better' | 'best';
   label: string | null;
   description: string | null;
   total: number;
@@ -82,10 +83,12 @@ export interface Project {
   city: string | null;
   state: string | null;
   clientName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
   total: number;
   currentJobId: string | null;
   metadata: Record<string, unknown>;
-  sections: import("@workwise/shared-types").Section[];
+  sections: import('@workwise/shared-types').Section[];
   options: Option[];
   createdAt: string;
   updatedAt: string;

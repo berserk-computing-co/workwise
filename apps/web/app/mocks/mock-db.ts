@@ -171,6 +171,8 @@ export const mockDb = {
       city: (body.city as string) ?? null,
       state: (body.state as string) ?? null,
       clientName: (body.clientName as string) ?? null,
+      clientEmail: (body.clientEmail as string) ?? null,
+      clientPhone: (body.clientPhone as string) ?? null,
       total: 0,
       currentJobId: null,
       metadata: {},
@@ -196,6 +198,8 @@ export const mockDb = {
       'city',
       'state',
       'clientName',
+      'clientEmail',
+      'clientPhone',
       'status',
     ];
     for (const key of allowedFields) {

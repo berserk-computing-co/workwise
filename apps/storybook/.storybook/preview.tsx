@@ -1,25 +1,26 @@
-import React from "react";
-import type { Preview, Decorator } from "@storybook/react";
-import { UserProvider } from "@auth0/nextjs-auth0/client";
-import { initialize, mswLoader } from "msw-storybook-addon";
-import { ThemeProvider } from "@/app/lib/theme/context";
-import { ToastProvider } from "@/app/components/toast";
-import { handlers } from "./mocks/handlers";
-import "../../web/app/globals.css";
+import React from 'react';
+import type { Preview, Decorator } from '@storybook/react';
+import { UserProvider as Auth0UserProvider } from '@auth0/nextjs-auth0/client';
+import { initialize, mswLoader } from 'msw-storybook-addon';
+import { ThemeProvider } from '@/app/lib/theme/context';
+import { ToastProvider } from '@/app/components/toast';
+import { UserProvider as BackendUserProvider } from '@/app/hooks/use-backend-user';
+import { handlers } from './mocks/handlers';
+import '../../web/app/globals.css';
 
 // Initialize MSW
 initialize({
-  onUnhandledRequest: "bypass",
+  onUnhandledRequest: 'bypass',
   serviceWorker: {
-    url: "/mockServiceWorker.js",
+    url: '/mockServiceWorker.js',
   },
 });
 
 const defaultAuth0User = {
-  sub: "auth0|storybook",
-  name: "Storybook User",
-  email: "storybook@workwise.io",
-  picture: "https://avatars.githubusercontent.com/u/1?v=4",
+  sub: 'auth0|storybook',
+  name: 'Storybook User',
+  email: 'storybook@workwise.io',
+  picture: 'https://avatars.githubusercontent.com/u/1?v=4',
 };
 
 const withProviders: Decorator = (Story, context) => {
@@ -30,13 +31,15 @@ const withProviders: Decorator = (Story, context) => {
     | undefined;
   const user = nextjs?.auth !== undefined ? nextjs.auth.user : defaultAuth0User;
   return (
-    <UserProvider user={user}>
-      <ThemeProvider>
-        <ToastProvider>
-          <Story />
-        </ToastProvider>
-      </ThemeProvider>
-    </UserProvider>
+    <Auth0UserProvider user={user}>
+      <BackendUserProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <Story />
+          </ToastProvider>
+        </ThemeProvider>
+      </BackendUserProvider>
+    </Auth0UserProvider>
   );
 };
 
@@ -57,10 +60,10 @@ const preview: Preview = {
       },
     },
     backgrounds: {
-      default: "light",
+      default: 'light',
       values: [
-        { name: "light", value: "#ffffff" },
-        { name: "dark", value: "#0f0f12" },
+        { name: 'light', value: '#ffffff' },
+        { name: 'dark', value: '#0f0f12' },
       ],
     },
   },

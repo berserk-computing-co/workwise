@@ -2,23 +2,23 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull, Repository } from "typeorm";
-import { Project } from "../entities/project.entity.js";
-import { Section } from "../entities/section.entity.js";
-import { Item } from "../entities/item.entity.js";
-import { Option } from "../entities/option.entity.js";
-import { UsersService } from "../../users/services/users.service.js";
-import { CreateProjectDto } from "../dto/create-project.dto.js";
-import { UpdateProjectDto } from "../dto/update-project.dto.js";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { IsNull, Repository } from 'typeorm';
+import { Project } from '../entities/project.entity.js';
+import { Section } from '../entities/section.entity.js';
+import { Item } from '../entities/item.entity.js';
+import { Option } from '../entities/option.entity.js';
+import { UsersService } from '../../users/services/users.service.js';
+import { CreateProjectDto } from '../dto/create-project.dto.js';
+import { UpdateProjectDto } from '../dto/update-project.dto.js';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  generating: ["review", "draft"],
-  review: ["sent", "draft"],
-  sent: ["accepted", "rejected", "draft"],
-  accepted: ["draft"],
-  rejected: ["draft"],
+  generating: ['review', 'draft'],
+  review: ['sent', 'draft'],
+  sent: ['accepted', 'rejected', 'draft'],
+  accepted: ['draft'],
+  rejected: ['draft'],
   draft: [],
 };
 
@@ -42,7 +42,7 @@ export class ProjectsService {
       ...dto,
       organizationId: user.organizationId,
       createdBy: user.id,
-      status: "draft",
+      status: 'draft',
     });
     return this.projectRepo.save(project);
   }
@@ -64,7 +64,7 @@ export class ProjectsService {
       deletedAt: IsNull(),
     };
     if (query.status) {
-      where["status"] = query.status;
+      where['status'] = query.status;
     }
 
     const [rows, total] = await this.projectRepo.findAndCount({
@@ -79,12 +79,14 @@ export class ProjectsService {
         address: true,
         zipCode: true,
         clientName: true,
+        clientEmail: true,
+        clientPhone: true,
         total: true,
         currentJobId: true,
         createdAt: true,
         updatedAt: true,
       },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       skip,
       take: limit,
     });
@@ -104,17 +106,17 @@ export class ProjectsService {
     await this.verifyOwnership(authId, id);
     const full = await this.projectRepo.findOne({
       where: { id },
-      relations: ["sections", "sections.items", "options"],
+      relations: ['sections', 'sections.items', 'options'],
       order: {
         sections: {
-          sortOrder: "ASC",
+          sortOrder: 'ASC',
           items: {
-            sortOrder: "ASC",
+            sortOrder: 'ASC',
           },
         },
       },
     });
-    if (!full) throw new NotFoundException("Project not found");
+    if (!full) throw new NotFoundException('Project not found');
     return full;
   }
 
@@ -126,9 +128,9 @@ export class ProjectsService {
     const { project } = await this.verifyOwnership(authId, id);
 
     if (dto.status && dto.status !== project.status) {
-      if (dto.status === "generating") {
+      if (dto.status === 'generating') {
         throw new ForbiddenException(
-          "Status cannot be set to generating directly; use the generate endpoint",
+          'Status cannot be set to generating directly; use the generate endpoint',
         );
       }
       const allowed = VALID_TRANSITIONS[project.status] ?? [];
@@ -154,19 +156,21 @@ export class ProjectsService {
 
     const full = await this.projectRepo.findOne({
       where: { id },
-      relations: ["sections", "sections.items"],
+      relations: ['sections', 'sections.items'],
     });
-    if (!full) throw new NotFoundException("Project not found");
+    if (!full) throw new NotFoundException('Project not found');
 
     const newProject = this.projectRepo.create({
       organizationId: full.organizationId,
       createdBy: full.createdBy,
-      status: "draft",
+      status: 'draft',
       description: full.description,
       address: full.address,
       zipCode: full.zipCode,
       category: full.category,
       clientName: full.clientName,
+      clientEmail: full.clientEmail,
+      clientPhone: full.clientPhone,
       total: 0,
     });
     const savedProject = await this.projectRepo.save(newProject);
@@ -228,16 +232,16 @@ export class ProjectsService {
     authId: string,
     projectId: string,
   ): Promise<{
-    user: Awaited<ReturnType<UsersService["findByAuthIdOrFail"]>>;
+    user: Awaited<ReturnType<UsersService['findByAuthIdOrFail']>>;
     project: Project;
   }> {
     const user = await this.usersService.findByAuthIdOrFail(authId);
     const project = await this.projectRepo.findOne({
       where: { id: projectId, deletedAt: IsNull() },
     });
-    if (!project) throw new NotFoundException("Project not found");
+    if (!project) throw new NotFoundException('Project not found');
     if (project.organizationId !== user.organizationId) {
-      throw new ForbiddenException("Access denied");
+      throw new ForbiddenException('Access denied');
     }
     return { user, project };
   }

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useAppUser } from "../hooks/use-app-user";
-import { ThemeToggle } from "./theme_toggle";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useAppUser } from '../hooks/use-app-user';
+import { ThemeToggle } from './theme_toggle';
 
 const NavbarProfile = () => {
   const [open, setOpen] = useState(false);
@@ -31,12 +31,12 @@ const NavbarProfile = () => {
         {'picture' in user && user.picture ? (
           <img
             src={user.picture}
-            alt={user.name || "User"}
+            alt={user.name || 'User'}
             className="h-8 w-8 rounded-full"
           />
         ) : (
           <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-            {(user.name || "U")[0].toUpperCase()}
+            {(user.name || 'U')[0].toUpperCase()}
           </div>
         )}
       </button>
@@ -59,6 +59,13 @@ const NavbarProfile = () => {
               className="block px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Dashboard
+            </Link>
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              Settings
             </Link>
             <a
               href="/api/auth/logout"

@@ -1,21 +1,21 @@
-import React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
-import { expect, userEvent, within, waitFor } from "storybook/test";
-import { http, HttpResponse } from "msw";
-import { WorkWiseNavbar } from "@/app/components/workwise_navbar";
+import React from 'react';
+import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within, waitFor } from 'storybook/test';
+import { http, HttpResponse } from 'msw';
+import { WorkWiseNavbar } from '@/app/components/workwise_navbar';
 import {
   mockAuth0User,
   mockAuth0UserNoPicture,
-} from "../../../.storybook/mocks/auth0";
+} from '../../../.storybook/mocks/auth0';
 
 const meta = {
-  title: "web/Components/WorkWiseNavbar",
+  title: 'web/Components/WorkWiseNavbar',
   component: WorkWiseNavbar,
   parameters: {
-    layout: "fullscreen",
+    layout: 'fullscreen',
     nextjs: {
       appDirectory: true,
-      navigation: { pathname: "/projects" },
+      navigation: { pathname: '/projects' },
     },
   },
 } satisfies Meta<typeof WorkWiseNavbar>;
@@ -27,11 +27,11 @@ export const Authenticated: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get("/api/proxy/users/me", () =>
-          HttpResponse.json({ id: "user-1", firstName: "James" }),
+        http.get('/api/proxy/users/me', () =>
+          HttpResponse.json({ id: 'user-1', firstName: 'James' }),
         ),
-        http.get("/api/proxy/organizations/me", () =>
-          HttpResponse.json({ id: "org-1", name: "WorkWise Contracting" }),
+        http.get('/api/proxy/organizations/me', () =>
+          HttpResponse.json({ id: 'org-1', name: 'WorkWise Contracting' }),
         ),
       ],
     },
@@ -46,8 +46,8 @@ export const AuthenticatedNoPicture: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get("/api/proxy/users/me", () =>
-          HttpResponse.json({ id: "user-1", firstName: "Alex" }),
+        http.get('/api/proxy/users/me', () =>
+          HttpResponse.json({ id: 'user-1', firstName: 'Alex' }),
         ),
       ],
     },
@@ -71,11 +71,11 @@ export const ProfileDropdown: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.get("/api/proxy/users/me", () =>
-          HttpResponse.json({ id: "user-1", firstName: "James" }),
+        http.get('/api/proxy/users/me', () =>
+          HttpResponse.json({ id: 'user-1', firstName: 'James' }),
         ),
-        http.get("/api/proxy/organizations/me", () =>
-          HttpResponse.json({ id: "org-1", name: "WorkWise Contracting" }),
+        http.get('/api/proxy/organizations/me', () =>
+          HttpResponse.json({ id: 'org-1', name: 'WorkWise Contracting' }),
         ),
       ],
     },
@@ -87,15 +87,16 @@ export const ProfileDropdown: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await waitFor(() => {
-      expect(canvasElement.querySelector("nav")).toBeInTheDocument();
+      expect(canvasElement.querySelector('nav')).toBeInTheDocument();
     });
-    const buttons = canvas.getAllByRole("button");
+    const buttons = canvas.getAllByRole('button');
     await userEvent.click(buttons[buttons.length - 1]);
     await waitFor(() => {
       expect(canvas.getByText(mockAuth0User.name)).toBeInTheDocument();
     });
     await expect(canvas.getByText(mockAuth0User.email)).toBeInTheDocument();
-    await expect(canvas.getByText("Dashboard")).toBeInTheDocument();
-    await expect(canvas.getByText("Sign out")).toBeInTheDocument();
+    await expect(canvas.getByText('Dashboard')).toBeInTheDocument();
+    await expect(canvas.getByText('Settings')).toBeInTheDocument();
+    await expect(canvas.getByText('Sign out')).toBeInTheDocument();
   },
 };

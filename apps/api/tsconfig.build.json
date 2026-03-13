@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "paths": {
-      "@workwise/shared-types": ["../../libs/shared-types/dist/src/index.d.ts"]
+      "@workwise/shared-types": ["../../libs/shared-types"]
     },
     "tsBuildInfoFile": "./dist/tsconfig.build.tsbuildinfo"
   },

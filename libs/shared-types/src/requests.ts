@@ -1,4 +1,4 @@
-import type { User, Organization } from "./models.js";
+import type { User, Organization } from './models.js';
 
 // -- Auth --
 
@@ -22,6 +22,11 @@ export interface UpdateUserPayload {
 export interface UpdateOrganizationPayload {
   name?: string;
   zipCode?: string;
+  phone?: string;
+  website?: string;
+  licenseNumber?: string;
+  emailDomain?: string;
+  emailFromAddress?: string;
 }
 
 // -- Projects --
@@ -38,6 +43,8 @@ export interface CreateProjectPayload {
 
 export interface UpdateProjectPayload {
   clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
   address?: string;
   status?: string;
   description?: string;

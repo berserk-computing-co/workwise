@@ -48,7 +48,12 @@ async function handler(
   };
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    fetchOptions.body = await req.text();
+    const contentType = req.headers.get('content-type') || '';
+    if (contentType.includes('multipart/form-data')) {
+      fetchOptions.body = await req.arrayBuffer();
+    } else {
+      fetchOptions.body = await req.text();
+    }
   }
 
   const res = await fetch(url.toString(), fetchOptions);

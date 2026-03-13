@@ -159,6 +159,88 @@ export const InlineEditSectionName: Story = {
   },
 };
 
+export const EditClientEmail: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/proxy/projects/:id', () =>
+          HttpResponse.json(mockProjectWithSections),
+        ),
+        http.patch('/api/proxy/projects/:id', async ({ params, request }) => {
+          const body = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({
+            ...mockProjectWithSections,
+            id: params.id,
+            ...body,
+          });
+        }),
+      ],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitFor(() => {
+      expect(canvas.getByText('Add email')).toBeInTheDocument();
+    });
+    const editButtons = canvas.getAllByRole('button', { name: /edit/i });
+    // editButtons[0] = description, [1] = clientEmail, [2] = clientPhone
+    await userEvent.click(editButtons[1]);
+    await waitFor(() => {
+      const inputs = canvasElement.querySelectorAll("input[type='text']");
+      expect(inputs.length).toBeGreaterThan(0);
+    });
+    const input = canvasElement.querySelector(
+      "input[type='text']",
+    ) as HTMLInputElement;
+    await userEvent.type(input, 'client@example.com');
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => {
+      expect(canvas.getByText('Client email updated')).toBeInTheDocument();
+    });
+  },
+};
+
+export const EditClientPhone: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/proxy/projects/:id', () =>
+          HttpResponse.json(mockProjectWithSections),
+        ),
+        http.patch('/api/proxy/projects/:id', async ({ params, request }) => {
+          const body = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({
+            ...mockProjectWithSections,
+            id: params.id,
+            ...body,
+          });
+        }),
+      ],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitFor(() => {
+      expect(canvas.getByText('Add phone')).toBeInTheDocument();
+    });
+    const editButtons = canvas.getAllByRole('button', { name: /edit/i });
+    // editButtons[0] = description, [1] = clientEmail, [2] = clientPhone
+    await userEvent.click(editButtons[2]);
+    await waitFor(() => {
+      const inputs = canvasElement.querySelectorAll("input[type='text']");
+      expect(inputs.length).toBeGreaterThan(0);
+    });
+    const input = canvasElement.querySelector(
+      "input[type='text']",
+    ) as HTMLInputElement;
+    await userEvent.type(input, '(555) 987-6543');
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => {
+      expect(canvas.getByText('Client phone updated')).toBeInTheDocument();
+    });
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Shared mobile viewport — forces responsive breakpoint below md (768px)
 // ---------------------------------------------------------------------------

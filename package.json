@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev:web": "nx dev web",
-    "dev:api": "nx serve api",
+    "dev:api": "nx dev api",
     "build:web": "nx build web",
     "build:api": "nx build api",
     "build": "nx run-many -t build --projects=web,api",
@@ -78,6 +78,7 @@
     "@types/express": "^5.0.0",
     "@types/google.maps": "^3.58.1",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/react": "^18",
