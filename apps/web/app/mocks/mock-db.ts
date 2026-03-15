@@ -381,6 +381,7 @@ export const mockDb = {
           unitCost,
           extendedCost: quantity * unitCost,
           source: 'manual',
+          sourceUrl: null,
           sourceData: {},
           sortOrder: section.items.length + 1,
           createdAt: now(),

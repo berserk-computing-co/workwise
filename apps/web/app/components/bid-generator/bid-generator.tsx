@@ -322,7 +322,6 @@ export function BidGenerator() {
 
       <ProgressOverlay
         jobId={generatingJobId}
-        projectId={projectId}
         onComplete={handleGenerateComplete}
         onClose={handleProgressClose}
       />
